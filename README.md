@@ -79,30 +79,30 @@ news_classifier_expanded/
 
 ---
 
-## 폴더 및 파일 설명
+## 주요 파일 설명
 
-| 경로 | 설명 |
+| 파일 | 설명 |
 |---|---|
-| `src/news_classifier/cli.py` | 터미널 명령어를 받아 뉴스 수집 및 분류를 실행하는 진입점 |
-| `src/news_classifier/pipeline.py` | 뉴스 수집, 중복 제거, 분류, 보정, 저장 흐름을 연결하는 핵심 파이프라인 |
-| `src/news_classifier/service.py` | 파이프라인 기능을 서비스 단위로 묶어 실행하기 위한 파일 |
-| `src/news_classifier/models.py` | 뉴스 데이터와 분류 결과에 사용되는 데이터 구조 정의 |
-| `src/news_classifier/config.py` | 모델명, 라벨, 실행 옵션 등 설정값 관리 |
-| `src/news_classifier/collectors/` | Google News RSS 수집 및 기사 데이터 추출 기능 |
-| `src/news_classifier/classifiers/` | zero-shot 분류, 규칙 보정, 신뢰도 판단 기능 |
-| `src/news_classifier/dedup/` | 중복 뉴스 제거 기능 |
-| `src/news_classifier/features/` | 뉴스 텍스트의 특징 추출 기능 |
-| `src/news_classifier/storage/` | CSV 및 SQLite 저장 기능 |
-| `src/news_classifier/exporters/` | Excel 등 결과 내보내기 기능 |
-| `src/news_classifier/reporting/` | 카테고리별 기사 수, 낮은 신뢰도 기사 수 등 요약 리포트 생성 |
-| `src/news_classifier/rules/` | 카테고리별 키워드 규칙 사전 |
-| `src/news_classifier/utils/` | 텍스트 정제, HTTP 요청, 날짜 처리, 검증 등 공통 유틸 |
-| `tests/` | 전처리, 중복 제거, 규칙 보정, 파이프라인 동작 검증 테스트 코드 |
-| `data/` | 분류 검증용 샘플 뉴스 케이스 |
-| `scripts/` | 실행 보조 스크립트 |
-| `requirements.txt` | 프로젝트 실행에 필요한 Python 패키지 목록 |
-| `ARCHITECTURE.md` | 프로젝트 구조와 설계 설명 문서 |
-| `LINE_COUNTS.json` | 파일별 행 수 정보 |
+| `src/news_classifier/cli.py` | 터미널 명령어 해석 및 뉴스 수집·분류 실행 진입점 |
+| `src/news_classifier/service.py` | 수집기, 분류기, 규칙 엔진, 중복 제거기 조립 및 파이프라인 구성 |
+| `src/news_classifier/pipeline.py` | 뉴스 수집, 중복 제거, 분류, 후처리까지의 전체 처리 흐름 실행 |
+| `src/news_classifier/collectors/google_rss.py` | Google News RSS 기반 키워드 뉴스 수집 및 기사 정보 추출 |
+| `src/news_classifier/collectors/article_scraper.py` | 선택적 기사 본문 추가 수집 및 분류 입력 데이터 보강 |
+| `src/news_classifier/classifiers/zero_shot_classifier.py` | Hugging Face zero-shot 모델 기반 뉴스 1차 카테고리 분류 |
+| `src/news_classifier/classifiers/rule_engine.py` | 카테고리별 키워드 매칭 점수 계산 및 규칙 기반 보정 근거 생성 |
+| `src/news_classifier/classifiers/postprocessor.py` | 모델 점수, margin, 규칙 점수 기반 최종 카테고리 결정 |
+| `src/news_classifier/rules/default_rules.py` | 기본 분류 카테고리 및 키워드 규칙 사전 관리 |
+| `src/news_classifier/rules/extended_rules.py` | 확장 키워드 기반 규칙 데이터 제공 |
+| `src/news_classifier/models.py` | 뉴스 기사, 모델 예측값, 규칙 판단 결과 등 공통 데이터 구조 정의 |
+| `src/news_classifier/storage/csv_store.py` | 분류 결과 CSV 저장 및 Excel 확인용 파일 생성 |
+| `src/news_classifier/storage/sqlite_store.py` | 분류 결과 SQLite DB 누적 저장 및 재조회 지원 |
+| `src/news_classifier/reporting/summary_report.py` | 전체 기사 수, 낮은 신뢰도 기사 수, 규칙 보정 수, 카테고리별 개수 요약 출력 |
+| `src/news_classifier/config.py` | 모델명, 분류 라벨, 임계값 등 프로젝트 설정값 관리 |
+| `src/news_classifier/utils/http.py` | RSS 요청 등 HTTP 통신 공통 기능 제공 |
+| `src/news_classifier/utils/text.py` | HTML 제거, 공백 정리, 텍스트 정규화 등 전처리 기능 제공 |
+| `tests/` | 전처리, 중복 제거, 규칙 보정, 파이프라인 동작 검증용 테스트 코드 |
+| `data/` | 분류 규칙 및 테스트 검증용 샘플 뉴스 데이터 |
+| `scripts/` | 프로젝트 실행 보조 스크립트 관리 |
 
 ---
 
@@ -246,6 +246,18 @@ CSV saved: out.csv
 - 기업동향: 1
 - 시장/투자: 1
 ```
+
+## 전체 처리 과정
+
+1. 사용자가 터미널에서 키워드와 저장 옵션을 입력합니다.
+2. cli.py가 명령어를 해석합니다.
+3. service.py가 수집기, 분류기, 규칙 엔진, 저장소 객체를 조립합니다.
+4. pipeline.py가 전체 처리 흐름을 실행합니다.
+5. google_rss.py가 Google News RSS에서 뉴스를 수집합니다.
+6. 중복 뉴스 제거 후 필요하면 article_scraper.py로 본문을 보강합니다.
+7. zero_shot_classifier.py가 Hugging Face 모델로 1차 분류를 수행합니다.
+8. rule_engine.py와 postprocessor.py가 모델 점수, margin, 키워드 규칙을 바탕으로 최종 카테고리를 결정합니다.
+9. csv_store.py와 sqlite_store.py가 결과를 CSV 또는 SQLite에 저장합니다.
 
 ## GitHub 업로드
 
