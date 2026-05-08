@@ -247,26 +247,6 @@ CSV saved: out.csv
 - 시장/투자: 1
 ```
 
----
-
-## 결과 파일 관리
-
-아래 파일들은 실행 결과물이므로 GitHub에는 올리지 않습니다.
-
-```text
-out.csv
-news.db
-*.sqlite
-*.sqlite3
-.venv/
-__pycache__/
-.pytest_cache/
-```
-
-실행 결과를 포트폴리오에 첨부하고 싶다면 `sample_result.csv`처럼 별도 샘플 파일명으로 저장해 관리하는 것을 권장합니다.
-
----
-
 ## GitHub 업로드
 
 ```powershell
