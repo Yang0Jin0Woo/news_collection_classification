@@ -119,10 +119,20 @@ news_classifier_expanded/
 ### 1. 프로젝트 폴더로 이동
 
 ```powershell
-cd C:\Users\juyan\Downloads\news_classifier_expanded_project\news_classifier_expanded
+cd C:\news_classifier_expanded_project
+ls
 ```
 
+`requirements.txt`, `src`, `tests`, `data` 폴더 확인
+
+---
+
 ### 2. 가상환경 생성 및 활성화
+
+![alt text](image-2.png)
+
+- 가상환경 생성 및 활성화
+  - 실제 프로젝트 폴더 위치 확인 → 패키지 설치 → Python 경로 설정 → 실행
 
 ```powershell
 py -m venv .venv
@@ -130,7 +140,9 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 .\.venv\Scripts\Activate.ps1
 ```
 
-정상적으로 활성화되면 터미널 앞에 `(.venv)`가 표시됩니다.
+정상 활성화 시 터미널 앞 `(.venv)` 표시
+
+---
 
 ### 3. 패키지 설치
 
@@ -139,11 +151,19 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+프로젝트 실행에 필요한 패키지 설치
+
+---
+
 ### 4. Python 경로 설정
 
 ```powershell
 $env:PYTHONPATH="src"
 ```
+
+`src` 폴더 안의 `news_classifier` 패키지 인식 설정
+
+---
 
 ### 5. CSV 파일로 결과 저장
 
@@ -151,12 +171,14 @@ $env:PYTHONPATH="src"
 python -m news_classifier.cli collect --keyword "AI 반도체" --limit 10 --csv out.csv
 ```
 
-실행 후 `out.csv` 파일이 생성됩니다.  
-CSV 파일은 Excel로 열어 결과를 확인할 수 있습니다.
+실행 후 `out.csv` 파일 생성  
+CSV 파일을 Excel로 열어 결과 확인 가능
 
 ```powershell
 ii .\out.csv
 ```
+
+---
 
 ### 6. CSV와 SQLite에 동시에 저장
 
@@ -164,12 +186,12 @@ ii .\out.csv
 python -m news_classifier.cli collect --keyword "AI 반도체" --limit 10 --csv out.csv --sqlite news.db
 ```
 
-실행 후 아래 파일이 생성됩니다.
+실행 후 `out.csv`, `news.db` 파일 생성
 
 | 파일 | 용도 |
 |---|---|
-| `out.csv` | Excel로 결과 확인 |
-| `news.db` | 뉴스 분류 결과 누적 저장 및 재조회 |
+| `out.csv` | Excel 기반 결과 확인 |
+| `news.db` | SQLite 기반 누적 저장 및 재조회 |
 
 ---
 
@@ -211,18 +233,10 @@ python -c "import sqlite3, pandas as pd; conn=sqlite3.connect('news.db'); df=pd.
 
 ---
 
-## 테스트 실행
-
-```powershell
-python -m pytest
-```
-
----
-
 ## 실행 예시
 
 ```powershell
-cd C:\Users\juyan\Downloads\news_classifier_expanded_project\news_classifier_expanded
+cd C:\news_classifier_expanded_project\news_classifier_expanded
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
