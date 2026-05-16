@@ -160,20 +160,31 @@ CPU 환경은 별도 GPU 설정 없이 실행 가능
 
 ### 3-2. GPU 환경일 때 실행
 
-NVIDIA GPU가 있는 환경에서 zero-shot 분류 모델을 GPU로 실행하는 방법
+NVIDIA GPU와 CUDA 지원 PyTorch가 있는 환경에서 zero-shot 분류 모델을 GPU로 실행하는 방법
 
-GPU와 드라이버 확인
+프로젝트 폴더 이동
 
 ```powershell
-nvidia-smi
+cd C:\news_classifier_expanded_project\news_classifier_expanded
 ```
 
-현재 PyTorch CUDA 인식 여부 확인
+CUDA PyTorch 설치 여부 확인
 
 ```powershell
 ..\.venv\Scripts\python.exe -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU only')"
 ```
 
+정상 출력 예시
+
+`True`와 NVIDIA GPU 이름이 나오면 바로 GPU 실행 가능
+
+뉴스 수집 및 분류 실행(torch 설치되어 있으면 해당 명령만 입력)
+
+```powershell
+.\run_news.ps1
+```
+
+`device=cuda`가 보이면 GPU 실행 상태
 `torch` 버전에 `+cpu`가 보이거나 `torch.cuda.is_available()` 결과가 `False`이면 CPU 전용 PyTorch 상태
 
 CUDA 지원 PyTorch 설치
@@ -185,25 +196,9 @@ CUDA 지원 PyTorch 설치
 
 설치 후 CUDA 인식 재확인
 
-```text
-2.x.x+cu128
-True
-NVIDIA GeForce ...
-```
-
-뉴스 수집 및 분류 실행
-
 ```powershell
-.\run_news.ps1
+..\.venv\Scripts\python.exe -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU only')"
 ```
-
-실행 로그 예시
-
-```text
-loading classifier model=... device=cuda
-```
-
-`device=cuda`가 보이면 GPU 실행 상태
 
 GPU가 없거나 CUDA 지원 PyTorch가 설치되지 않은 경우 자동 CPU 실행
 
