@@ -83,26 +83,18 @@ news_classifier_expanded/
 
 | 파일 | 설명 |
 |---|---|
+| `run_news.ps1` | 실행 환경 설정 및 뉴스 수집·분류 CLI 실행 |
 | `src/news_classifier/cli.py` | 터미널 명령어 해석 및 뉴스 수집·분류 실행 진입점 |
 | `src/news_classifier/service.py` | 수집기, 분류기, 규칙 엔진, 중복 제거기 조립 및 파이프라인 구성 |
 | `src/news_classifier/pipeline.py` | 뉴스 수집, 중복 제거, 분류, 후처리까지의 전체 처리 흐름 실행 |
 | `src/news_classifier/collectors/google_rss.py` | Google News RSS 기반 키워드 뉴스 수집 및 기사 정보 추출 |
-| `src/news_classifier/collectors/article_scraper.py` | 선택적 기사 본문 추가 수집 및 분류 입력 데이터 보강 |
 | `src/news_classifier/classifiers/zero_shot_classifier.py` | Hugging Face zero-shot 모델 기반 뉴스 1차 카테고리 분류 |
 | `src/news_classifier/classifiers/rule_engine.py` | 카테고리별 키워드 매칭 점수 계산 및 규칙 기반 보정 근거 생성 |
 | `src/news_classifier/classifiers/postprocessor.py` | 모델 점수, margin, 규칙 점수 기반 최종 카테고리 결정 |
 | `src/news_classifier/rules/default_rules.py` | 기본 분류 카테고리 및 키워드 규칙 사전 관리 |
-| `src/news_classifier/rules/extended_rules.py` | 확장 키워드 기반 규칙 데이터 제공 |
-| `src/news_classifier/models.py` | 뉴스 기사, 모델 예측값, 규칙 판단 결과 등 공통 데이터 구조 정의 |
 | `src/news_classifier/storage/csv_store.py` | 분류 결과 CSV 저장 및 Excel 확인용 파일 생성 |
 | `src/news_classifier/storage/sqlite_store.py` | 분류 결과 SQLite DB 누적 저장 및 재조회 지원 |
 | `src/news_classifier/reporting/summary_report.py` | 전체 기사 수, 낮은 신뢰도 기사 수, 규칙 보정 수, 카테고리별 개수 요약 출력 |
-| `src/news_classifier/config.py` | 모델명, 분류 라벨, 임계값 등 프로젝트 설정값 관리 |
-| `src/news_classifier/utils/http.py` | RSS 요청 등 HTTP 통신 공통 기능 제공 |
-| `src/news_classifier/utils/text.py` | HTML 제거, 공백 정리, 텍스트 정규화 등 전처리 기능 제공 |
-| `tests/` | 전처리, 중복 제거, 규칙 보정, 파이프라인 동작 검증용 테스트 코드 |
-| `data/` | 분류 규칙 및 테스트 검증용 샘플 뉴스 데이터 |
-| `scripts/` | 프로젝트 실행 보조 스크립트 관리 |
 
 ---
 
@@ -202,17 +194,23 @@ streamlit run src\news_classifier\dashboard_streamlit.py
 
 ## 다른 키워드로 실행하기
 
-키워드를 바꾸면 다른 주제의 뉴스도 수집할 수 있습니다.
+실행 스크립트를 다시 실행한 뒤 입력 문구에 다른 키워드 입력
 
 ```powershell
-python -m news_classifier.cli collect --keyword "생성형 AI" --limit 10 --csv generative_ai.csv --sqlite news.db
+.\run_news.ps1
 ```
 
-```powershell
-python -m news_classifier.cli collect --keyword "반도체 공급망" --limit 10 --csv semiconductor_supply.csv --sqlite news.db
+```text
+검색 키워드를 입력하세요: 생성형 AI
 ```
 
-SQLite 파일명을 동일하게 `news.db`로 지정하면 여러 키워드의 결과를 하나의 DB에 누적 저장할 수 있습니다.
+다른 예시 입력
+
+```text
+검색 키워드를 입력하세요: 반도체 공급망
+```
+
+스크립트 실행 결과는 `out.csv`에 새로 저장되고, `news.db`에는 같은 DB 파일로 누적 저장
 
 ---
 
@@ -242,12 +240,13 @@ python -c "import sqlite3, pandas as pd; conn=sqlite3.connect('news.db'); df=pd.
 
 ```powershell
 cd C:\news_classifier_expanded_project\news_classifier_expanded
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-$env:PYTHONPATH="src"
-python -m news_classifier.cli collect --keyword "AI 반도체" --limit 10 --csv out.csv --sqlite news.db
+.\run_news.ps1
+```
+
+키워드 입력 예시
+
+```text
+검색 키워드를 입력하세요: AI 반도체
 ```
 
 실행 결과 예시는 다음과 같습니다.
@@ -268,15 +267,17 @@ CSV saved: out.csv
 
 ## 전체 처리 과정
 
-1. 사용자가 터미널에서 키워드와 저장 옵션을 입력합니다.
-2. cli.py가 명령어를 해석합니다.
-3. service.py가 수집기, 분류기, 규칙 엔진, 저장소 객체를 조립합니다.
-4. pipeline.py가 전체 처리 흐름을 실행합니다.
-5. google_rss.py가 Google News RSS에서 뉴스를 수집합니다.
-6. 중복 뉴스 제거 후 필요하면 article_scraper.py로 본문을 보강합니다.
-7. zero_shot_classifier.py가 Hugging Face 모델로 1차 분류를 수행합니다.
-8. rule_engine.py와 postprocessor.py가 모델 점수, margin, 키워드 규칙을 바탕으로 최종 카테고리를 결정합니다.
-9. csv_store.py와 sqlite_store.py가 결과를 CSV 또는 SQLite에 저장합니다.
+1. 사용자가 `run_news.ps1` 실행
+2. 스크립트가 `PYTHONPATH` 설정 후 CLI 실행
+3. 사용자가 터미널 입력 문구에 검색 키워드 입력
+4. cli.py가 입력값과 실행 옵션 해석
+5. service.py가 수집기, 분류기, 규칙 엔진, 저장소 객체 조립
+6. pipeline.py가 전체 처리 흐름 실행
+7. google_rss.py가 Google News RSS에서 뉴스 수집
+8. 중복 뉴스 제거 후 필요하면 article_scraper.py로 본문 보강
+9. zero_shot_classifier.py가 Hugging Face 모델로 1차 분류 수행
+10. rule_engine.py와 postprocessor.py가 모델 점수, margin, 키워드 규칙을 바탕으로 최종 카테고리 결정
+11. csv_store.py와 sqlite_store.py가 결과를 CSV와 SQLite에 저장
 
 ## GitHub 업로드
 
