@@ -21,6 +21,7 @@ def build_pipeline(settings: AppSettings | None = None) -> NewsPipeline:
         model_name=settings.classification_model,
         candidate_labels=CANDIDATE_LABELS,
         max_sequence_length=settings.max_sequence_length,
+        batch_size=settings.classification_batch_size,
     )
     rule_engine = RuleEngine(
         RULES,

@@ -30,6 +30,7 @@ class AppSettings:
     min_margin_threshold: float = 0.08
     min_rule_match_count: int = 2
     review_needed_score_threshold: float = 0.40
+    classification_batch_size: int = 4
 
     @property
     def headers(self) -> dict[str, str]:
