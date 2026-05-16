@@ -1,4 +1,4 @@
-"""Large sample fixture set for classification regression tests.
+﻿"""Large sample fixture set for classification regression tests.
 
 The cases are synthetic examples used to test the rule engine behavior.
 They are not real news articles.
@@ -8647,7 +8647,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1081,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 주가 관련 실적 소식 1081",
         "description": "이번 사례는 AI 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8655,7 +8655,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1082,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 투자 관련 매출 소식 1082",
         "description": "이번 사례는 AI 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8663,7 +8663,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1083,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 증권 관련 영업이익 소식 1083",
         "description": "이번 사례는 AI 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8671,7 +8671,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1084,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 실적 관련 펀드 소식 1084",
         "description": "이번 사례는 AI 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8679,7 +8679,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1085,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 매출 관련 상장 소식 1085",
         "description": "이번 사례는 AI 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8687,7 +8687,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1086,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 영업이익 관련 공모 소식 1086",
         "description": "이번 사례는 AI 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8695,7 +8695,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1087,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 펀드 관련 배당 소식 1087",
         "description": "이번 사례는 AI 산업에서 펀드와 배당 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8703,7 +8703,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1088,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 상장 관련 수익률 소식 1088",
         "description": "이번 사례는 AI 산업에서 상장와 수익률 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8711,7 +8711,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1089,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 공모 관련 목표가 소식 1089",
         "description": "이번 사례는 AI 산업에서 공모와 목표가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8719,7 +8719,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1090,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 배당 관련 주가 소식 1090",
         "description": "이번 사례는 AI 산업에서 배당와 주가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8727,7 +8727,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1091,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 수익률 관련 투자 소식 1091",
         "description": "이번 사례는 AI 산업에서 수익률와 투자 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8735,7 +8735,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1092,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 목표가 관련 증권 소식 1092",
         "description": "이번 사례는 AI 산업에서 목표가와 증권 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8743,7 +8743,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1093,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 주가 관련 실적 소식 1093",
         "description": "이번 사례는 AI 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8751,7 +8751,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1094,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 투자 관련 매출 소식 1094",
         "description": "이번 사례는 AI 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8759,7 +8759,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1095,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 증권 관련 영업이익 소식 1095",
         "description": "이번 사례는 AI 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8767,7 +8767,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1096,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 실적 관련 펀드 소식 1096",
         "description": "이번 사례는 AI 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8775,7 +8775,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1097,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 매출 관련 상장 소식 1097",
         "description": "이번 사례는 AI 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8783,7 +8783,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1098,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "AI",
         "title": "AI 분야 영업이익 관련 공모 소식 1098",
         "description": "이번 사례는 AI 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8791,7 +8791,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1099,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 주가 관련 실적 소식 1099",
         "description": "이번 사례는 반도체 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8799,7 +8799,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1100,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 투자 관련 매출 소식 1100",
         "description": "이번 사례는 반도체 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8807,7 +8807,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1101,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 증권 관련 영업이익 소식 1101",
         "description": "이번 사례는 반도체 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8815,7 +8815,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1102,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 실적 관련 펀드 소식 1102",
         "description": "이번 사례는 반도체 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8823,7 +8823,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1103,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 매출 관련 상장 소식 1103",
         "description": "이번 사례는 반도체 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8831,7 +8831,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1104,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 영업이익 관련 공모 소식 1104",
         "description": "이번 사례는 반도체 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8839,7 +8839,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1105,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 펀드 관련 배당 소식 1105",
         "description": "이번 사례는 반도체 산업에서 펀드와 배당 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8847,7 +8847,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1106,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 상장 관련 수익률 소식 1106",
         "description": "이번 사례는 반도체 산업에서 상장와 수익률 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8855,7 +8855,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1107,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 공모 관련 목표가 소식 1107",
         "description": "이번 사례는 반도체 산업에서 공모와 목표가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8863,7 +8863,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1108,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 배당 관련 주가 소식 1108",
         "description": "이번 사례는 반도체 산업에서 배당와 주가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8871,7 +8871,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1109,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 수익률 관련 투자 소식 1109",
         "description": "이번 사례는 반도체 산업에서 수익률와 투자 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8879,7 +8879,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1110,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 목표가 관련 증권 소식 1110",
         "description": "이번 사례는 반도체 산업에서 목표가와 증권 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8887,7 +8887,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1111,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 주가 관련 실적 소식 1111",
         "description": "이번 사례는 반도체 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8895,7 +8895,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1112,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 투자 관련 매출 소식 1112",
         "description": "이번 사례는 반도체 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8903,7 +8903,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1113,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 증권 관련 영업이익 소식 1113",
         "description": "이번 사례는 반도체 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8911,7 +8911,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1114,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 실적 관련 펀드 소식 1114",
         "description": "이번 사례는 반도체 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8919,7 +8919,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1115,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 매출 관련 상장 소식 1115",
         "description": "이번 사례는 반도체 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8927,7 +8927,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1116,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "반도체",
         "title": "반도체 분야 영업이익 관련 공모 소식 1116",
         "description": "이번 사례는 반도체 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8935,7 +8935,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1117,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 주가 관련 실적 소식 1117",
         "description": "이번 사례는 로봇 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8943,7 +8943,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1118,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 투자 관련 매출 소식 1118",
         "description": "이번 사례는 로봇 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8951,7 +8951,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1119,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 증권 관련 영업이익 소식 1119",
         "description": "이번 사례는 로봇 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8959,7 +8959,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1120,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 실적 관련 펀드 소식 1120",
         "description": "이번 사례는 로봇 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8967,7 +8967,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1121,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 매출 관련 상장 소식 1121",
         "description": "이번 사례는 로봇 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8975,7 +8975,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1122,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 영업이익 관련 공모 소식 1122",
         "description": "이번 사례는 로봇 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8983,7 +8983,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1123,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 펀드 관련 배당 소식 1123",
         "description": "이번 사례는 로봇 산업에서 펀드와 배당 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8991,7 +8991,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1124,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 상장 관련 수익률 소식 1124",
         "description": "이번 사례는 로봇 산업에서 상장와 수익률 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -8999,7 +8999,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1125,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 공모 관련 목표가 소식 1125",
         "description": "이번 사례는 로봇 산업에서 공모와 목표가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9007,7 +9007,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1126,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 배당 관련 주가 소식 1126",
         "description": "이번 사례는 로봇 산업에서 배당와 주가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9015,7 +9015,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1127,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 수익률 관련 투자 소식 1127",
         "description": "이번 사례는 로봇 산업에서 수익률와 투자 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9023,7 +9023,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1128,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 목표가 관련 증권 소식 1128",
         "description": "이번 사례는 로봇 산업에서 목표가와 증권 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9031,7 +9031,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1129,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 주가 관련 실적 소식 1129",
         "description": "이번 사례는 로봇 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9039,7 +9039,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1130,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 투자 관련 매출 소식 1130",
         "description": "이번 사례는 로봇 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9047,7 +9047,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1131,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 증권 관련 영업이익 소식 1131",
         "description": "이번 사례는 로봇 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9055,7 +9055,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1132,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 실적 관련 펀드 소식 1132",
         "description": "이번 사례는 로봇 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9063,7 +9063,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1133,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 매출 관련 상장 소식 1133",
         "description": "이번 사례는 로봇 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9071,7 +9071,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1134,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "로봇",
         "title": "로봇 분야 영업이익 관련 공모 소식 1134",
         "description": "이번 사례는 로봇 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9079,7 +9079,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1135,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 주가 관련 실적 소식 1135",
         "description": "이번 사례는 전력 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9087,7 +9087,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1136,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 투자 관련 매출 소식 1136",
         "description": "이번 사례는 전력 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9095,7 +9095,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1137,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 증권 관련 영업이익 소식 1137",
         "description": "이번 사례는 전력 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9103,7 +9103,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1138,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 실적 관련 펀드 소식 1138",
         "description": "이번 사례는 전력 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9111,7 +9111,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1139,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 매출 관련 상장 소식 1139",
         "description": "이번 사례는 전력 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9119,7 +9119,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1140,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 영업이익 관련 공모 소식 1140",
         "description": "이번 사례는 전력 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9127,7 +9127,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1141,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 펀드 관련 배당 소식 1141",
         "description": "이번 사례는 전력 산업에서 펀드와 배당 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9135,7 +9135,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1142,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 상장 관련 수익률 소식 1142",
         "description": "이번 사례는 전력 산업에서 상장와 수익률 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9143,7 +9143,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1143,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 공모 관련 목표가 소식 1143",
         "description": "이번 사례는 전력 산업에서 공모와 목표가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9151,7 +9151,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1144,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 배당 관련 주가 소식 1144",
         "description": "이번 사례는 전력 산업에서 배당와 주가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9159,7 +9159,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1145,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 수익률 관련 투자 소식 1145",
         "description": "이번 사례는 전력 산업에서 수익률와 투자 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9167,7 +9167,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1146,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 목표가 관련 증권 소식 1146",
         "description": "이번 사례는 전력 산업에서 목표가와 증권 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9175,7 +9175,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1147,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 주가 관련 실적 소식 1147",
         "description": "이번 사례는 전력 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9183,7 +9183,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1148,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 투자 관련 매출 소식 1148",
         "description": "이번 사례는 전력 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9191,7 +9191,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1149,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 증권 관련 영업이익 소식 1149",
         "description": "이번 사례는 전력 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9199,7 +9199,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1150,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 실적 관련 펀드 소식 1150",
         "description": "이번 사례는 전력 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9207,7 +9207,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1151,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 매출 관련 상장 소식 1151",
         "description": "이번 사례는 전력 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9215,7 +9215,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1152,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "전력",
         "title": "전력 분야 영업이익 관련 공모 소식 1152",
         "description": "이번 사례는 전력 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9223,7 +9223,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1153,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 주가 관련 실적 소식 1153",
         "description": "이번 사례는 배터리 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9231,7 +9231,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1154,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 투자 관련 매출 소식 1154",
         "description": "이번 사례는 배터리 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9239,7 +9239,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1155,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 증권 관련 영업이익 소식 1155",
         "description": "이번 사례는 배터리 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9247,7 +9247,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1156,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 실적 관련 펀드 소식 1156",
         "description": "이번 사례는 배터리 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9255,7 +9255,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1157,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 매출 관련 상장 소식 1157",
         "description": "이번 사례는 배터리 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9263,7 +9263,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1158,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 영업이익 관련 공모 소식 1158",
         "description": "이번 사례는 배터리 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9271,7 +9271,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1159,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 펀드 관련 배당 소식 1159",
         "description": "이번 사례는 배터리 산업에서 펀드와 배당 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9279,7 +9279,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1160,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 상장 관련 수익률 소식 1160",
         "description": "이번 사례는 배터리 산업에서 상장와 수익률 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9287,7 +9287,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1161,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 공모 관련 목표가 소식 1161",
         "description": "이번 사례는 배터리 산업에서 공모와 목표가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9295,7 +9295,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1162,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 배당 관련 주가 소식 1162",
         "description": "이번 사례는 배터리 산업에서 배당와 주가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9303,7 +9303,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1163,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 수익률 관련 투자 소식 1163",
         "description": "이번 사례는 배터리 산업에서 수익률와 투자 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9311,7 +9311,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1164,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 목표가 관련 증권 소식 1164",
         "description": "이번 사례는 배터리 산업에서 목표가와 증권 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9319,7 +9319,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1165,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 주가 관련 실적 소식 1165",
         "description": "이번 사례는 배터리 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9327,7 +9327,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1166,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 투자 관련 매출 소식 1166",
         "description": "이번 사례는 배터리 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9335,7 +9335,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1167,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 증권 관련 영업이익 소식 1167",
         "description": "이번 사례는 배터리 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9343,7 +9343,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1168,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 실적 관련 펀드 소식 1168",
         "description": "이번 사례는 배터리 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9351,7 +9351,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1169,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 매출 관련 상장 소식 1169",
         "description": "이번 사례는 배터리 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9359,7 +9359,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1170,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "배터리",
         "title": "배터리 분야 영업이익 관련 공모 소식 1170",
         "description": "이번 사례는 배터리 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9367,7 +9367,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1171,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 주가 관련 실적 소식 1171",
         "description": "이번 사례는 클라우드 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9375,7 +9375,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1172,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 투자 관련 매출 소식 1172",
         "description": "이번 사례는 클라우드 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9383,7 +9383,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1173,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 증권 관련 영업이익 소식 1173",
         "description": "이번 사례는 클라우드 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9391,7 +9391,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1174,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 실적 관련 펀드 소식 1174",
         "description": "이번 사례는 클라우드 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9399,7 +9399,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1175,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 매출 관련 상장 소식 1175",
         "description": "이번 사례는 클라우드 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9407,7 +9407,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1176,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 영업이익 관련 공모 소식 1176",
         "description": "이번 사례는 클라우드 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9415,7 +9415,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1177,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 펀드 관련 배당 소식 1177",
         "description": "이번 사례는 클라우드 산업에서 펀드와 배당 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9423,7 +9423,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1178,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 상장 관련 수익률 소식 1178",
         "description": "이번 사례는 클라우드 산업에서 상장와 수익률 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9431,7 +9431,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1179,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 공모 관련 목표가 소식 1179",
         "description": "이번 사례는 클라우드 산업에서 공모와 목표가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9439,7 +9439,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1180,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 배당 관련 주가 소식 1180",
         "description": "이번 사례는 클라우드 산업에서 배당와 주가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9447,7 +9447,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1181,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 수익률 관련 투자 소식 1181",
         "description": "이번 사례는 클라우드 산업에서 수익률와 투자 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9455,7 +9455,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1182,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 목표가 관련 증권 소식 1182",
         "description": "이번 사례는 클라우드 산업에서 목표가와 증권 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9463,7 +9463,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1183,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 주가 관련 실적 소식 1183",
         "description": "이번 사례는 클라우드 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9471,7 +9471,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1184,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 투자 관련 매출 소식 1184",
         "description": "이번 사례는 클라우드 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9479,7 +9479,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1185,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 증권 관련 영업이익 소식 1185",
         "description": "이번 사례는 클라우드 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9487,7 +9487,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1186,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 실적 관련 펀드 소식 1186",
         "description": "이번 사례는 클라우드 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9495,7 +9495,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1187,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 매출 관련 상장 소식 1187",
         "description": "이번 사례는 클라우드 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9503,7 +9503,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1188,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "클라우드",
         "title": "클라우드 분야 영업이익 관련 공모 소식 1188",
         "description": "이번 사례는 클라우드 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9511,7 +9511,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1189,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 주가 관련 실적 소식 1189",
         "description": "이번 사례는 보안 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9519,7 +9519,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1190,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 투자 관련 매출 소식 1190",
         "description": "이번 사례는 보안 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9527,7 +9527,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1191,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 증권 관련 영업이익 소식 1191",
         "description": "이번 사례는 보안 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9535,7 +9535,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1192,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 실적 관련 펀드 소식 1192",
         "description": "이번 사례는 보안 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9543,7 +9543,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1193,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 매출 관련 상장 소식 1193",
         "description": "이번 사례는 보안 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9551,7 +9551,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1194,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 영업이익 관련 공모 소식 1194",
         "description": "이번 사례는 보안 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9559,7 +9559,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1195,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 펀드 관련 배당 소식 1195",
         "description": "이번 사례는 보안 산업에서 펀드와 배당 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9567,7 +9567,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1196,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 상장 관련 수익률 소식 1196",
         "description": "이번 사례는 보안 산업에서 상장와 수익률 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9575,7 +9575,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1197,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 공모 관련 목표가 소식 1197",
         "description": "이번 사례는 보안 산업에서 공모와 목표가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9583,7 +9583,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1198,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 배당 관련 주가 소식 1198",
         "description": "이번 사례는 보안 산업에서 배당와 주가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9591,7 +9591,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1199,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 수익률 관련 투자 소식 1199",
         "description": "이번 사례는 보안 산업에서 수익률와 투자 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9599,7 +9599,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1200,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 목표가 관련 증권 소식 1200",
         "description": "이번 사례는 보안 산업에서 목표가와 증권 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9607,7 +9607,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1201,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 주가 관련 실적 소식 1201",
         "description": "이번 사례는 보안 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9615,7 +9615,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1202,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 투자 관련 매출 소식 1202",
         "description": "이번 사례는 보안 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9623,7 +9623,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1203,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 증권 관련 영업이익 소식 1203",
         "description": "이번 사례는 보안 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9631,7 +9631,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1204,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 실적 관련 펀드 소식 1204",
         "description": "이번 사례는 보안 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9639,7 +9639,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1205,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 매출 관련 상장 소식 1205",
         "description": "이번 사례는 보안 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9647,7 +9647,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1206,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "보안",
         "title": "보안 분야 영업이익 관련 공모 소식 1206",
         "description": "이번 사례는 보안 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9655,7 +9655,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1207,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 주가 관련 실적 소식 1207",
         "description": "이번 사례는 디스플레이 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9663,7 +9663,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1208,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 투자 관련 매출 소식 1208",
         "description": "이번 사례는 디스플레이 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9671,7 +9671,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1209,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 증권 관련 영업이익 소식 1209",
         "description": "이번 사례는 디스플레이 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9679,7 +9679,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1210,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 실적 관련 펀드 소식 1210",
         "description": "이번 사례는 디스플레이 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9687,7 +9687,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1211,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 매출 관련 상장 소식 1211",
         "description": "이번 사례는 디스플레이 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9695,7 +9695,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1212,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 영업이익 관련 공모 소식 1212",
         "description": "이번 사례는 디스플레이 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9703,7 +9703,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1213,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 펀드 관련 배당 소식 1213",
         "description": "이번 사례는 디스플레이 산업에서 펀드와 배당 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9711,7 +9711,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1214,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 상장 관련 수익률 소식 1214",
         "description": "이번 사례는 디스플레이 산업에서 상장와 수익률 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9719,7 +9719,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1215,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 공모 관련 목표가 소식 1215",
         "description": "이번 사례는 디스플레이 산업에서 공모와 목표가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9727,7 +9727,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1216,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 배당 관련 주가 소식 1216",
         "description": "이번 사례는 디스플레이 산업에서 배당와 주가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9735,7 +9735,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1217,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 수익률 관련 투자 소식 1217",
         "description": "이번 사례는 디스플레이 산업에서 수익률와 투자 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9743,7 +9743,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1218,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 목표가 관련 증권 소식 1218",
         "description": "이번 사례는 디스플레이 산업에서 목표가와 증권 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9751,7 +9751,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1219,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 주가 관련 실적 소식 1219",
         "description": "이번 사례는 디스플레이 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9759,7 +9759,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1220,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 투자 관련 매출 소식 1220",
         "description": "이번 사례는 디스플레이 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9767,7 +9767,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1221,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 증권 관련 영업이익 소식 1221",
         "description": "이번 사례는 디스플레이 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9775,7 +9775,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1222,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 실적 관련 펀드 소식 1222",
         "description": "이번 사례는 디스플레이 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9783,7 +9783,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1223,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 매출 관련 상장 소식 1223",
         "description": "이번 사례는 디스플레이 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9791,7 +9791,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1224,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "디스플레이",
         "title": "디스플레이 분야 영업이익 관련 공모 소식 1224",
         "description": "이번 사례는 디스플레이 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9799,7 +9799,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1225,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 주가 관련 실적 소식 1225",
         "description": "이번 사례는 통신 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9807,7 +9807,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1226,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 투자 관련 매출 소식 1226",
         "description": "이번 사례는 통신 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9815,7 +9815,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1227,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 증권 관련 영업이익 소식 1227",
         "description": "이번 사례는 통신 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9823,7 +9823,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1228,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 실적 관련 펀드 소식 1228",
         "description": "이번 사례는 통신 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9831,7 +9831,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1229,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 매출 관련 상장 소식 1229",
         "description": "이번 사례는 통신 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9839,7 +9839,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1230,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 영업이익 관련 공모 소식 1230",
         "description": "이번 사례는 통신 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9847,7 +9847,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1231,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 펀드 관련 배당 소식 1231",
         "description": "이번 사례는 통신 산업에서 펀드와 배당 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9855,7 +9855,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1232,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 상장 관련 수익률 소식 1232",
         "description": "이번 사례는 통신 산업에서 상장와 수익률 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9863,7 +9863,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1233,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 공모 관련 목표가 소식 1233",
         "description": "이번 사례는 통신 산업에서 공모와 목표가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9871,7 +9871,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1234,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 배당 관련 주가 소식 1234",
         "description": "이번 사례는 통신 산업에서 배당와 주가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9879,7 +9879,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1235,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 수익률 관련 투자 소식 1235",
         "description": "이번 사례는 통신 산업에서 수익률와 투자 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9887,7 +9887,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1236,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 목표가 관련 증권 소식 1236",
         "description": "이번 사례는 통신 산업에서 목표가와 증권 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9895,7 +9895,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1237,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 주가 관련 실적 소식 1237",
         "description": "이번 사례는 통신 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9903,7 +9903,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1238,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 투자 관련 매출 소식 1238",
         "description": "이번 사례는 통신 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9911,7 +9911,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1239,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 증권 관련 영업이익 소식 1239",
         "description": "이번 사례는 통신 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9919,7 +9919,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1240,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 실적 관련 펀드 소식 1240",
         "description": "이번 사례는 통신 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9927,7 +9927,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1241,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 매출 관련 상장 소식 1241",
         "description": "이번 사례는 통신 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9935,7 +9935,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1242,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "통신",
         "title": "통신 분야 영업이익 관련 공모 소식 1242",
         "description": "이번 사례는 통신 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9943,7 +9943,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1243,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 주가 관련 실적 소식 1243",
         "description": "이번 사례는 제조 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9951,7 +9951,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1244,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 투자 관련 매출 소식 1244",
         "description": "이번 사례는 제조 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9959,7 +9959,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1245,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 증권 관련 영업이익 소식 1245",
         "description": "이번 사례는 제조 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9967,7 +9967,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1246,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 실적 관련 펀드 소식 1246",
         "description": "이번 사례는 제조 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9975,7 +9975,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1247,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 매출 관련 상장 소식 1247",
         "description": "이번 사례는 제조 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9983,7 +9983,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1248,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 영업이익 관련 공모 소식 1248",
         "description": "이번 사례는 제조 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9991,7 +9991,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1249,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 펀드 관련 배당 소식 1249",
         "description": "이번 사례는 제조 산업에서 펀드와 배당 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -9999,7 +9999,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1250,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 상장 관련 수익률 소식 1250",
         "description": "이번 사례는 제조 산업에서 상장와 수익률 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10007,7 +10007,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1251,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 공모 관련 목표가 소식 1251",
         "description": "이번 사례는 제조 산업에서 공모와 목표가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10015,7 +10015,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1252,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 배당 관련 주가 소식 1252",
         "description": "이번 사례는 제조 산업에서 배당와 주가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10023,7 +10023,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1253,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 수익률 관련 투자 소식 1253",
         "description": "이번 사례는 제조 산업에서 수익률와 투자 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10031,7 +10031,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1254,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 목표가 관련 증권 소식 1254",
         "description": "이번 사례는 제조 산업에서 목표가와 증권 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10039,7 +10039,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1255,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 주가 관련 실적 소식 1255",
         "description": "이번 사례는 제조 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10047,7 +10047,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1256,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 투자 관련 매출 소식 1256",
         "description": "이번 사례는 제조 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10055,7 +10055,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1257,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 증권 관련 영업이익 소식 1257",
         "description": "이번 사례는 제조 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10063,7 +10063,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1258,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 실적 관련 펀드 소식 1258",
         "description": "이번 사례는 제조 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10071,7 +10071,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1259,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 매출 관련 상장 소식 1259",
         "description": "이번 사례는 제조 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10079,7 +10079,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1260,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "제조",
         "title": "제조 분야 영업이익 관련 공모 소식 1260",
         "description": "이번 사례는 제조 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10087,7 +10087,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1261,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 주가 관련 실적 소식 1261",
         "description": "이번 사례는 헬스케어 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10095,7 +10095,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1262,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 투자 관련 매출 소식 1262",
         "description": "이번 사례는 헬스케어 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10103,7 +10103,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1263,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 증권 관련 영업이익 소식 1263",
         "description": "이번 사례는 헬스케어 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10111,7 +10111,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1264,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 실적 관련 펀드 소식 1264",
         "description": "이번 사례는 헬스케어 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10119,7 +10119,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1265,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 매출 관련 상장 소식 1265",
         "description": "이번 사례는 헬스케어 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10127,7 +10127,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1266,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 영업이익 관련 공모 소식 1266",
         "description": "이번 사례는 헬스케어 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10135,7 +10135,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1267,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 펀드 관련 배당 소식 1267",
         "description": "이번 사례는 헬스케어 산업에서 펀드와 배당 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10143,7 +10143,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1268,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 상장 관련 수익률 소식 1268",
         "description": "이번 사례는 헬스케어 산업에서 상장와 수익률 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10151,7 +10151,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1269,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 공모 관련 목표가 소식 1269",
         "description": "이번 사례는 헬스케어 산업에서 공모와 목표가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10159,7 +10159,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1270,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 배당 관련 주가 소식 1270",
         "description": "이번 사례는 헬스케어 산업에서 배당와 주가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10167,7 +10167,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1271,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 수익률 관련 투자 소식 1271",
         "description": "이번 사례는 헬스케어 산업에서 수익률와 투자 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10175,7 +10175,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1272,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 목표가 관련 증권 소식 1272",
         "description": "이번 사례는 헬스케어 산업에서 목표가와 증권 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10183,7 +10183,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1273,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 주가 관련 실적 소식 1273",
         "description": "이번 사례는 헬스케어 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10191,7 +10191,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1274,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 투자 관련 매출 소식 1274",
         "description": "이번 사례는 헬스케어 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10199,7 +10199,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1275,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 증권 관련 영업이익 소식 1275",
         "description": "이번 사례는 헬스케어 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10207,7 +10207,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1276,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 실적 관련 펀드 소식 1276",
         "description": "이번 사례는 헬스케어 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10215,7 +10215,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1277,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 매출 관련 상장 소식 1277",
         "description": "이번 사례는 헬스케어 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10223,7 +10223,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1278,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "헬스케어",
         "title": "헬스케어 분야 영업이익 관련 공모 소식 1278",
         "description": "이번 사례는 헬스케어 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10231,7 +10231,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1279,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 주가 관련 실적 소식 1279",
         "description": "이번 사례는 모빌리티 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10239,7 +10239,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1280,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 투자 관련 매출 소식 1280",
         "description": "이번 사례는 모빌리티 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10247,7 +10247,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1281,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 증권 관련 영업이익 소식 1281",
         "description": "이번 사례는 모빌리티 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10255,7 +10255,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1282,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 실적 관련 펀드 소식 1282",
         "description": "이번 사례는 모빌리티 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10263,7 +10263,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1283,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 매출 관련 상장 소식 1283",
         "description": "이번 사례는 모빌리티 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10271,7 +10271,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1284,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 영업이익 관련 공모 소식 1284",
         "description": "이번 사례는 모빌리티 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10279,7 +10279,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1285,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 펀드 관련 배당 소식 1285",
         "description": "이번 사례는 모빌리티 산업에서 펀드와 배당 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10287,7 +10287,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1286,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 상장 관련 수익률 소식 1286",
         "description": "이번 사례는 모빌리티 산업에서 상장와 수익률 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10295,7 +10295,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1287,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 공모 관련 목표가 소식 1287",
         "description": "이번 사례는 모빌리티 산업에서 공모와 목표가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10303,7 +10303,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1288,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 배당 관련 주가 소식 1288",
         "description": "이번 사례는 모빌리티 산업에서 배당와 주가 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10311,7 +10311,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1289,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 수익률 관련 투자 소식 1289",
         "description": "이번 사례는 모빌리티 산업에서 수익률와 투자 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10319,7 +10319,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1290,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 목표가 관련 증권 소식 1290",
         "description": "이번 사례는 모빌리티 산업에서 목표가와 증권 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10327,7 +10327,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1291,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 주가 관련 실적 소식 1291",
         "description": "이번 사례는 모빌리티 산업에서 주가와 실적 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10335,7 +10335,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1292,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 투자 관련 매출 소식 1292",
         "description": "이번 사례는 모빌리티 산업에서 투자와 매출 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10343,7 +10343,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1293,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 증권 관련 영업이익 소식 1293",
         "description": "이번 사례는 모빌리티 산업에서 증권와 영업이익 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10351,7 +10351,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1294,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 실적 관련 펀드 소식 1294",
         "description": "이번 사례는 모빌리티 산업에서 실적와 펀드 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10359,7 +10359,7 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1295,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 매출 관련 상장 소식 1295",
         "description": "이번 사례는 모빌리티 산업에서 매출와 상장 흐름이 함께 언급된 분류 테스트 데이터입니다.",
@@ -10367,10 +10367,11 @@ SAMPLE_NEWS_CASES = [
     },
     {
         "id": 1296,
-        "expected": "시장/투자",
+        "expected": "금융/투자",
         "keyword": "모빌리티",
         "title": "모빌리티 분야 영업이익 관련 공모 소식 1296",
         "description": "이번 사례는 모빌리티 산업에서 영업이익와 공모 흐름이 함께 언급된 분류 테스트 데이터입니다.",
         "source": "synthetic",
     },
 ]
+

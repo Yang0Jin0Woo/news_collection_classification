@@ -21,9 +21,33 @@ def test_rule_engine_overrides_weak_model_when_rule_is_strong():
         title="신제품 출시와 고객사 적용 확대",
         description="서비스 업데이트와 솔루션 적용",
         content="",
-        prediction=ModelPrediction("시장/투자", 0.42, 0.01, [], []),
+        prediction=ModelPrediction("금융/투자", 0.42, 0.01, [], []),
     )
     assert decision.final_label == "제품/서비스"
+    assert decision.rule_applied is True
+
+
+def test_rule_engine_overrides_low_confidence_finance_signal():
+    engine = RuleEngine(RULES)
+    decision = engine.decide(
+        title="필라델피아 반도체 지수 SOX의 함정",
+        description="뉴욕증시와 코스피 흐름 분석",
+        content="",
+        prediction=ModelPrediction("기술개발", 0.45, 0.01, [], []),
+    )
+    assert decision.final_label == "금융/투자"
+    assert decision.rule_applied is True
+
+
+def test_rule_engine_overrides_low_confidence_labor_signal():
+    engine = RuleEngine(RULES)
+    decision = engine.decide(
+        title="삼성 반도체 사장단, 직접 노조 만나러 평택행",
+        description="조건 없이 대화하겠다는 노사 관련 소식",
+        content="",
+        prediction=ModelPrediction("기술개발", 0.48, 0.01, [], []),
+    )
+    assert decision.final_label == "노동/노사"
     assert decision.rule_applied is True
 
 
