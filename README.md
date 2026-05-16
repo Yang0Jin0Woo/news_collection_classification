@@ -103,6 +103,8 @@ news_classifier_expanded/
 - Python 3.12 이상 권장
 - Windows PowerShell 기준
 - VS Code 터미널 기준
+- 기본 실행은 CPU에서 가능
+- NVIDIA GPU와 CUDA 지원 PyTorch가 있으면 zero-shot 분류 모델은 GPU 사용
 
 ---
 
@@ -113,8 +115,6 @@ news_classifier_expanded/
 ```powershell
 cd C:\news_classifier_expanded_project\news_classifier_expanded
 ```
-
-`run_news.ps1`, `requirements.txt`, `src`, `tests`, `data` 확인
 
 ---
 
@@ -132,7 +132,84 @@ cd C:\news_classifier_expanded_project\news_classifier_expanded
 
 ---
 
-### 3. 뉴스 수집 및 분류 실행
+### 3-1. CPU 환경일 때 실행
+
+GPU 설정 없이 기본 환경으로 실행하는 방법
+
+패키지 설치
+
+```powershell
+..\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+뉴스 수집 및 분류 실행
+
+```powershell
+.\run_news.ps1
+```
+
+실행 로그 예시
+
+```text
+loading classifier model=... device=cpu
+```
+
+CPU 환경은 별도 GPU 설정 없이 실행 가능
+
+---
+
+### 3-2. GPU 환경일 때 실행
+
+NVIDIA GPU가 있는 환경에서 zero-shot 분류 모델을 GPU로 실행하는 방법
+
+GPU와 드라이버 확인
+
+```powershell
+nvidia-smi
+```
+
+현재 PyTorch CUDA 인식 여부 확인
+
+```powershell
+..\.venv\Scripts\python.exe -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU only')"
+```
+
+`torch` 버전에 `+cpu`가 보이거나 `torch.cuda.is_available()` 결과가 `False`이면 CPU 전용 PyTorch 상태
+
+CUDA 지원 PyTorch 설치
+
+```powershell
+..\.venv\Scripts\python.exe -m pip uninstall -y torch torchvision torchaudio
+..\.venv\Scripts\python.exe -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+```
+
+설치 후 CUDA 인식 재확인
+
+```text
+2.x.x+cu128
+True
+NVIDIA GeForce ...
+```
+
+뉴스 수집 및 분류 실행
+
+```powershell
+.\run_news.ps1
+```
+
+실행 로그 예시
+
+```text
+loading classifier model=... device=cuda
+```
+
+`device=cuda`가 보이면 GPU 실행 상태
+
+GPU가 없거나 CUDA 지원 PyTorch가 설치되지 않은 경우 자동 CPU 실행
+
+---
+
+### 5. 공통 실행 세부 내용
 
 ```powershell
 .\run_news.ps1
@@ -159,7 +236,7 @@ AI 반도체
 
 ---
 
-### 4. 결과 파일 확인
+### 6. 결과 파일 확인
 
 실행 완료 후 프로젝트 폴더에 결과 파일 생성
 
@@ -178,7 +255,7 @@ ii .\out.csv
 
 ---
 
-### 5. 대시보드로 결과 확인
+### 7. 대시보드로 결과 확인
 
 Streamlit 대시보드 실행
 
