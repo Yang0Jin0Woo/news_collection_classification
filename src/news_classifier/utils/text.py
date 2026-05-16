@@ -6,6 +6,7 @@ _BRACKET_PATTERN = re.compile(r"\[[^\]]+\]")
 _PAREN_PATTERN = re.compile(r"\([^)]*\)")
 _SPACE_PATTERN = re.compile(r"\s+")
 _QUOTE_PATTERN = re.compile(r"[\"'“”‘’]")
+_WORD_PATTERN = re.compile(r"[A-Za-z0-9가-힣]+")
 
 
 def clean_text(text: str | None) -> str:
@@ -31,7 +32,7 @@ def normalize_description(text: str | None) -> str:
     text = _PAREN_PATTERN.sub(" ", text)
     text = _QUOTE_PATTERN.sub("", text)
     text = _SPACE_PATTERN.sub(" ", text).strip()
-    if len(text) < 15:
+    if len(_WORD_PATTERN.findall(text)) < 2:
         return ""
     return text
 
