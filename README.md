@@ -119,78 +119,84 @@ news_classifier_expanded/
 ### 1. 프로젝트 폴더로 이동
 
 ```powershell
-cd C:\news_classifier_expanded_project
-ls
-```
-
-`requirements.txt`, `src`, `tests`, `data` 폴더 확인
-
----
-
-### 2. 가상환경 생성 및 활성화
-
-![alt text](image-2.png)
-
-- 가상환경 생성 및 활성화
-  - 실제 프로젝트 폴더 위치 확인 → 패키지 설치 → Python 경로 설정 → 실행
-  - 종료: deactivate
-```powershell
 cd C:\news_classifier_expanded_project\news_classifier_expanded
-..\.venv\Scripts\Activate.ps1
 ```
 
-정상 활성화 시 터미널 앞 `(.venv)` 표시
+`run_news.ps1`, `requirements.txt`, `src`, `tests`, `data` 확인
 
 ---
 
-### 3. 패키지 설치
+### 2. 패키지 설치
+
+처음 실행하거나 패키지가 없을 때만 설치
+
+![가상환경 실행 예시](image-2.png)
 
 ```powershell
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+..\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-설치했으면 스킵
+이미 설치된 경우 생략 가능
 
 ---
 
-### 4. Python 경로 설정
+### 3. 뉴스 수집 및 분류 실행
 
 ```powershell
-$env:PYTHONPATH="src"
+.\run_news.ps1
 ```
 
-`src` 폴더 안의 `news_classifier` 패키지 인식 설정
+스크립트 내부 처리 내용
+
+```powershell
+$env:PYTHONPATH = "src"
+..\.venv\Scripts\python.exe -m news_classifier.cli collect --limit 10 --csv out.csv --sqlite news.db
+```
+
+실행 후 터미널에 검색 키워드 입력 문구 표시
+
+```text
+검색 키워드를 입력하세요:
+```
+
+예시 입력
+
+```text
+AI 반도체
+```
 
 ---
 
-### 5. CSV 파일로 결과 저장
+### 4. 결과 파일 확인
 
-```powershell
-python -m news_classifier.cli collect --keyword "AI 반도체" --limit 10 --csv out.csv
-```
+실행 완료 후 프로젝트 폴더에 결과 파일 생성
 
-실행 후 `out.csv` 파일 생성  
-CSV 파일을 Excel로 열어 결과 확인 가능
+| 파일 | 용도 |
+|---|---|
+| `out.csv` | Excel 기반 분류 결과 확인 |
+| `news.db` | SQLite 기반 누적 저장 및 재조회 |
+
+CSV 결과 열기
 
 ```powershell
 ii .\out.csv
 ```
 
+![CSV 결과 예시](image-1.png)
+
 ---
 
-### 6. CSV와 SQLite에 동시에 저장
+### 5. 대시보드로 결과 확인
+
+Streamlit 대시보드 실행
 
 ```powershell
-python -m news_classifier.cli collect --keyword "AI 반도체" --limit 10 --csv out.csv --sqlite news.db
+..\.venv\Scripts\Activate.ps1
+$env:PYTHONPATH="src"
+streamlit run src\news_classifier\dashboard_streamlit.py
 ```
 
-실행 후 `out.csv`, `news.db` 파일 생성
-
-| 파일 | 용도 |
-|---|---|
-| `out.csv` | Excel 기반 결과 확인 |
-| `news.db` | SQLite 기반 누적 저장 및 재조회 |
+대시보드의 CSV 경로 입력칸에 `out.csv` 입력
 
 ---
 
