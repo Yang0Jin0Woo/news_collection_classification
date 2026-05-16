@@ -133,11 +133,10 @@ ls
 
 - 가상환경 생성 및 활성화
   - 실제 프로젝트 폴더 위치 확인 → 패키지 설치 → Python 경로 설정 → 실행
-
+  - 종료: deactivate
 ```powershell
-py -m venv .venv
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-.\.venv\Scripts\Activate.ps1
+cd C:\news_classifier_expanded_project\news_classifier_expanded
+..\.venv\Scripts\Activate.ps1
 ```
 
 정상 활성화 시 터미널 앞 `(.venv)` 표시
@@ -151,7 +150,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-프로젝트 실행에 필요한 패키지 설치
+설치했으면 스킵
 
 ---
 
