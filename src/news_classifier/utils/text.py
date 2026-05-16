@@ -42,6 +42,20 @@ def normalize_key(text: str | None) -> str:
     return re.sub(r"\s+", "", text)
 
 
+def strip_source_suffix(title: str | None, source: str | None) -> str:
+    title = clean_text(title)
+    source = clean_text(source)
+    if not title or not source:
+        return title
+
+    pattern = re.compile(rf"\s+[-|–—]\s*{re.escape(source)}\s*$", flags=re.IGNORECASE)
+    while True:
+        cleaned = pattern.sub("", title).strip()
+        if cleaned == title:
+            return title
+        title = cleaned
+
+
 def safe_truncate(text: str, limit: int) -> str:
     text = clean_text(text)
     if len(text) <= limit:

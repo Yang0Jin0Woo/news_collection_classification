@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from news_classifier.classifiers.base import NewsClassifier
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
@@ -9,6 +9,7 @@ from news_classifier.collectors.base import NewsCollector
 from news_classifier.collectors.article_scraper import ArticleScraper
 from news_classifier.dedup.title_deduplicator import TitleSourceDeduplicator
 from news_classifier.models import ClassifiedNews, NewsItem
+from news_classifier.utils.text import strip_source_suffix
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,10 @@ class NewsPipeline:
         print("뉴스 수집 중...")
 
         # 1. 키워드 기반 뉴스 수집
-        news_list = self.collector.fetch(keyword=keyword, limit=limit)
+        news_list = [
+            replace(item, title=strip_source_suffix(item.title, item.source))
+            for item in self.collector.fetch(keyword=keyword, limit=limit)
+        ]
         logger.info("fetched=%s", len(news_list))
         print(f"수집 완료: {len(news_list)}건")
 
