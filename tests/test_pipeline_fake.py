@@ -4,6 +4,7 @@ from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.collectors.base import NewsCollector
 from news_classifier.dedup.title_deduplicator import TitleSourceDeduplicator
 from news_classifier.models import ModelPrediction, NewsItem
+from news_classifier.models import PipelineStatus
 from news_classifier.pipeline import NewsPipeline
 from news_classifier.rules.default_rules import RULES
 
@@ -52,8 +53,13 @@ def test_pipeline_runs_with_fake_dependencies():
         deduplicator=TitleSourceDeduplicator(),
     )
     result = pipeline.run("AI", limit=10)
-    assert len(result) == 1
-    assert result[0].rule_decision.final_label == "제품/서비스"
+    assert result.status == PipelineStatus.SUCCESS
+    assert len(result.results) == 1
+    assert result.results[0].rule_decision.final_label == "제품/서비스"
+    assert result.errors == []
+    assert result.statistics.collected_count == 2
+    assert result.statistics.deduplicated_count == 1
+    assert result.statistics.classified_count == 1
 
 
 def test_pipeline_uses_batch_classifier_and_prints_progress(capsys):
@@ -67,7 +73,8 @@ def test_pipeline_uses_batch_classifier_and_prints_progress(capsys):
 
     result = pipeline.run("AI", limit=10)
 
-    assert len(result) == 3
+    assert result.status == PipelineStatus.SUCCESS
+    assert len(result.results) == 3
     assert classifier.batch_lengths == [2, 1]
     output = capsys.readouterr().out
     assert "뉴스 수집 중..." in output

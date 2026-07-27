@@ -6,3 +6,5 @@ $env:PYTHONPATH = "src"
     --limit 10 `
     --csv out.csv `
     --sqlite news.db
+
+exit $LASTEXITCODE

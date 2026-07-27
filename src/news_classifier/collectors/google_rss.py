@@ -4,7 +4,11 @@ import logging
 import urllib.parse
 import xml.etree.ElementTree as ET
 
-from news_classifier.collectors.base import NewsCollector
+from news_classifier.collectors.base import (
+    FeedParseError,
+    NetworkCollectionError,
+    NewsCollector,
+)
 from news_classifier.models import NewsItem
 from news_classifier.utils.http import HttpClient
 from news_classifier.utils.text import clean_text, normalize_description, strip_html
@@ -29,27 +33,28 @@ class GoogleNewsRssCollector(NewsCollector):
     def fetch(self, keyword: str, limit: int = 10) -> list[NewsItem]:
         url = self.build_url(keyword)
 
-        # RSS 요청 실패 시 빈 목록 반환
+        # 요청 실패와 실제 검색 결과 없음은 서로 다른 상태로 전달
         response = self.http_client.get(url)
         if response is None:
-            return []
+            raise NetworkCollectionError("Google News RSS 요청에 실패했습니다.")
 
         # RSS XML 응답 파싱
         try:
             root = ET.fromstring(response.text)
         except Exception as exc:
             logger.warning("RSS parse failed: %s", exc)
-            return []
+            raise FeedParseError("Google News RSS 응답을 해석할 수 없습니다.") from exc
 
-        # channel 태그가 없으면 수집 결과 없음 처리
+        # channel이 없는 응답은 정상적인 빈 검색 결과가 아닌 잘못된 피드
         channel = root.find("channel")
         if channel is None:
-            return []
+            raise FeedParseError("Google News RSS 응답에 channel 요소가 없습니다.")
 
         items: list[NewsItem] = []
+        feed_items = channel.findall("item")
 
         # RSS item 태그를 NewsItem 데이터 구조로 변환(원본 XML 데이터 -> 공통된 객체로 변환하여 일관되게 사용)
-        for item in channel.findall("item")[:limit]:
+        for item in feed_items[:limit]:
             source_tag = item.find("source")
             news = NewsItem(
                 keyword=keyword,
@@ -63,5 +68,8 @@ class GoogleNewsRssCollector(NewsCollector):
             # 제목과 링크가 있는 기사만 최종 수집 목록에 추가
             if news.title and news.link:
                 items.append(news)
+
+        if feed_items and not items:
+            raise FeedParseError("RSS 기사에서 필수 제목과 링크를 찾을 수 없습니다.")
 
         return items

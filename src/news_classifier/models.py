@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
+from enum import Enum
 
 
 DECISION_SOURCE_MODEL = "MODEL"
@@ -12,6 +13,46 @@ DECISION_SOURCE_ERROR = "ERROR"
 FINAL_STATUS_DECIDED = "DECIDED"
 FINAL_STATUS_REVIEW_REQUIRED = "REVIEW_REQUIRED"
 FINAL_STATUS_ERROR = "ERROR"
+
+
+class PipelineStatus(str, Enum):
+    SUCCESS = "SUCCESS"
+    NO_RESULTS = "NO_RESULTS"
+    NETWORK_ERROR = "NETWORK_ERROR"
+    COLLECTION_ERROR = "COLLECTION_ERROR"
+    MODEL_ERROR = "MODEL_ERROR"
+
+
+@dataclass(frozen=True)
+class PipelineError:
+    stage: str
+    code: str
+    message: str
+
+
+@dataclass(frozen=True)
+class PipelineStatistics:
+    requested_limit: int = 0
+    collected_count: int = 0
+    deduplicated_count: int = 0
+    classified_count: int = 0
+    rule_applied_count: int = 0
+    review_required_count: int = 0
+
+
+@dataclass(frozen=True)
+class PipelineResult:
+    status: PipelineStatus
+    results: list["ClassifiedNews"] = field(default_factory=list)
+    errors: list[PipelineError] = field(default_factory=list)
+    statistics: PipelineStatistics = field(default_factory=PipelineStatistics)
+
+    @property
+    def succeeded(self) -> bool:
+        return self.status in {
+            PipelineStatus.SUCCESS,
+            PipelineStatus.NO_RESULTS,
+        }
 
 
 @dataclass(frozen=True)
@@ -124,3 +165,31 @@ class ClassifiedNews:
             "top3_scores": ", ".join(str(round(x, 4)) for x in self.model_prediction.top3_scores),
             "created_at": self.created_at,
         }
+
+
+CLASSIFIED_NEWS_COLUMNS = [
+    "keyword",
+    "title",
+    "source",
+    "published_at",
+    "link",
+    "description",
+    "content",
+    "classification_text",
+    "model_category",
+    "model_category_score",
+    "model_confidence",
+    "model_confidence_level",
+    "score_margin",
+    "final_category",
+    "decision_source",
+    "review_required",
+    "final_decision_status",
+    "rule_applied",
+    "rule_reason",
+    "rule_best_label",
+    "rule_match_count",
+    "top3_labels",
+    "top3_scores",
+    "created_at",
+]

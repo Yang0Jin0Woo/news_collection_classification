@@ -78,7 +78,7 @@ def test_pipeline_cleans_title_before_output_and_storage(capsys):
     result = pipeline.run("반도체", limit=10)
     output = capsys.readouterr().out
 
-    assert result[0].item.title == "디스플레이 업계, 반도체 신사업 추진"
-    assert result[0].to_row()["title"] == "디스플레이 업계, 반도체 신사업 추진"
+    assert result.results[0].item.title == "디스플레이 업계, 반도체 신사업 추진"
+    assert result.results[0].to_row()["title"] == "디스플레이 업계, 반도체 신사업 추진"
     assert "디스플레이 업계, 반도체 신사업 추진 - 디일렉" in output
     assert "디일렉 - 디일렉" not in output

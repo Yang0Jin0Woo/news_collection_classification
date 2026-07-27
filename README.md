@@ -51,6 +51,17 @@ Google News RSS에서 키워드 기반 뉴스를 수집하고, Hugging Face zero
 `final_decision_status`는 `DECIDED`, `REVIEW_REQUIRED`, `ERROR` 중 하나이며,
 `review_required`는 사람이 확인해야 하는 결과인지 나타냅니다.
 
+파이프라인은 단순 목록 대신 `PipelineResult`를 반환합니다.
+
+- `status`: `SUCCESS`, `NO_RESULTS`, `NETWORK_ERROR`, `COLLECTION_ERROR`, `MODEL_ERROR`
+- `results`: 정상적으로 완료된 개별 분류 결과(전체 실패 시 부분 결과 포함)
+- `errors`: 실패 단계, 오류 코드, 오류 메시지
+- `statistics`: 요청·수집·중복 제거·분류·규칙 보정·검토 필요 건수
+
+`NO_RESULTS`는 검색 결과가 없는 정상 상태로 처리하며 헤더만 있는 CSV를 저장합니다.
+네트워크·RSS 파싱·모델 분류 실패와 모델 출력 개수 불일치는 결과를 저장하지 않고
+CLI 종료 코드 `1`을 반환합니다.
+
 ---
 
 ## 사용 기술
@@ -109,13 +120,13 @@ news_classifier_expanded/
 | `run_news.ps1` | 실행 환경 설정 및 뉴스 수집·분류 CLI 실행 |
 | `src/news_classifier/cli.py` | 터미널 명령어 해석 및 뉴스 수집·분류 실행 진입점 |
 | `src/news_classifier/service.py` | 수집기, 분류기, 규칙 엔진, 중복 제거기 조립 및 파이프라인 구성 |
-| `src/news_classifier/pipeline.py` | 뉴스 수집, 중복 제거, 분류, 후처리까지의 전체 처리 흐름 실행 |
-| `src/news_classifier/collectors/google_rss.py` | Google News RSS 기반 키워드 뉴스 수집 및 기사 정보 추출 |
+| `src/news_classifier/pipeline.py` | 전체 처리 흐름과 성공·빈 결과·수집·모델 실패 상태 반환 |
+| `src/news_classifier/collectors/google_rss.py` | Google News RSS 수집 및 네트워크 실패·빈 결과·파싱 오류 구분 |
 | `src/news_classifier/classifiers/zero_shot_classifier.py` | Hugging Face zero-shot 모델 기반 뉴스 1차 카테고리 분류 |
 | `src/news_classifier/classifiers/rule_engine.py` | 카테고리별 키워드 매칭 점수 계산 및 규칙 기반 보정 근거 생성 |
 | `src/news_classifier/classifiers/postprocessor.py` | 모델 점수, margin, 규칙 점수 기반 최종 카테고리 결정 |
 | `src/news_classifier/rules/default_rules.py` | 기본 분류 카테고리 및 키워드 규칙 사전 관리 |
-| `src/news_classifier/storage/csv_store.py` | 분류 결과 CSV 저장 및 Excel 확인용 파일 생성 |
+| `src/news_classifier/storage/csv_store.py` | 분류 결과 CSV 저장 및 빈 결과의 고정 헤더 생성 |
 | `src/news_classifier/storage/sqlite_store.py` | 분류 결과 SQLite DB 누적 저장 및 재조회 지원 |
 | `src/news_classifier/reporting/summary_report.py` | 전체 기사 수, 낮은 모델 신뢰도, 규칙 보정·검토필요·오류 수 요약 출력 |
 | `src/news_classifier/evaluation.py` | 정확도·거시 평균 F1·카테고리별 정밀도와 재현율·혼동행렬 계산 |
@@ -402,6 +413,7 @@ cd C:\news_classifier_expanded_project\news_classifier_expanded
 실행 결과 예시는 다음과 같습니다.
 
 ```text
+Pipeline status: SUCCESS
 CSV saved: out.csv
 
 # 뉴스 분류 요약
