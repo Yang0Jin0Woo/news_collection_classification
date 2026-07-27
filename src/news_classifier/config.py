@@ -34,6 +34,9 @@ class AppSettings:
         "NEWS_MODEL_REVISION",
         "b5113eb38ab63efdd7f280f8c144ea8b13f978ce",
     ))
+    confidence_calibration_path: str = field(default_factory=lambda: os.getenv(
+        "NEWS_CONFIDENCE_CALIBRATION", ""
+    ))
     request_timeout_seconds: int = 15
     max_sequence_length: int = 1200
     base_rule_override_threshold: float = 0.55

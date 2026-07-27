@@ -18,6 +18,10 @@ class EvaluationReport:
     macro_recall: float
     macro_f1: float
     total: int
+    coverage: float
+    decided_accuracy: float
+    review_count: int
+    error_count: int
     per_category: dict[str, CategoryMetrics]
     confusion_matrix: dict[str, dict[str, int]]
 
@@ -75,12 +79,24 @@ def calculate_metrics(
 
     category_metrics = list(per_category.values())
     correct = sum(confusion[label][label] for label in labels)
+    decided_pairs = [
+        (gold, prediction)
+        for gold, prediction in zip(expected, predicted)
+        if prediction in labels
+    ]
+    decided_correct = sum(
+        gold == prediction for gold, prediction in decided_pairs
+    )
     return EvaluationReport(
         accuracy=correct / len(expected),
         macro_precision=sum(metric.precision for metric in category_metrics) / len(labels),
         macro_recall=sum(metric.recall for metric in category_metrics) / len(labels),
         macro_f1=sum(metric.f1 for metric in category_metrics) / len(labels),
         total=len(expected),
+        coverage=len(decided_pairs) / len(expected),
+        decided_accuracy=_safe_divide(decided_correct, len(decided_pairs)),
+        review_count=sum(prediction == "검토필요" for prediction in predicted),
+        error_count=sum(prediction == "분류실패" for prediction in predicted),
         per_category=per_category,
         confusion_matrix=confusion,
     )
@@ -95,13 +111,14 @@ def render_comparison_markdown(
         "",
         "## 방식별 비교",
         "",
-        "| 방식 | 정확도 | 거시 평균 정밀도 | 거시 평균 재현율 | 거시 평균 F1 | 평가 건수 |",
-        "|---|---:|---:|---:|---:|---:|",
+        "| 방식 | 정확도 | 거시 평균 F1 | 결정 커버리지 | 결정 건 정확도 | 검토 | 오류 | 평가 건수 |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for name, report in reports.items():
         lines.append(
-            f"| {name} | {report.accuracy:.4f} | {report.macro_precision:.4f} | "
-            f"{report.macro_recall:.4f} | {report.macro_f1:.4f} | {report.total} |"
+            f"| {name} | {report.accuracy:.4f} | {report.macro_f1:.4f} | "
+            f"{report.coverage:.4f} | {report.decided_accuracy:.4f} | "
+            f"{report.review_count} | {report.error_count} | {report.total} |"
         )
 
     for name, report in reports.items():

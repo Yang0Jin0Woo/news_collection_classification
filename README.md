@@ -33,6 +33,7 @@ Google News RSS에서 키워드 기반 뉴스를 수집하고, Hugging Face zero
 - Hugging Face zero-shot 분류 모델 기반 1차 분류
 - 모델 점수와 top1-top2 margin 기반 신뢰도 판단
 - 규칙 기반 키워드 보정
+- 모델 기반 `기타/무관` 판정
 - 모델 신뢰도와 최종 판단 출처를 분리해 저장
 - 최종 카테고리, 판단 상태, 사람 검토 필요 여부 저장
 - CSV 결과 저장
@@ -42,6 +43,8 @@ Google News RSS에서 키워드 기반 뉴스를 수집하고, Hugging Face zero
 
 결과 데이터에서 `model_confidence`는 `model_category`에만 해당합니다.
 최종 카테고리의 판단 근거는 `decision_source`로 구분합니다.
+검색 키워드는 정답 힌트가 될 수 있으므로 모델 입력에는 포함하지 않고
+기사 제목·설명·본문만 사용합니다.
 
 - `MODEL`: 모델 예측을 최종 결과로 채택
 - `RULE`: 규칙이 최종 결과를 결정
@@ -136,7 +139,10 @@ news_classifier_expanded/
 | `src/news_classifier/dashboard_streamlit.py` | CSV 결과의 카테고리·규칙 보정·검토 필요 현황 시각화 |
 | `src/news_classifier/reporting/summary_report.py` | 전체 기사 수, 낮은 모델 신뢰도, 규칙 보정·검토필요·오류 수 요약 출력 |
 | `src/news_classifier/evaluation.py` | 정확도·거시 평균 F1·카테고리별 정밀도와 재현율·혼동행렬 계산 |
+| `src/news_classifier/evaluation_dataset.py` | 수동 확정 데이터 검증, 사건 단위 분할 누출 차단 및 평가 입력 생성 |
+| `src/news_classifier/confidence_calibration.py` | 개발 데이터의 실제 정답률과 Wilson 하한 기반 신뢰도 임계값 탐색 |
 | `scripts/collect_evaluation_news.py` | 수동 라벨링에 사용할 실제 뉴스 후보 수집 |
+| `scripts/calibrate_confidence.py` | development 데이터로 신뢰도 보정 프로파일 생성 |
 | `scripts/evaluate_news.py` | 모델 단독·규칙 단독·하이브리드 분류 성능 비교 |
 
 ---
@@ -150,11 +156,13 @@ news_classifier_expanded/
 ### 1. 실제 뉴스 후보 수집
 
 ```bash
-python scripts/collect_evaluation_news.py --output data/evaluation/real_news_candidates.csv --target-per-label 20
+python scripts/collect_evaluation_news.py --output data/evaluation/real_news_candidates.csv --target-total 180
 ```
 
-현재 후보 파일에는 9개 카테고리별 20건씩 총 180건의 실제 뉴스가
-들어 있습니다.
+카테고리 정답을 암시하는 검색어 대신 중립적인 기술 도메인 검색어와
+`기타/무관` 검증용 대조 검색어로 최대 180건을 수집합니다. 기존
+`suggested_label` 값이 들어 있는 후보 파일은
+라벨링 편향을 막기 위해 평가에 사용할 수 없으므로 새로 수집합니다.
 
 ### 2. 수동 라벨 확정
 
@@ -164,11 +172,42 @@ python scripts/collect_evaluation_news.py --output data/evaluation/real_news_can
 - `review_status`: 검토 완료 시 `confirmed`
 - `reviewed_by`: 검토자 이름
 - `split`: 규칙 개발용은 `development`, 최종 평가는 `evaluation`
+- `event_id`: 동일 사건을 다룬 기사는 같은 값으로 통일
 
 같은 사건을 다룬 유사 기사는 동일한 분할에 넣어 정보 누출을 방지합니다.
 확정되지 않은 데이터가 포함되면 평가 명령은 실행을 중단합니다.
 
-### 3. 세 가지 분류 방식 비교
+라벨은 다음 기준으로 하나의 핵심 주제를 선택합니다.
+
+| 라벨 | 핵심 기준 |
+|---|---|
+| 기술개발 | 연구, 성능 개선, 알고리즘·기술 개발 |
+| 제품/서비스 | 출시, 상용화, 도입, 사용자 제공 |
+| 기업동향 | 제휴, 계약, 인수합병, 조직·사업 변화 |
+| 생산/공급망 | 공장, 양산, 소재·부품 조달, 물류 |
+| 정책/규제 | 정부 정책, 법·제도, 인증, 보조금 |
+| 금융/투자 | 주가, 실적, 증권 분석, 상장·투자 |
+| 시장/산업 | 시장 규모, 수요, 가격, 점유율, 업황 |
+| 노동/노사 | 고용, 임금, 노조, 교섭, 파업 |
+| 국제/통상 | 국가 간 수출입, 관세, 제재, 협상 |
+| 기타/무관 | 위 분류에 해당하지 않거나 검색 주제와 직접 관련 없음 |
+
+### 3. 신뢰도 기준 보정
+
+확정된 `development` 데이터로만 높음·보통 기준을 생성합니다.
+
+```bash
+python scripts/calibrate_confidence.py --dataset data/evaluation/real_news_candidates.csv --output evaluation_results/confidence_calibration.json
+```
+
+보정 파일은 모델 이름·revision, 10개 후보 라벨, 입력 정책이 현재 실행 환경과
+일치할 때만 적용됩니다.
+
+```bash
+news-classifier collect --keyword "AI 반도체" --confidence-profile evaluation_results/confidence_calibration.json
+```
+
+### 4. 세 가지 분류 방식 비교
 
 ```bash
 python scripts/evaluate_news.py --dataset data/evaluation/real_news_candidates.csv --split evaluation --output-dir evaluation_results
@@ -179,7 +218,8 @@ python scripts/evaluate_news.py --dataset data/evaluation/real_news_candidates.c
 - 모델 단독·규칙 단독·하이브리드 방식의 정확도와 거시 평균 F1
 - 카테고리별 정밀도·재현율·F1
 - 방식별 혼동행렬
-- 평가 데이터, 모델 이름, 카테고리 목록
+- 결정 커버리지, 결정된 기사 정확도, 검토·오류 건수
+- 평가 데이터 해시, 모델 이름·revision, 입력 정책, 기사별 예측
 
 수동 라벨 검토가 끝나기 전에는 정확도 수치를 README나 포트폴리오에
 표시하지 않습니다.

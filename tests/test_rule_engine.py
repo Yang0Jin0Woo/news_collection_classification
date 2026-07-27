@@ -240,3 +240,15 @@ def test_rule_engine_classifies_lifestyle_robot_as_product():
     )
     assert decision.final_label == "제품/서비스"
     assert decision.rule_applied is True
+
+
+def test_rule_engine_marks_clearly_unrelated_news_as_other():
+    decision = RuleEngine(RULES).decide(
+        title="프로야구 경기 결과",
+        description="주말 경기에서 연장전 끝에 승리했다.",
+        content="",
+        prediction=ModelPrediction("노동/노사", 0.85, 0.30, [], []),
+    )
+
+    assert decision.final_label == "기타/무관"
+    assert decision.rule_applied is True

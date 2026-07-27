@@ -3,7 +3,7 @@ import pytest
 from data.sample_news_cases import SAMPLE_NEWS_CASES
 from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.models import ModelPrediction
-from news_classifier.rules.default_rules import CANDIDATE_LABELS, RULES
+from news_classifier.rules.default_rules import RULES
 
 
 @pytest.mark.parametrize(
@@ -24,6 +24,6 @@ def test_rule_engine_matches_expected_label(case):
     assert decision.rule_match_count >= 2
 
 
-def test_sample_cases_cover_every_candidate_label():
-    assert {case["expected"] for case in SAMPLE_NEWS_CASES} == set(CANDIDATE_LABELS)
+def test_sample_cases_cover_every_rule_label():
+    assert {case["expected"] for case in SAMPLE_NEWS_CASES} == set(RULES)
     assert len({case["id"] for case in SAMPLE_NEWS_CASES}) == len(SAMPLE_NEWS_CASES)

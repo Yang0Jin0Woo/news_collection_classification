@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import logging
 from pathlib import Path
 import subprocess
@@ -50,6 +51,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Save to SQLite; omit PATH to use NEWS_OUTPUT_DB",
     )
     collect.add_argument("--enrich-content", action="store_true")  # 기사 본문 보강 여부
+    collect.add_argument(
+        "--confidence-profile",
+        default=None,
+        help="Use confidence thresholds calibrated on development data",
+    )
 
     sub.add_parser("dashboard", help="Open the Streamlit dashboard")
 
@@ -98,7 +104,16 @@ def run_cli(argv: list[str] | None = None) -> int:
 
         from news_classifier.service import build_pipeline
 
-        pipeline = build_pipeline(settings)
+        if args.confidence_profile is not None:
+            settings = replace(
+                settings,
+                confidence_calibration_path=args.confidence_profile,
+            )
+        try:
+            pipeline = build_pipeline(settings)
+        except (OSError, ValueError) as exc:
+            print(f"파이프라인 설정 실패: {exc}", file=sys.stderr)
+            return 1
         pipeline_result = pipeline.run(
             keyword=keyword,
             limit=args.limit,

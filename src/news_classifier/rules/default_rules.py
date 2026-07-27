@@ -1,3 +1,6 @@
+OTHER_LABEL = "기타/무관"
+MODEL_ONLY_LABELS = frozenset({OTHER_LABEL})
+
 CANDIDATE_LABELS = [
     "기술개발",
     "제품/서비스",
@@ -8,6 +11,7 @@ CANDIDATE_LABELS = [
     "시장/산업",
     "노동/노사",
     "국제/통상",
+    OTHER_LABEL,
 ]
 
 RULES = {
@@ -111,6 +115,7 @@ RULES = {
 def validate_rule_configuration(
     candidate_labels: list[str] = CANDIDATE_LABELS,
     rules: dict[str, list[str]] = RULES,
+    model_only_labels: frozenset[str] = MODEL_ONLY_LABELS,
 ) -> None:
     """후보 라벨과 규칙 사전의 불일치·중복을 시작 단계에서 검증한다."""
 
@@ -118,10 +123,17 @@ def validate_rule_configuration(
     if len(label_set) != len(candidate_labels):
         raise ValueError("candidate labels contain duplicates")
 
+    unknown_model_only_labels = set(model_only_labels) - label_set
+    if unknown_model_only_labels:
+        raise ValueError(
+            f"unknown model-only labels: {sorted(unknown_model_only_labels)}"
+        )
+
     rule_label_set = set(rules)
-    if label_set != rule_label_set:
-        missing = sorted(label_set - rule_label_set)
-        unknown = sorted(rule_label_set - label_set)
+    expected_rule_labels = label_set - set(model_only_labels)
+    if expected_rule_labels != rule_label_set:
+        missing = sorted(expected_rule_labels - rule_label_set)
+        unknown = sorted(rule_label_set - expected_rule_labels)
         raise ValueError(f"rule labels mismatch: missing={missing}, unknown={unknown}")
 
     keyword_owners: dict[str, str] = {}

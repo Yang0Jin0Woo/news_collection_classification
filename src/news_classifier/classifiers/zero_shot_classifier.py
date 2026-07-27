@@ -11,6 +11,7 @@ from news_classifier.models import ModelPrediction
 from news_classifier.utils.text import clean_text
 
 logger = logging.getLogger(__name__)
+HYPOTHESIS_TEMPLATE = "이 뉴스의 핵심 주제는 {}입니다."
 
 
 class ZeroShotNewsClassifier(NewsClassifier):
@@ -90,7 +91,7 @@ class ZeroShotNewsClassifier(NewsClassifier):
                 results = classifier(
                     sequences=[text for _, text in valid_items],
                     candidate_labels=self.candidate_labels,
-                    hypothesis_template="이 뉴스의 핵심 주제는 {}입니다.",
+                    hypothesis_template=HYPOTHESIS_TEMPLATE,
                     multi_label=False,
                     batch_size=self.batch_size,
                 )

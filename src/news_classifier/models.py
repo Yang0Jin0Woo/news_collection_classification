@@ -13,6 +13,7 @@ DECISION_SOURCE_ERROR = "ERROR"
 FINAL_STATUS_DECIDED = "DECIDED"
 FINAL_STATUS_REVIEW_REQUIRED = "REVIEW_REQUIRED"
 FINAL_STATUS_ERROR = "ERROR"
+CLASSIFICATION_INPUT_POLICY = "article_only_v1"
 
 
 class PipelineStatus(str, Enum):
@@ -65,8 +66,11 @@ class NewsItem:
     description: str = ""
     content: str = ""
 
-    def classification_text(self) -> str:
-        parts = [f"검색주제: {self.keyword}", f"기사제목: {self.title}"]
+    def classification_text(self, include_keyword: bool = False) -> str:
+        parts = []
+        if include_keyword:
+            parts.append(f"검색주제: {self.keyword}")
+        parts.append(f"기사제목: {self.title}")
         if self.description:
             parts.append(f"기사설명: {self.description}")
         if self.content:

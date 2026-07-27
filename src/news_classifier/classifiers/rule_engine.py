@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from news_classifier.classifiers.confidence import is_ambiguous
 from news_classifier.models import ModelPrediction, RuleDecision
+from news_classifier.rules.default_rules import OTHER_LABEL
 from news_classifier.utils.text import clean_text
 
 
@@ -46,6 +47,18 @@ CONTEXT_SIGNALS: dict[str, tuple[str, ...]] = {
     ),
 }
 
+UNRELATED_SIGNAL_GROUPS = (
+    ("프로야구", "야구"),
+    ("축구", "농구", "배구"),
+    ("경기 결과", "연장전"),
+    ("선수", "감독"),
+    ("연예", "배우", "가수", "아이돌"),
+    ("드라마", "영화", "예능"),
+    ("날씨", "기상"),
+    ("여행", "축제", "맛집"),
+    ("요리", "레시피"),
+)
+
 
 def _contains_any(text: str, keywords: tuple[str, ...]) -> bool:
     return any(keyword in text for keyword in keywords)
@@ -67,6 +80,10 @@ class RuleEngineConfig:
 
     # 검토필요로 분류할 낮은 모델 점수 기준
     review_needed_score_threshold: float = 0.40
+
+    # 실제 개발 데이터로 보정 가능한 애매한 모델 예측 기준
+    ambiguity_score_threshold: float = 0.50
+    ambiguity_margin_threshold: float = 0.05
 
     # 낮은 신뢰도일 때 단일 키워드만으로도 보정할 수 있는 선명한 카테고리
     single_match_override_labels: tuple[str, ...] = (
@@ -115,6 +132,29 @@ class RuleEngine:
         content: str,
         prediction: ModelPrediction,
     ) -> RuleDecision:
+        normalized_text = (
+            f"{clean_text(title)} {clean_text(description)} "
+            f"{clean_text(content)}"
+        ).lower()
+        domain_matches = sum(
+            term in normalized_text for term in DOMAIN_TERMS
+        )
+        unrelated_matches = sum(
+            _contains_any(normalized_text, group)
+            for group in UNRELATED_SIGNAL_GROUPS
+        )
+        if domain_matches == 0 and unrelated_matches >= 2:
+            return RuleDecision(
+                final_label=OTHER_LABEL,
+                rule_applied=True,
+                rule_reason=(
+                    f"비관련 문맥 {unrelated_matches}개 매칭, "
+                    "기술 도메인 근거 없음"
+                ),
+                rule_best_label=OTHER_LABEL,
+                rule_match_count=unrelated_matches,
+            )
+
         label_scores = self.calculate_scores(title, description, content)
 
         # 가장 많이 매칭된 규칙 카테고리 선택. 동점이면 금융/노사/통상/정책처럼 신호가 선명한 라벨을 우선한다.
@@ -130,7 +170,12 @@ class RuleEngine:
             else prediction.label
         )
         best_rule_score = label_scores.get(best_rule_label, 0)
-        ambiguous = is_ambiguous(prediction.score, prediction.margin)
+        ambiguous = is_ambiguous(
+            prediction.score,
+            prediction.margin,
+            min_score=self.config.ambiguity_score_threshold,
+            min_margin=self.config.ambiguity_margin_threshold,
+        )
 
         # 로봇/AI처럼 모델이 기술개발로 과하게 쏠릴 때, 명확한 비기술 규칙 근거가 있으면 보정
         if (
