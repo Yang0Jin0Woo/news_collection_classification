@@ -193,7 +193,14 @@ python scripts/evaluate_news.py --dataset data/evaluation/real_news_candidates.c
 
 ## 실행 방법
 
-프로젝트를 클론한 뒤 저장소 최상위 폴더에서 실행합니다.
+상위 폴더에서 터미널을 열었다면 프로젝트 폴더로 이동합니다.
+
+```powershell
+cd .\news_classifier_expanded
+```
+
+터미널 경로가 이미 `news_classifier_expanded`로 끝난다면 이 명령은 생략합니다.
+이후 저장소 최상위 폴더에서 가상환경을 생성합니다.
 
 ```bash
 python -m venv .venv
