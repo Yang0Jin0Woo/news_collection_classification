@@ -63,8 +63,6 @@ news_classifier_expanded/
 ├─ requirements.txt
 ├─ pyproject.toml
 ├─ .env.example
-├─ ARCHITECTURE.md
-├─ LINE_COUNTS.json
 │
 ├─ src/
 │  └─ news_classifier/
@@ -73,15 +71,12 @@ news_classifier_expanded/
 │     ├─ service.py
 │     ├─ config.py
 │     ├─ models.py
-│     ├─ scheduler.py
 │     ├─ dashboard_streamlit.py
 │     │
 │     ├─ collectors/
 │     ├─ classifiers/
 │     ├─ dedup/
-│     ├─ features/
 │     ├─ storage/
-│     ├─ exporters/
 │     ├─ reporting/
 │     ├─ rules/
 │     └─ utils/
@@ -348,7 +343,7 @@ CSV saved: out.csv
 ## 카테고리별 기사 수
 - 기술개발: 8
 - 기업동향: 1
-- 시장/투자: 1
+- 금융/투자: 1
 ```
 
 ## 전체 처리 과정
@@ -396,4 +391,4 @@ git push -u origin main
 - 낮은 신뢰도 기사 재검토 기능 추가
 - 카테고리별 기사 수 요약 조회 기능 추가
 - 전처리, 중복 제거, 규칙 보정, 파이프라인 검증 테스트 추가
-- 카테고리별 샘플 뉴스 케이스 추가
+- 9개 카테고리의 기대 라벨을 직접 비교하는 회귀 테스트 추가

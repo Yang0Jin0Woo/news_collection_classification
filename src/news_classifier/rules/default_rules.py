@@ -24,7 +24,7 @@ RULES = {
         "상승", "강세", "랠리",
     ],
     "시장/산업": [
-        "시장", "산업", "업황", "수요", "공급", "가격", "메모리",
+        "시장", "산업", "업황", "수요", "가격", "메모리",
         "d램", "dram", "낸드", "nand", "점유율", "매출", "출하량",
         "성장률", "전망", "생태계", "기금", "경쟁력", "수급",
         "호황", "불황", "사이클", "반도체 생태계", "배터리 시장",
@@ -38,7 +38,7 @@ RULES = {
         "정부", "정책", "규제", "법안", "지원", "산업부", "과기정통부",
         "환경부", "금감원", "공정위", "국회", "세제", "인허가",
         "가이드라인", "표준", "인증", "보조금", "제도", "시행령",
-        "수출통제", "수출 통제", "관세", "제재", "ustr", "정상회담",
+        "관세",
         "ira", "인플레이션 감축법", "배터리 여권", "탄소규제",
         "탄소 규제", "ai 기본법", "ai 규제", "저작권", "개인정보",
         "데이터 규제", "로봇 규제", "실증특례", "전기요금", "전력정책",
@@ -47,7 +47,7 @@ RULES = {
     "생산/공급망": [
         "공급망", "생산", "양산", "공장", "수율", "라인", "파운드리",
         "소부장", "재고", "출하", "납품", "조달", "설비", "제조",
-        "증설", "가동", "원자재", "물류", "부품", "공급",
+        "증설", "가동", "원자재", "물류", "부품",
         "배터리셀", "배터리 셀", "셀 공장", "양극재", "음극재",
         "전해액", "분리막", "리튬", "니켈", "코발트", "흑연",
         "전구체", "광물", "소재", "패널", "oled 라인", "증착",
@@ -106,3 +106,39 @@ RULES = {
         "글로벌 공급망", "국제에너지기구", "iea", "opec",
     ],
 }
+
+
+def validate_rule_configuration(
+    candidate_labels: list[str] = CANDIDATE_LABELS,
+    rules: dict[str, list[str]] = RULES,
+) -> None:
+    """후보 라벨과 규칙 사전의 불일치·중복을 시작 단계에서 검증한다."""
+
+    label_set = set(candidate_labels)
+    if len(label_set) != len(candidate_labels):
+        raise ValueError("candidate labels contain duplicates")
+
+    rule_label_set = set(rules)
+    if label_set != rule_label_set:
+        missing = sorted(label_set - rule_label_set)
+        unknown = sorted(rule_label_set - label_set)
+        raise ValueError(f"rule labels mismatch: missing={missing}, unknown={unknown}")
+
+    keyword_owners: dict[str, str] = {}
+    for label, keywords in rules.items():
+        seen_for_label: set[str] = set()
+        for keyword in keywords:
+            normalized = keyword.strip().casefold()
+            if not normalized:
+                raise ValueError(f"empty rule keyword: label={label}")
+            if normalized in seen_for_label:
+                raise ValueError(f"duplicate rule keyword: label={label}, keyword={keyword}")
+            seen_for_label.add(normalized)
+
+            previous_owner = keyword_owners.get(normalized)
+            if previous_owner is not None:
+                raise ValueError(
+                    "rule keyword belongs to multiple labels: "
+                    f"keyword={keyword}, labels={previous_owner},{label}"
+                )
+            keyword_owners[normalized] = label

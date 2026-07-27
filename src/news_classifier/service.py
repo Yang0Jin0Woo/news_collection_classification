@@ -8,12 +8,17 @@ from news_classifier.collectors.google_rss import GoogleNewsRssCollector
 from news_classifier.config import AppSettings
 from news_classifier.dedup.title_deduplicator import TitleSourceDeduplicator
 from news_classifier.pipeline import NewsPipeline
-from news_classifier.rules.default_rules import CANDIDATE_LABELS, RULES
+from news_classifier.rules.default_rules import (
+    CANDIDATE_LABELS,
+    RULES,
+    validate_rule_configuration,
+)
 from news_classifier.utils.http import HttpClient
 
 
 def build_pipeline(settings: AppSettings | None = None) -> NewsPipeline:
     settings = settings or AppSettings()
+    validate_rule_configuration()
     http_client = HttpClient(settings.headers, settings.request_timeout_seconds)
     collector = GoogleNewsRssCollector(http_client)
     scraper = ArticleScraper(http_client)
