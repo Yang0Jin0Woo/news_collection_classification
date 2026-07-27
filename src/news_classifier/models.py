@@ -2,7 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
-from typing import Optional
+
+
+DECISION_SOURCE_MODEL = "MODEL"
+DECISION_SOURCE_RULE = "RULE"
+DECISION_SOURCE_REVIEW = "REVIEW"
+DECISION_SOURCE_ERROR = "ERROR"
+
+FINAL_STATUS_DECIDED = "DECIDED"
+FINAL_STATUS_REVIEW_REQUIRED = "REVIEW_REQUIRED"
+FINAL_STATUS_ERROR = "ERROR"
 
 
 @dataclass(frozen=True)
@@ -55,8 +64,38 @@ class ClassifiedNews:
     item: NewsItem
     model_prediction: ModelPrediction
     rule_decision: RuleDecision
-    confidence_level: str
+    model_confidence_level: str
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+    @property
+    def model_confidence(self) -> float:
+        """최종 라벨이 아닌 모델 원예측에 대한 점수다."""
+        return self.model_prediction.score
+
+    @property
+    def decision_source(self) -> str:
+        if self.rule_decision.final_label == "분류실패":
+            return DECISION_SOURCE_ERROR
+        if self.rule_decision.final_label == "검토필요":
+            return DECISION_SOURCE_REVIEW
+        if self.rule_decision.rule_applied:
+            return DECISION_SOURCE_RULE
+        return DECISION_SOURCE_MODEL
+
+    @property
+    def review_required(self) -> bool:
+        return self.decision_source in {
+            DECISION_SOURCE_REVIEW,
+            DECISION_SOURCE_ERROR,
+        }
+
+    @property
+    def final_decision_status(self) -> str:
+        if self.decision_source == DECISION_SOURCE_ERROR:
+            return FINAL_STATUS_ERROR
+        if self.review_required:
+            return FINAL_STATUS_REVIEW_REQUIRED
+        return FINAL_STATUS_DECIDED
 
     def to_row(self) -> dict:
         return {
@@ -70,9 +109,13 @@ class ClassifiedNews:
             "classification_text": self.item.classification_text(),
             "model_category": self.model_prediction.label,
             "model_category_score": round(self.model_prediction.score, 4),
+            "model_confidence": round(self.model_confidence, 4),
+            "model_confidence_level": self.model_confidence_level,
             "score_margin": round(self.model_prediction.margin, 4),
             "final_category": self.rule_decision.final_label,
-            "confidence_level": self.confidence_level,
+            "decision_source": self.decision_source,
+            "review_required": self.review_required,
+            "final_decision_status": self.final_decision_status,
             "rule_applied": "Y" if self.rule_decision.rule_applied else "N",
             "rule_reason": self.rule_decision.rule_reason,
             "rule_best_label": self.rule_decision.rule_best_label,

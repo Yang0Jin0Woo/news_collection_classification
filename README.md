@@ -33,11 +33,23 @@ Google News RSS에서 키워드 기반 뉴스를 수집하고, Hugging Face zero
 - Hugging Face zero-shot 분류 모델 기반 1차 분류
 - 모델 점수와 top1-top2 margin 기반 신뢰도 판단
 - 규칙 기반 키워드 보정
-- 최종 카테고리, 신뢰도, 보정 여부 저장
+- 모델 신뢰도와 최종 판단 출처를 분리해 저장
+- 최종 카테고리, 판단 상태, 사람 검토 필요 여부 저장
 - CSV 결과 저장
 - SQLite 누적 저장
 - 카테고리별 기사 수 요약 출력
-- 낮은 신뢰도 기사 재검토 가능
+- 낮은 모델 신뢰도 및 검토필요 기사 재검토 가능
+
+결과 데이터에서 `model_confidence`는 `model_category`에만 해당합니다.
+최종 카테고리의 판단 근거는 `decision_source`로 구분합니다.
+
+- `MODEL`: 모델 예측을 최종 결과로 채택
+- `RULE`: 규칙이 최종 결과를 결정
+- `REVIEW`: 근거 부족으로 사람 검토 필요
+- `ERROR`: 모델 실행 또는 분류 실패
+
+`final_decision_status`는 `DECIDED`, `REVIEW_REQUIRED`, `ERROR` 중 하나이며,
+`review_required`는 사람이 확인해야 하는 결과인지 나타냅니다.
 
 ---
 
@@ -105,7 +117,7 @@ news_classifier_expanded/
 | `src/news_classifier/rules/default_rules.py` | 기본 분류 카테고리 및 키워드 규칙 사전 관리 |
 | `src/news_classifier/storage/csv_store.py` | 분류 결과 CSV 저장 및 Excel 확인용 파일 생성 |
 | `src/news_classifier/storage/sqlite_store.py` | 분류 결과 SQLite DB 누적 저장 및 재조회 지원 |
-| `src/news_classifier/reporting/summary_report.py` | 전체 기사 수, 낮은 신뢰도 기사 수, 규칙 보정 수, 카테고리별 개수 요약 출력 |
+| `src/news_classifier/reporting/summary_report.py` | 전체 기사 수, 낮은 모델 신뢰도, 규칙 보정·검토필요·오류 수 요약 출력 |
 | `src/news_classifier/evaluation.py` | 정확도·거시 평균 F1·카테고리별 정밀도와 재현율·혼동행렬 계산 |
 | `scripts/collect_evaluation_news.py` | 수동 라벨링에 사용할 실제 뉴스 후보 수집 |
 | `scripts/evaluate_news.py` | 모델 단독·규칙 단독·하이브리드 분류 성능 비교 |
@@ -357,7 +369,7 @@ streamlit run src\news_classifier\dashboard_streamlit.py
 최근 저장된 뉴스 20개를 터미널에서 확인합니다.
 
 ```powershell
-python -c "import sqlite3, pandas as pd; conn=sqlite3.connect('news.db'); df=pd.read_sql_query('SELECT title, source, final_category, confidence_level, rule_applied, published_at FROM classified_news ORDER BY id DESC LIMIT 20', conn); print(df.to_string(index=False))"
+python -c "import sqlite3, pandas as pd; conn=sqlite3.connect('news.db'); df=pd.read_sql_query('SELECT title, source, model_category, model_confidence, final_category, decision_source, final_decision_status, published_at FROM classified_news ORDER BY id DESC LIMIT 20', conn); print(df.to_string(index=False))"
 ```
 
 카테고리별 기사 수를 확인합니다.
@@ -366,10 +378,10 @@ python -c "import sqlite3, pandas as pd; conn=sqlite3.connect('news.db'); df=pd.
 python -c "import sqlite3, pandas as pd; conn=sqlite3.connect('news.db'); df=pd.read_sql_query('SELECT final_category, COUNT(*) AS count FROM classified_news GROUP BY final_category ORDER BY count DESC', conn); print(df.to_string(index=False))"
 ```
 
-낮은 신뢰도 기사만 확인합니다.
+낮은 모델 신뢰도 또는 사람 검토가 필요한 기사만 확인합니다.
 
 ```powershell
-python -c "import sqlite3, pandas as pd; conn=sqlite3.connect('news.db'); df=pd.read_sql_query(\"SELECT title, source, final_category, confidence_level, rule_reason FROM classified_news WHERE confidence_level='낮음' ORDER BY id DESC LIMIT 20\", conn); print(df.to_string(index=False))"
+python -c "import sqlite3, pandas as pd; conn=sqlite3.connect('news.db'); df=pd.read_sql_query(\"SELECT title, source, model_category, model_confidence_level, final_category, decision_source, review_required, rule_reason FROM classified_news WHERE model_confidence_level='낮음' OR review_required=1 ORDER BY id DESC LIMIT 20\", conn); print(df.to_string(index=False))"
 ```
 
 ---
@@ -394,8 +406,10 @@ CSV saved: out.csv
 
 # 뉴스 분류 요약
 - 전체 기사 수: 10
-- 낮은 신뢰도 기사 수: 2
+- 낮은 모델 신뢰도 기사 수: 2
 - 규칙 보정 적용 기사 수: 1
+- 검토필요 기사 수: 1
+- 분류 오류 기사 수: 0
 
 ## 카테고리별 기사 수
 - 기술개발: 8
@@ -444,8 +458,8 @@ git push -u origin main
 - 카테고리별 키워드 규칙 사전 확장
 - 규칙 기반 키워드 보정 로직 강화
 - CSV 저장과 SQLite 누적 저장 기능 분리
-- 최종 카테고리, 신뢰도, 규칙 보정 여부 저장
-- 낮은 신뢰도 기사 재검토 기능 추가
+- 최종 카테고리와 모델 신뢰도를 구분해 저장
+- 판단 출처와 사람 검토 필요 여부 저장
 - 카테고리별 기사 수 요약 조회 기능 추가
 - 전처리, 중복 제거, 규칙 보정, 파이프라인 검증 테스트 추가
 - 9개 카테고리의 기대 라벨을 직접 비교하는 회귀 테스트 추가

@@ -20,9 +20,13 @@ CREATE TABLE IF NOT EXISTS classified_news (
     classification_text TEXT,
     model_category TEXT,
     model_category_score REAL,
+    model_confidence REAL,
+    model_confidence_level TEXT,
     score_margin REAL,
     final_category TEXT,
-    confidence_level TEXT,
+    decision_source TEXT,
+    review_required INTEGER,
+    final_decision_status TEXT,
     rule_applied TEXT,
     rule_reason TEXT,
     rule_best_label TEXT,
@@ -33,6 +37,14 @@ CREATE TABLE IF NOT EXISTS classified_news (
     unique_key TEXT UNIQUE
 );
 """
+
+REQUIRED_RESULT_COLUMNS = {
+    "model_confidence": "REAL",
+    "model_confidence_level": "TEXT",
+    "decision_source": "TEXT",
+    "review_required": "INTEGER",
+    "final_decision_status": "TEXT",
+}
 
 
 class SqliteNewsStore:
@@ -46,6 +58,14 @@ class SqliteNewsStore:
     def init_schema(self) -> None:
         with self.connect() as conn:
             conn.executescript(SCHEMA)
+            existing_columns = {
+                row[1] for row in conn.execute("PRAGMA table_info(classified_news)")
+            }
+            for column, column_type in REQUIRED_RESULT_COLUMNS.items():
+                if column not in existing_columns:
+                    conn.execute(
+                        f"ALTER TABLE classified_news ADD COLUMN {column} {column_type}"
+                    )
 
     def save(self, rows: Iterable[ClassifiedNews]) -> None:
         with self.connect() as conn:
@@ -57,14 +77,18 @@ class SqliteNewsStore:
                     """
                     INSERT OR REPLACE INTO classified_news (
                         keyword, title, source, published_at, link, description, content,
-                        classification_text, model_category, model_category_score, score_margin,
-                        final_category, confidence_level, rule_applied, rule_reason,
+                        classification_text, model_category, model_category_score,
+                        model_confidence, model_confidence_level, score_margin,
+                        final_category, decision_source, review_required,
+                        final_decision_status, rule_applied, rule_reason,
                         rule_best_label, rule_match_count, top3_labels, top3_scores,
                         created_at, unique_key
                     ) VALUES (
                         :keyword, :title, :source, :published_at, :link, :description, :content,
-                        :classification_text, :model_category, :model_category_score, :score_margin,
-                        :final_category, :confidence_level, :rule_applied, :rule_reason,
+                        :classification_text, :model_category, :model_category_score,
+                        :model_confidence, :model_confidence_level, :score_margin,
+                        :final_category, :decision_source, :review_required,
+                        :final_decision_status, :rule_applied, :rule_reason,
                         :rule_best_label, :rule_match_count, :top3_labels, :top3_scores,
                         :created_at, :unique_key
                     )

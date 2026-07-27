@@ -198,7 +198,7 @@ class RuleEngine:
         ):
             return RuleDecision(
                 final_label="검토필요",
-                rule_applied=True,
+                rule_applied=False,
                 rule_reason="모델 점수 낮고 규칙 근거 없음",
                 rule_best_label=best_rule_label,
                 rule_match_count=best_rule_score,

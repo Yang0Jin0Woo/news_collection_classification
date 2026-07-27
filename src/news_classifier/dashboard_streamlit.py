@@ -19,10 +19,51 @@ def render_dashboard(default_path: str = "news_analysis_results.csv") -> None:
     selected = st.multiselect("카테고리", categories, default=categories)
     filtered = df[df["final_category"].isin(selected)] if selected else df
 
-    st.metric("전체 기사", len(filtered))
+    metric_columns = st.columns(3)
+    metric_columns[0].metric("전체 기사", len(filtered))
+    rule_count = (
+        int((filtered["decision_source"] == "RULE").sum())
+        if "decision_source" in filtered.columns
+        else 0
+    )
+    metric_columns[1].metric("규칙 보정", rule_count)
+    review_count = (
+        int(
+            filtered["review_required"]
+            .astype(str)
+            .str.lower()
+            .isin({"true", "1", "y"})
+            .sum()
+        )
+        if "review_required" in filtered.columns
+        else 0
+    )
+    metric_columns[2].metric("검토 필요", review_count)
+
     if "final_category" in filtered.columns:
         st.bar_chart(filtered.groupby("final_category").size())
-    st.dataframe(filtered, use_container_width=True)
+
+    display_columns = [
+        "title",
+        "source",
+        "model_category",
+        "model_confidence",
+        "model_confidence_level",
+        "final_category",
+        "decision_source",
+        "final_decision_status",
+        "review_required",
+        "rule_reason",
+        "published_at",
+        "link",
+    ]
+    available_columns = [
+        column for column in display_columns if column in filtered.columns
+    ]
+    st.dataframe(
+        filtered[available_columns] if available_columns else filtered,
+        use_container_width=True,
+    )
 
 
 if __name__ == "__main__":
