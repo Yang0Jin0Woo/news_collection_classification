@@ -13,9 +13,9 @@ Google News RSS에서 키워드 기반 뉴스를 수집하고, Hugging Face zero
 
 **[키워드 입력] → [뉴스 수집] → [정제·중복 제거] → [Zero-shot 분류 (mDeBERTa)] → [규칙 보정] → [출력/대시보드]**
 
-1. **유연한 확장성:** 새로운 주제나 언어의 뉴스가 수집되어도 모델 재학습 없이 분류 가능
-2. **높은 정밀도:** mDeBERTa의 뛰어난 다국어 맥락 이해력 기반의 분류
-3. **신뢰성 보장:** AI 분류 후 '규칙 보정' 단계를 거쳐 최종 결과 산출
+1. **유연한 분류 방식:** 사전학습된 제로샷 모델을 활용해 별도 재학습 없이 후보 카테고리 분류
+2. **검증 가능한 구조:** 수동 라벨이 확정된 실제 뉴스로 모델·규칙·하이브리드 방식 비교 지원
+3. **설명 가능한 보정:** 모델 점수와 규칙 적용 사유를 함께 저장해 최종 판단 근거 확인
 
 ---
 
@@ -67,6 +67,7 @@ news_classifier_expanded/
 ├─ src/
 │  └─ news_classifier/
 │     ├─ cli.py
+│     ├─ evaluation.py
 │     ├─ pipeline.py
 │     ├─ service.py
 │     ├─ config.py
@@ -83,6 +84,7 @@ news_classifier_expanded/
 │
 ├─ tests/
 ├─ data/
+│  └─ evaluation/
 └─ scripts/
 ```
 
@@ -104,6 +106,61 @@ news_classifier_expanded/
 | `src/news_classifier/storage/csv_store.py` | 분류 결과 CSV 저장 및 Excel 확인용 파일 생성 |
 | `src/news_classifier/storage/sqlite_store.py` | 분류 결과 SQLite DB 누적 저장 및 재조회 지원 |
 | `src/news_classifier/reporting/summary_report.py` | 전체 기사 수, 낮은 신뢰도 기사 수, 규칙 보정 수, 카테고리별 개수 요약 출력 |
+| `src/news_classifier/evaluation.py` | 정확도·거시 평균 F1·카테고리별 정밀도와 재현율·혼동행렬 계산 |
+| `scripts/collect_evaluation_news.py` | 수동 라벨링에 사용할 실제 뉴스 후보 수집 |
+| `scripts/evaluate_news.py` | 모델 단독·규칙 단독·하이브리드 분류 성능 비교 |
+
+---
+
+## 실제 뉴스 분류 성능 평가
+
+테스트 통과 개수와 실제 분류 정확도는 다릅니다. 이 프로젝트는 사람이
+확정한 실제 뉴스 라벨만 성능 평가에 사용하며, 검색어 기반 추천 라벨은
+정답으로 취급하지 않습니다.
+
+### 1. 실제 뉴스 후보 수집
+
+```powershell
+$env:PYTHONPATH="src"
+python scripts\collect_evaluation_news.py `
+    --output data\evaluation\real_news_candidates.csv `
+    --target-per-label 20
+```
+
+현재 후보 파일에는 9개 카테고리별 20건씩 총 180건의 실제 뉴스가
+들어 있습니다.
+
+### 2. 수동 라벨 확정
+
+`data/evaluation/real_news_candidates.csv`의 다음 열을 사람이 직접 작성합니다.
+
+- `gold_label`: 사람이 확정한 최종 카테고리
+- `review_status`: 검토 완료 시 `confirmed`
+- `reviewed_by`: 검토자 이름
+- `split`: 규칙 개발용은 `development`, 최종 평가는 `evaluation`
+
+같은 사건을 다룬 유사 기사는 동일한 분할에 넣어 정보 누출을 방지합니다.
+확정되지 않은 데이터가 포함되면 평가 명령은 실행을 중단합니다.
+
+### 3. 세 가지 분류 방식 비교
+
+```powershell
+$env:PYTHONPATH="src"
+python scripts\evaluate_news.py `
+    --dataset data\evaluation\real_news_candidates.csv `
+    --split evaluation `
+    --output-dir evaluation_results
+```
+
+평가 결과에는 다음 내용이 생성됩니다.
+
+- 모델 단독·규칙 단독·하이브리드 방식의 정확도와 거시 평균 F1
+- 카테고리별 정밀도·재현율·F1
+- 방식별 혼동행렬
+- 평가 데이터, 모델 이름, 카테고리 목록
+
+수동 라벨 검토가 끝나기 전에는 정확도 수치를 README나 포트폴리오에
+표시하지 않습니다.
 
 ---
 

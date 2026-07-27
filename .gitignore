@@ -16,7 +16,7 @@ env/
 
 *.log
 
-out.csv
+*.csv
 news.db
 news_archive.db
 *.sqlite
