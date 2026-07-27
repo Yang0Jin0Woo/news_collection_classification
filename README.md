@@ -1,4 +1,4 @@
-# 뉴스 수집 및 분류기
+# 뉴소트(NewSort)
 
 Python 기반 뉴스 수집 및 분류기 프로젝트입니다.
 
@@ -187,15 +187,11 @@ python scripts/evaluate_news.py --dataset data/evaluation/real_news_candidates.c
 ## 실행 환경
 
 - Python 3.11~3.13
-- Windows, macOS, Linux
-- 기본 실행은 CPU에서 가능
-- NVIDIA GPU와 CUDA 지원 PyTorch가 있으면 zero-shot 분류 모델은 GPU 사용
+- 최초 실행 시 모델 다운로드를 위한 인터넷 연결 필요
 
 ---
 
 ## 실행 방법
-
-### 1. 가상환경 생성
 
 프로젝트를 클론한 뒤 저장소 최상위 폴더에서 실행합니다.
 
@@ -203,10 +199,10 @@ python scripts/evaluate_news.py --dataset data/evaluation/real_news_candidates.c
 python -m venv .venv
 ```
 
-가상환경 활성화는 운영체제에 따라 선택합니다.
+가상환경을 활성화합니다.
 
 ```powershell
-# Windows PowerShell
+# Windows
 .\.venv\Scripts\Activate.ps1
 ```
 
@@ -215,135 +211,18 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2. 패키지 설치
-
-일반 설치는 `pyproject.toml`에 고정된 직접 의존성을 사용합니다.
+패키지를 설치하고 뉴스를 수집·분류합니다.
 
 ```bash
 python -m pip install -e .
-```
-
-하위 의존성까지 동일한 버전으로 설치하려면 lock 파일을 사용합니다.
-
-```bash
-python -m pip install -r requirements.lock
-```
-
-### 3. 환경변수 설정
-
-기본값만 사용할 경우 `.env` 파일은 없어도 됩니다. 설정을 변경하려면 예제 파일을
-복사하며, 프로그램 시작 시 `.env`가 자동으로 로드됩니다. 이미 설정된 운영체제
-환경변수는 `.env`보다 우선합니다.
-
-```powershell
-# Windows PowerShell
-Copy-Item .env.example .env
-```
-
-```bash
-# macOS / Linux
-cp .env.example .env
-```
-
-기본 모델과 revision은 다음 값으로 고정되어 있습니다.
-
-```text
-NEWS_MODEL=MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7
-NEWS_MODEL_REVISION=b5113eb38ab63efdd7f280f8c144ea8b13f978ce
-```
-
-### 4. 뉴스 수집 및 분류
-
-```bash
 news-classifier collect --keyword "AI 반도체"
 ```
 
-저장 경로와 수집 개수를 지정할 수도 있습니다.
-
-```bash
-news-classifier collect --keyword "AI 반도체" --limit 10 --csv out.csv --sqlite news.db
-```
-
-Windows PowerShell에서는 설치 후 보조 스크립트도 사용할 수 있습니다.
-
-```powershell
-.\run_news.ps1
-```
-
-최초 실행에서는 고정된 Hugging Face 모델을 다운로드하므로 인터넷 연결과 시간이
-필요합니다. CUDA 지원 PyTorch가 설치되어 있으면 GPU를 자동 사용하고, 그 외에는
-CPU로 실행합니다.
-
-### 5. 결과 확인
-
-기본 실행은 `news_analysis_results.csv`를 생성합니다. `--sqlite news.db`를 지정하면
-SQLite에도 결과를 누적합니다.
-
-| 파일 | 용도 |
-|---|---|
-| `news_analysis_results.csv` | 기본 CSV 분류 결과 |
-| `out.csv` | `--csv out.csv` 지정 시 생성되는 결과 |
-| `news.db` | `--sqlite news.db` 지정 시 누적 결과 |
-
-### 6. 테스트
+정상 실행되면 프로젝트 폴더에 `news_analysis_results.csv`가 생성됩니다.
+테스트는 다음 명령으로 확인합니다.
 
 ```bash
 pytest -q
-```
-
-### 7. 대시보드
-
-```bash
-streamlit run src/news_classifier/dashboard_streamlit.py
-```
-
----
-
-## SQLite 저장 결과 확인
-
-최근 저장된 뉴스 20개를 터미널에서 확인합니다.
-
-```powershell
-python -c "import sqlite3, pandas as pd; conn=sqlite3.connect('news.db'); df=pd.read_sql_query('SELECT title, source, model_category, model_confidence, final_category, decision_source, final_decision_status, published_at FROM classified_news ORDER BY id DESC LIMIT 20', conn); print(df.to_string(index=False))"
-```
-
-카테고리별 기사 수를 확인합니다.
-
-```powershell
-python -c "import sqlite3, pandas as pd; conn=sqlite3.connect('news.db'); df=pd.read_sql_query('SELECT final_category, COUNT(*) AS count FROM classified_news GROUP BY final_category ORDER BY count DESC', conn); print(df.to_string(index=False))"
-```
-
-낮은 모델 신뢰도 또는 사람 검토가 필요한 기사만 확인합니다.
-
-```powershell
-python -c "import sqlite3, pandas as pd; conn=sqlite3.connect('news.db'); df=pd.read_sql_query(\"SELECT title, source, model_category, model_confidence_level, final_category, decision_source, review_required, rule_reason FROM classified_news WHERE model_confidence_level='낮음' OR review_required=1 ORDER BY id DESC LIMIT 20\", conn); print(df.to_string(index=False))"
-```
-
----
-
-## 실행 예시
-
-```bash
-news-classifier collect --keyword "AI 반도체" --limit 10 --csv out.csv
-```
-
-실행 결과 예시는 다음과 같습니다.
-
-```text
-Pipeline status: SUCCESS
-CSV saved: out.csv
-
-# 뉴스 분류 요약
-- 전체 기사 수: 10
-- 낮은 모델 신뢰도 기사 수: 2
-- 규칙 보정 적용 기사 수: 1
-- 검토필요 기사 수: 1
-- 분류 오류 기사 수: 0
-
-## 카테고리별 기사 수
-- 기술개발: 8
-- 기업동향: 1
-- 금융/투자: 1
 ```
 
 ## 전체 처리 과정
@@ -356,19 +235,7 @@ CSV saved: out.csv
 6. 중복 뉴스 제거 후 필요하면 article_scraper.py로 본문 보강
 7. zero_shot_classifier.py가 고정 revision 모델로 1차 분류 수행
 8. rule_engine.py와 postprocessor.py가 모델 점수, margin, 키워드 규칙을 바탕으로 최종 카테고리 결정
-9. csv_store.py와 sqlite_store.py가 결과를 CSV와 SQLite에 저장
-
-## GitHub 업로드
-
-```powershell
-git init
-git add .
-git status
-git commit -m "뉴스 수집 및 분류기 프로젝트 초기 커밋"
-git branch -M main
-git remote add origin https://github.com/Yang0Jin0Woo/news-collection-classification_python.git
-git push -u origin main
-```
+9. csv_store.py가 CSV를 저장하고, 옵션 지정 시 sqlite_store.py가 SQLite에도 저장
 
 ## 프로젝트 개선 내용
 
