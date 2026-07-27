@@ -8,9 +8,9 @@ def require_non_blank(value: str, field_name: str) -> str:
     return str(value).strip()
 
 
-def clamp_limit(limit: int, minimum: int = 1, maximum: int = 100) -> int:
-    if limit < minimum:
-        return minimum
-    if limit > maximum:
-        return maximum
+def validate_limit(limit: int, minimum: int = 1, maximum: int = 100) -> int:
+    if not minimum <= limit <= maximum:
+        raise ValidationError(
+            f"limit must be between {minimum} and {maximum}"
+        )
     return limit

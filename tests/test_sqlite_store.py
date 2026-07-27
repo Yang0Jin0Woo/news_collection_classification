@@ -52,7 +52,13 @@ def test_sqlite_store_saves_decision_metadata(tmp_path):
     store = SqliteNewsStore(str(path))
 
     store.save([rule_result()])
-    row = store.list_recent(1)[0]
+    with sqlite3.connect(path) as conn:
+        conn.row_factory = sqlite3.Row
+        row = dict(
+            conn.execute(
+                "SELECT * FROM classified_news ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+        )
 
     assert row["model_confidence"] == 0.85
     assert row["model_confidence_level"] == "높음"

@@ -35,7 +35,6 @@ class AppSettings:
         "b5113eb38ab63efdd7f280f8c144ea8b13f978ce",
     ))
     request_timeout_seconds: int = 15
-    default_limit: int = 10
     max_sequence_length: int = 1200
     base_rule_override_threshold: float = 0.55
     min_margin_threshold: float = 0.08

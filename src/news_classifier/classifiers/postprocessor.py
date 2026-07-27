@@ -17,7 +17,6 @@ class ClassificationPostProcessor:
                 rule_reason="모델 분류 실패",
                 rule_best_label="",
                 rule_match_count=0,
-                label_scores={},
             )
         else:
             decision = self.rule_engine.decide(

@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
+from news_classifier.config import AppSettings
 from news_classifier.storage.csv_store import CsvNewsStore
 
 
@@ -67,4 +68,4 @@ def render_dashboard(default_path: str = "news_analysis_results.csv") -> None:
 
 
 if __name__ == "__main__":
-    render_dashboard()
+    render_dashboard(AppSettings().output_csv)

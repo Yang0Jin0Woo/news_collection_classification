@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import timezone
 from email.utils import parsedate_to_datetime
 
 
@@ -12,7 +12,3 @@ def parse_rss_datetime(value: str) -> str:
         return dt.isoformat()
     except Exception:
         return value
-
-
-def utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()

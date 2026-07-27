@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import sqlite3
 from pathlib import Path
 from typing import Iterable
@@ -95,11 +94,3 @@ class SqliteNewsStore:
                     """,
                     data,
                 )
-
-    def list_recent(self, limit: int = 100) -> list[dict]:
-        with self.connect() as conn:
-            conn.row_factory = sqlite3.Row
-            rows = conn.execute(
-                "SELECT * FROM classified_news ORDER BY published_at DESC LIMIT ?", (limit,)
-            ).fetchall()
-            return [dict(row) for row in rows]

@@ -59,7 +59,7 @@ def test_to_row_uses_cleaned_title():
     row = ClassifiedNews(
         item=item,
         model_prediction=ModelPrediction("정책/규제", 0.8, 0.2),
-        rule_decision=RuleDecision("정책/규제", False, "", "정책/규제", 0, {}),
+        rule_decision=RuleDecision("정책/규제", False, "", "정책/규제", 0),
         model_confidence_level="높음",
     ).to_row()
 

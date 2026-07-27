@@ -61,8 +61,3 @@ def safe_truncate(text: str, limit: int) -> str:
     if len(text) <= limit:
         return text
     return text[:limit].rstrip() + "..."
-
-
-def contains_any(text: str, keywords: list[str]) -> bool:
-    lowered = clean_text(text).lower()
-    return any(keyword.lower() in lowered for keyword in keywords)

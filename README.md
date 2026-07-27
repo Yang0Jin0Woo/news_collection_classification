@@ -3,7 +3,7 @@
 Python 기반 뉴스 수집 및 분류기 프로젝트입니다.
 
 Google News RSS에서 키워드 기반 뉴스를 수집하고, Hugging Face zero-shot 분류 모델과 규칙 기반 보정 로직을 활용하여 뉴스 카테고리를 분류합니다.  
-분류 결과는 CSV 파일로 저장하여 Excel로 확인할 수 있고, SQLite DB에 누적 저장하여 필요할 때 다시 조회할 수 있습니다.
+분류 결과는 CSV 파일로 저장하여 Excel이나 대시보드에서 확인할 수 있고, 필요하면 SQLite DB에도 누적 보관할 수 있습니다.
 
 ## 아키텍처
 
@@ -73,6 +73,7 @@ CLI 종료 코드 `1`을 반환합니다.
 - Pandas
 - BeautifulSoup
 - SQLite
+- Streamlit
 - CSV
 - Pytest
 
@@ -131,7 +132,8 @@ news_classifier_expanded/
 | `src/news_classifier/classifiers/postprocessor.py` | 모델 점수, margin, 규칙 점수 기반 최종 카테고리 결정 |
 | `src/news_classifier/rules/default_rules.py` | 기본 분류 카테고리 및 키워드 규칙 사전 관리 |
 | `src/news_classifier/storage/csv_store.py` | 분류 결과 CSV 저장 및 빈 결과의 고정 헤더 생성 |
-| `src/news_classifier/storage/sqlite_store.py` | 분류 결과 SQLite DB 누적 저장 및 재조회 지원 |
+| `src/news_classifier/storage/sqlite_store.py` | 분류 결과 SQLite DB 누적 저장 |
+| `src/news_classifier/dashboard_streamlit.py` | CSV 결과의 카테고리·규칙 보정·검토 필요 현황 시각화 |
 | `src/news_classifier/reporting/summary_report.py` | 전체 기사 수, 낮은 모델 신뢰도, 규칙 보정·검토필요·오류 수 요약 출력 |
 | `src/news_classifier/evaluation.py` | 정확도·거시 평균 F1·카테고리별 정밀도와 재현율·혼동행렬 계산 |
 | `scripts/collect_evaluation_news.py` | 수동 라벨링에 사용할 실제 뉴스 후보 수집 |
@@ -226,6 +228,23 @@ news-classifier collect --keyword "AI 반도체"
 ```
 
 정상 실행되면 프로젝트 폴더에 `news_analysis_results.csv`가 생성됩니다.
+`--limit`에는 1~100을 입력할 수 있습니다. SQLite에도 저장하려면 기본 경로를
+사용하거나 저장 경로를 직접 지정합니다.
+
+```bash
+news-classifier collect --keyword "AI 반도체" --sqlite
+news-classifier collect --keyword "AI 반도체" --sqlite custom.db
+```
+
+`--sqlite`만 입력하면 `.env`의 `NEWS_OUTPUT_DB`를 사용하며, 기본값은
+`news_analysis.db`입니다. 분류 결과 대시보드는 다음 명령으로 실행합니다.
+
+```bash
+news-classifier dashboard
+```
+
+대시보드가 실행된 터미널에서 `Ctrl+C`를 누르면 종료됩니다.
+
 테스트는 다음 명령으로 확인합니다.
 
 ```bash
@@ -243,6 +262,7 @@ pytest -q
 7. zero_shot_classifier.py가 고정 revision 모델로 1차 분류 수행
 8. rule_engine.py와 postprocessor.py가 모델 점수, margin, 키워드 규칙을 바탕으로 최종 카테고리 결정
 9. csv_store.py가 CSV를 저장하고, 옵션 지정 시 sqlite_store.py가 SQLite에도 저장
+10. `news-classifier dashboard`로 CSV 분류 결과를 시각화
 
 ## 프로젝트 개선 내용
 

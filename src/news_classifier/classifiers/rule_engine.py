@@ -145,7 +145,6 @@ class RuleEngine:
                 rule_reason=f"기술개발 편향 보정: {best_rule_label} 키워드 {best_rule_score}개 매칭",
                 rule_best_label=best_rule_label,
                 rule_match_count=best_rule_score,
-                label_scores=label_scores,
             )
 
         # 모델 점수와 차이가 충분하면 모델 결과 유지
@@ -159,7 +158,6 @@ class RuleEngine:
                 rule_reason="",
                 rule_best_label=best_rule_label,
                 rule_match_count=best_rule_score,
-                label_scores=label_scores,
             )
 
         # 규칙 키워드 근거가 충분하면 규칙 기반 카테고리로 보정
@@ -170,7 +168,6 @@ class RuleEngine:
                 rule_reason=f"{best_rule_label} 키워드 {best_rule_score}개 매칭",
                 rule_best_label=best_rule_label,
                 rule_match_count=best_rule_score,
-                label_scores=label_scores,
             )
 
         # 낮은 신뢰도 기사에서 금융/노사/통상/정책처럼 신호가 분명한 키워드는 더 적극 반영
@@ -185,7 +182,6 @@ class RuleEngine:
                 rule_reason=f"낮은 신뢰도에서 {best_rule_label} 키워드 {best_rule_score}개 매칭",
                 rule_best_label=best_rule_label,
                 rule_match_count=best_rule_score,
-                label_scores=label_scores,
             )
 
         # 모델 점수도 낮고 규칙 근거도 없으면 검토필요 처리
@@ -202,7 +198,6 @@ class RuleEngine:
                 rule_reason="모델 점수 낮고 규칙 근거 없음",
                 rule_best_label=best_rule_label,
                 rule_match_count=best_rule_score,
-                label_scores=label_scores,
             )
 
         # 그 외에는 모델 예측 결과 유지
@@ -212,5 +207,4 @@ class RuleEngine:
             rule_reason="",
             rule_best_label=best_rule_label,
             rule_match_count=best_rule_score,
-            label_scores=label_scores,
         )

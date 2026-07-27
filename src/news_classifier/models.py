@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 
@@ -73,10 +73,6 @@ class NewsItem:
             parts.append(f"기사본문요약: {self.content[:500]}")
         return "\n".join(parts)
 
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-
 @dataclass(frozen=True)
 class ModelPrediction:
     label: str
@@ -97,7 +93,6 @@ class RuleDecision:
     rule_reason: str
     rule_best_label: str
     rule_match_count: int
-    label_scores: dict[str, int]
 
 
 @dataclass(frozen=True)
