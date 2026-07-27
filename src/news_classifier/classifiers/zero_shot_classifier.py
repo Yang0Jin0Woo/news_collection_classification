@@ -17,11 +17,13 @@ class ZeroShotNewsClassifier(NewsClassifier):
     def __init__(
         self,
         model_name: str,
+        model_revision: str,
         candidate_labels: Sequence[str],
         max_sequence_length: int = 1200,
         batch_size: int = 4,
     ) -> None:
         self.model_name = model_name
+        self.model_revision = model_revision
         self.candidate_labels = list(candidate_labels)
         self.max_sequence_length = max_sequence_length
         self.batch_size = batch_size
@@ -34,11 +36,17 @@ class ZeroShotNewsClassifier(NewsClassifier):
 
         # GPU 사용 가능 시 cuda, 아니면 CPU 사용
         device = 0 if torch.cuda.is_available() else -1
-        logger.info("loading classifier model=%s device=%s", self.model_name, "cuda" if device == 0 else "cpu")
+        logger.info(
+            "loading classifier model=%s revision=%s device=%s",
+            self.model_name,
+            self.model_revision,
+            "cuda" if device == 0 else "cpu",
+        )
 
         self._classifier = pipeline(
             task="zero-shot-classification",
             model=self.model_name,
+            revision=self.model_revision,
             framework="pt",
             device=device,
         )

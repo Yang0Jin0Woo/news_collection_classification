@@ -84,8 +84,10 @@ CLI 종료 코드 `1`을 반환합니다.
 news_classifier_expanded/
 ├─ README.md
 ├─ requirements.txt
+├─ requirements.lock
 ├─ pyproject.toml
 ├─ .env.example
+├─ run_news.ps1
 │
 ├─ src/
 │  └─ news_classifier/
@@ -117,7 +119,9 @@ news_classifier_expanded/
 
 | 파일 | 설명 |
 |---|---|
-| `run_news.ps1` | 실행 환경 설정 및 뉴스 수집·분류 CLI 실행 |
+| `run_news.ps1` | 설치된 `news-classifier` 명령을 호출하는 Windows 보조 스크립트 |
+| `pyproject.toml` | 패키지 의존성, Python 범위, CLI 진입점 정의 |
+| `requirements.lock` | 하위 패키지까지 고정한 재현용 의존성 목록 |
 | `src/news_classifier/cli.py` | 터미널 명령어 해석 및 뉴스 수집·분류 실행 진입점 |
 | `src/news_classifier/service.py` | 수집기, 분류기, 규칙 엔진, 중복 제거기 조립 및 파이프라인 구성 |
 | `src/news_classifier/pipeline.py` | 전체 처리 흐름과 성공·빈 결과·수집·모델 실패 상태 반환 |
@@ -143,11 +147,8 @@ news_classifier_expanded/
 
 ### 1. 실제 뉴스 후보 수집
 
-```powershell
-$env:PYTHONPATH="src"
-python scripts\collect_evaluation_news.py `
-    --output data\evaluation\real_news_candidates.csv `
-    --target-per-label 20
+```bash
+python scripts/collect_evaluation_news.py --output data/evaluation/real_news_candidates.csv --target-per-label 20
 ```
 
 현재 후보 파일에는 9개 카테고리별 20건씩 총 180건의 실제 뉴스가
@@ -167,12 +168,8 @@ python scripts\collect_evaluation_news.py `
 
 ### 3. 세 가지 분류 방식 비교
 
-```powershell
-$env:PYTHONPATH="src"
-python scripts\evaluate_news.py `
-    --dataset data\evaluation\real_news_candidates.csv `
-    --split evaluation `
-    --output-dir evaluation_results
+```bash
+python scripts/evaluate_news.py --dataset data/evaluation/real_news_candidates.csv --split evaluation --output-dir evaluation_results
 ```
 
 평가 결과에는 다음 내용이 생성됩니다.
@@ -189,9 +186,8 @@ python scripts\evaluate_news.py `
 
 ## 실행 환경
 
-- Python 3.12 이상 권장
-- Windows PowerShell 기준
-- VS Code 터미널 기준
+- Python 3.11~3.13
+- Windows, macOS, Linux
 - 기본 실행은 CPU에서 가능
 - NVIDIA GPU와 CUDA 지원 PyTorch가 있으면 zero-shot 분류 모델은 GPU 사용
 
@@ -199,179 +195,107 @@ python scripts\evaluate_news.py `
 
 ## 실행 방법
 
-### 1. 프로젝트 폴더로 이동
+### 1. 가상환경 생성
 
-```powershell
-cd C:\news_classifier_expanded_project\news_classifier_expanded
+프로젝트를 클론한 뒤 저장소 최상위 폴더에서 실행합니다.
+
+```bash
+python -m venv .venv
 ```
 
----
+가상환경 활성화는 운영체제에 따라 선택합니다.
+
+```powershell
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+```
+
+```bash
+# macOS / Linux
+source .venv/bin/activate
+```
 
 ### 2. 패키지 설치
 
-처음 실행하거나 패키지가 없을 때만 설치
+일반 설치는 `pyproject.toml`에 고정된 직접 의존성을 사용합니다.
 
-![가상환경 실행 예시](image-2.png)
-
-```powershell
-..\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```bash
+python -m pip install -e .
 ```
 
-이미 설치된 경우 생략 가능
+하위 의존성까지 동일한 버전으로 설치하려면 lock 파일을 사용합니다.
 
----
-
-### 3-1. CPU 환경일 때 실행
-
-GPU 설정 없이 기본 환경으로 실행하는 방법
-
-패키지 설치
-
-```powershell
-..\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```bash
+python -m pip install -r requirements.lock
 ```
 
-뉴스 수집 및 분류 실행
+### 3. 환경변수 설정
+
+기본값만 사용할 경우 `.env` 파일은 없어도 됩니다. 설정을 변경하려면 예제 파일을
+복사하며, 프로그램 시작 시 `.env`가 자동으로 로드됩니다. 이미 설정된 운영체제
+환경변수는 `.env`보다 우선합니다.
+
+```powershell
+# Windows PowerShell
+Copy-Item .env.example .env
+```
+
+```bash
+# macOS / Linux
+cp .env.example .env
+```
+
+기본 모델과 revision은 다음 값으로 고정되어 있습니다.
+
+```text
+NEWS_MODEL=MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7
+NEWS_MODEL_REVISION=b5113eb38ab63efdd7f280f8c144ea8b13f978ce
+```
+
+### 4. 뉴스 수집 및 분류
+
+```bash
+news-classifier collect --keyword "AI 반도체"
+```
+
+저장 경로와 수집 개수를 지정할 수도 있습니다.
+
+```bash
+news-classifier collect --keyword "AI 반도체" --limit 10 --csv out.csv --sqlite news.db
+```
+
+Windows PowerShell에서는 설치 후 보조 스크립트도 사용할 수 있습니다.
 
 ```powershell
 .\run_news.ps1
 ```
 
-실행 로그 예시
+최초 실행에서는 고정된 Hugging Face 모델을 다운로드하므로 인터넷 연결과 시간이
+필요합니다. CUDA 지원 PyTorch가 설치되어 있으면 GPU를 자동 사용하고, 그 외에는
+CPU로 실행합니다.
 
-```text
-loading classifier model=... device=cpu
-```
+### 5. 결과 확인
 
-CPU 환경은 별도 GPU 설정 없이 실행 가능
-
----
-
-### 3-2. GPU 환경일 때 실행
-
-NVIDIA GPU와 CUDA 지원 PyTorch가 있는 환경에서 zero-shot 분류 모델을 GPU로 실행하는 방법
-
-프로젝트 폴더 이동
-
-```powershell
-cd C:\news_classifier_expanded_project\news_classifier_expanded
-```
-
-CUDA PyTorch 설치 여부 확인
-
-```powershell
-..\.venv\Scripts\python.exe -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU only')"
-```
-
-정상 출력 예시
-
-`True`와 NVIDIA GPU 이름이 나오면 바로 GPU 실행 가능
-
-뉴스 수집 및 분류 실행(torch 설치되어 있으면 해당 명령만 입력)
-
-```powershell
-.\run_news.ps1
-```
-
-`device=cuda`가 보이면 GPU 실행 상태
-`torch` 버전에 `+cpu`가 보이거나 `torch.cuda.is_available()` 결과가 `False`이면 CPU 전용 PyTorch 상태
-
-CUDA 지원 PyTorch 설치
-
-```powershell
-..\.venv\Scripts\python.exe -m pip uninstall -y torch torchvision torchaudio
-..\.venv\Scripts\python.exe -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
-```
-
-설치 후 CUDA 인식 재확인
-
-```powershell
-..\.venv\Scripts\python.exe -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU only')"
-```
-
-GPU가 없거나 CUDA 지원 PyTorch가 설치되지 않은 경우 자동 CPU 실행
-
----
-
-### 5. 공통 실행 세부 내용
-
-```powershell
-.\run_news.ps1
-```
-
-스크립트 내부 처리 내용
-
-```powershell
-$env:PYTHONPATH = "src"
-..\.venv\Scripts\python.exe -m news_classifier.cli collect --limit 10 --csv out.csv --sqlite news.db
-```
-
-실행 후 터미널에 검색 키워드 입력 문구 표시
-
-```text
-검색 키워드를 입력하세요:
-```
-
-예시 입력
-
-```text
-AI 반도체
-```
-
----
-
-### 6. 결과 파일 확인
-
-실행 완료 후 프로젝트 폴더에 결과 파일 생성
+기본 실행은 `news_analysis_results.csv`를 생성합니다. `--sqlite news.db`를 지정하면
+SQLite에도 결과를 누적합니다.
 
 | 파일 | 용도 |
 |---|---|
-| `out.csv` | Excel 기반 분류 결과 확인 |
-| `news.db` | SQLite 기반 누적 저장 및 재조회 |
+| `news_analysis_results.csv` | 기본 CSV 분류 결과 |
+| `out.csv` | `--csv out.csv` 지정 시 생성되는 결과 |
+| `news.db` | `--sqlite news.db` 지정 시 누적 결과 |
 
-CSV 결과 열기
+### 6. 테스트
 
-```powershell
-ii .\out.csv
+```bash
+pytest -q
 ```
 
-![CSV 결과 예시](image-1.png)
+### 7. 대시보드
 
----
-
-### 7. 대시보드로 결과 확인
-
-Streamlit 대시보드 실행
-
-```powershell
-..\.venv\Scripts\Activate.ps1
-$env:PYTHONPATH="src"
-streamlit run src\news_classifier\dashboard_streamlit.py
+```bash
+streamlit run src/news_classifier/dashboard_streamlit.py
 ```
-
-대시보드의 CSV 경로 입력칸에 `out.csv` 입력
-
----
-
-## 다른 키워드로 실행하기
-
-실행 스크립트를 다시 실행한 뒤 입력 문구에 다른 키워드 입력
-
-```powershell
-.\run_news.ps1
-```
-
-```text
-검색 키워드를 입력하세요: 생성형 AI
-```
-
-다른 예시 입력
-
-```text
-검색 키워드를 입력하세요: 반도체 공급망
-```
-
-스크립트 실행 결과는 `out.csv`에 새로 저장되고, `news.db`에는 같은 DB 파일로 누적 저장
 
 ---
 
@@ -399,15 +323,8 @@ python -c "import sqlite3, pandas as pd; conn=sqlite3.connect('news.db'); df=pd.
 
 ## 실행 예시
 
-```powershell
-cd C:\news_classifier_expanded_project\news_classifier_expanded
-.\run_news.ps1
-```
-
-키워드 입력 예시
-
-```text
-검색 키워드를 입력하세요: AI 반도체
+```bash
+news-classifier collect --keyword "AI 반도체" --limit 10 --csv out.csv
 ```
 
 실행 결과 예시는 다음과 같습니다.
@@ -431,17 +348,15 @@ CSV saved: out.csv
 
 ## 전체 처리 과정
 
-1. 사용자가 `run_news.ps1` 실행
-2. 스크립트가 `PYTHONPATH` 설정 후 CLI 실행
-3. 사용자가 터미널 입력 문구에 검색 키워드 입력
-4. cli.py가 입력값과 실행 옵션 해석
-5. service.py가 수집기, 분류기, 규칙 엔진, 저장소 객체 조립
-6. pipeline.py가 전체 처리 흐름 실행
-7. google_rss.py가 Google News RSS에서 뉴스 수집
-8. 중복 뉴스 제거 후 필요하면 article_scraper.py로 본문 보강
-9. zero_shot_classifier.py가 Hugging Face 모델로 1차 분류 수행
-10. rule_engine.py와 postprocessor.py가 모델 점수, margin, 키워드 규칙을 바탕으로 최종 카테고리 결정
-11. csv_store.py와 sqlite_store.py가 결과를 CSV와 SQLite에 저장
+1. 사용자가 `news-classifier collect --keyword "검색어"` 실행
+2. cli.py가 `.env`, 입력값과 실행 옵션 해석
+3. service.py가 수집기, 분류기, 규칙 엔진, 저장소 객체 조립
+4. pipeline.py가 전체 처리 흐름 실행
+5. google_rss.py가 Google News RSS에서 뉴스 수집
+6. 중복 뉴스 제거 후 필요하면 article_scraper.py로 본문 보강
+7. zero_shot_classifier.py가 고정 revision 모델로 1차 분류 수행
+8. rule_engine.py와 postprocessor.py가 모델 점수, margin, 키워드 규칙을 바탕으로 최종 카테고리 결정
+9. csv_store.py와 sqlite_store.py가 결과를 CSV와 SQLite에 저장
 
 ## GitHub 업로드
 

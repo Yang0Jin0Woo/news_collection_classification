@@ -1,9 +1,29 @@
+[build-system]
+requires = ["setuptools==81.0.0", "wheel==0.47.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "news-classifier-expanded"
 version = "0.1.0"
 description = "Portfolio-grade Python news collection and classification pipeline"
-requires-python = ">=3.10"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "beautifulsoup4==4.14.3",
+    "pandas==3.0.2",
+    "python-dotenv==1.2.2",
+    "requests==2.33.1",
+    "streamlit==1.57.0",
+    "torch==2.11.0",
+    "transformers==5.8.0",
+    "pytest==9.0.3",
+]
+
+[project.scripts]
+news-classifier = "news_classifier.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = [".", "src"]
 testpaths = ["tests"]

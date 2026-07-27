@@ -24,6 +24,7 @@ def build_pipeline(settings: AppSettings | None = None) -> NewsPipeline:
     scraper = ArticleScraper(http_client)
     classifier = ZeroShotNewsClassifier(
         model_name=settings.classification_model,
+        model_revision=settings.classification_model_revision,
         candidate_labels=CANDIDATE_LABELS,
         max_sequence_length=settings.max_sequence_length,
         batch_size=settings.classification_batch_size,

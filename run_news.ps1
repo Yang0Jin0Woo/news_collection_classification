@@ -1,10 +1,16 @@
 $ErrorActionPreference = "Stop"
 
-$env:PYTHONPATH = "src"
+$projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+Push-Location $projectRoot
+try {
+    & news-classifier collect `
+        --limit 10 `
+        --csv out.csv `
+        --sqlite news.db
+    $exitCode = $LASTEXITCODE
+}
+finally {
+    Pop-Location
+}
 
-& "..\.venv\Scripts\python.exe" -m news_classifier.cli collect `
-    --limit 10 `
-    --csv out.csv `
-    --sqlite news.db
-
-exit $LASTEXITCODE
+exit $exitCode
