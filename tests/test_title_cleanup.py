@@ -5,7 +5,7 @@ from news_classifier.collectors.base import NewsCollector
 from news_classifier.dedup.title_deduplicator import TitleSourceDeduplicator
 from news_classifier.models import ClassifiedNews, ModelPrediction, NewsItem, RuleDecision
 from news_classifier.pipeline import NewsPipeline
-from news_classifier.rules.default_rules import RULES
+from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 from news_classifier.utils.text import strip_source_suffix
 
 
@@ -71,7 +71,7 @@ def test_pipeline_cleans_title_before_output_and_storage(capsys):
     pipeline = NewsPipeline(
         collector=SourceSuffixCollector(),
         classifier=OneShotClassifier(),
-        postprocessor=ClassificationPostProcessor(RuleEngine(RULES)),
+        postprocessor=ClassificationPostProcessor(RuleEngine(DEFAULT_RULE_SET)),
         deduplicator=TitleSourceDeduplicator(),
     )
 

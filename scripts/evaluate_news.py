@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict
 import json
 from pathlib import Path
 
@@ -14,6 +15,11 @@ from news_classifier.evaluation_dataset import (
 )
 from news_classifier.models import CLASSIFICATION_INPUT_POLICY, NewsItem
 from news_classifier.rules.default_rules import CANDIDATE_LABELS
+from news_classifier.rules.policy import (
+    rule_set_fingerprint,
+    validate_development_rule_errors,
+    validate_development_rule_evidence,
+)
 from news_classifier.service import build_pipeline
 
 
@@ -30,12 +36,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def rule_only_label(rule_engine, item: NewsItem) -> str:
-    scores = rule_engine.calculate_scores(item.title, item.description, item.content)
-    best_score = max(scores.values(), default=0)
-    if best_score == 0:
-        return "검토필요"
-    best_labels = [label for label, score in scores.items() if score == best_score]
-    return best_labels[0] if len(best_labels) == 1 else "검토필요"
+    return rule_engine.rule_only_decision(
+        item.title,
+        item.description,
+        item.content,
+    )
 
 
 def main() -> None:
@@ -45,20 +50,55 @@ def main() -> None:
     items = rows_to_items(rows)
 
     pipeline = build_pipeline(AppSettings())
+    rule_engine = pipeline.postprocessor.rule_engine
+    runtime_rule_set = rule_engine.rule_set
+    has_development_rules = any(
+        term.origin == "development"
+        for label_policy in runtime_rule_set.labels
+        for term in label_policy.terms
+    )
+    if has_development_rules:
+        development_rows = (
+            rows
+            if args.split == "development"
+            else load_reviewed_cases(
+                dataset_path,
+                "development",
+                CANDIDATE_LABELS,
+            )
+        )
+        validate_development_rule_evidence(
+            runtime_rule_set,
+            development_rows,
+        )
+
     predictions = pipeline.classifier.classify_many(
         [evaluation_input(item) for item in items]
     )
     if len(predictions) != len(items):
         raise RuntimeError("model prediction count does not match evaluation cases")
+    if has_development_rules and args.split == "development":
+        validate_development_rule_errors(
+            runtime_rule_set,
+            rows,
+            [prediction.label for prediction in predictions],
+        )
 
-    rule_engine = pipeline.postprocessor.rule_engine
     expected = [row["gold_label"] for row in rows]
+    rule_rankings = [
+        rule_engine.rank_rules(item.title, item.description, item.content)
+        for item in items
+    ]
+    rule_only_labels = [rule_only_label(rule_engine, item) for item in items]
+    hybrid_results = [
+        pipeline.postprocessor.process(item, prediction)
+        for item, prediction in zip(items, predictions, strict=True)
+    ]
     predicted_by_method = {
         "모델 단독": [prediction.label for prediction in predictions],
-        "규칙 단독": [rule_only_label(rule_engine, item) for item in items],
+        "규칙 단독": rule_only_labels,
         "하이브리드": [
-            pipeline.postprocessor.process(item, prediction).rule_decision.final_label
-            for item, prediction in zip(items, predictions, strict=True)
+            result.rule_decision.final_label for result in hybrid_results
         ],
     }
     reports = {
@@ -79,6 +119,13 @@ def main() -> None:
             "name": CLASSIFICATION_INPUT_POLICY,
             "include_keyword": False,
         },
+        "rule_policy": {
+            "version": runtime_rule_set.version,
+            "matcher_version": runtime_rule_set.matcher_version,
+            "fingerprint_sha256": rule_set_fingerprint(runtime_rule_set),
+            "change_policy": runtime_rule_set.change_policy,
+            "decision": asdict(runtime_rule_set.decision),
+        },
         "reports": {name: report.to_dict() for name, report in reports.items()},
         "cases": [
             {
@@ -89,7 +136,19 @@ def main() -> None:
                 "model_score": prediction.score,
                 "model_margin": prediction.margin,
                 "rule_label": predicted_by_method["규칙 단독"][idx],
+                "rule_best_label": rule_rankings[idx].first.label,
+                "rule_best_score": rule_rankings[idx].first.weighted_score,
+                "rule_strong_match_count": (
+                    rule_rankings[idx].first.strong_match_count
+                ),
+                "rule_second_label": rule_rankings[idx].second.label,
+                "rule_second_score": rule_rankings[idx].second.weighted_score,
+                "rule_score_margin": rule_rankings[idx].score_margin,
+                "matched_rule_terms": list(
+                    rule_rankings[idx].first.matched_terms
+                ),
                 "hybrid_label": predicted_by_method["하이브리드"][idx],
+                "hybrid_reason": hybrid_results[idx].rule_decision.rule_reason,
             }
             for idx, (row, prediction) in enumerate(
                 zip(rows, predictions, strict=True)

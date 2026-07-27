@@ -1,6 +1,13 @@
 from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.models import ModelPrediction
-from news_classifier.rules.default_rules import RULES
+from news_classifier.rules.default_rules import DEFAULT_RULE_SET as RULES
+from news_classifier.rules.policy import (
+    LabelRulePolicy,
+    RuleDecisionPolicy,
+    RuleSet,
+    RuleStrength,
+    RuleTerm,
+)
 
 
 def test_rule_engine_keeps_strong_model_result():
@@ -252,3 +259,232 @@ def test_rule_engine_marks_clearly_unrelated_news_as_other():
 
     assert decision.final_label == "기타/무관"
     assert decision.rule_applied is True
+
+
+def small_rule_set(
+    *,
+    product_strength: RuleStrength = RuleStrength.WEAK,
+    reverse_label_order: bool = False,
+) -> RuleSet:
+    technology = LabelRulePolicy(
+        "기술개발",
+        (RuleTerm("alpha"),),
+        tie_priority=20,
+    )
+    product = LabelRulePolicy(
+        "제품/서비스",
+        (RuleTerm("beta", strength=product_strength),),
+        tie_priority=10,
+        allow_technology_bias_override=True,
+    )
+    direct_labels = (product, technology) if reverse_label_order else (technology, product)
+    return RuleSet(
+        version="test-weighted-rules",
+        matcher_version="test-longest-matcher",
+        labels=direct_labels + (
+            LabelRulePolicy(
+                "기타/무관",
+                (),
+                tie_priority=30,
+                no_direct_rules=True,
+            ),
+        ),
+        domain_terms=("ai",),
+        unrelated_signal_groups=(("야구",), ("경기 결과",)),
+        decision=RuleDecisionPolicy(
+            min_rule_score=2,
+            min_rule_score_margin=1,
+            strong_override_score=4,
+            strong_override_margin=2,
+        ),
+        other_label="기타/무관",
+        technology_label="기술개발",
+    )
+
+
+def test_ascii_rule_does_not_match_inside_another_word():
+    engine = RuleEngine(RULES)
+
+    scores = engine.calculate_scores(
+        "반도체 capital expenditure 확대",
+        "business cost analysis",
+    )
+
+    assert scores["제품/서비스"] == 0  # api, os 부분 문자열 오탐 방지
+    assert scores["기술개발"] == 0  # ess 부분 문자열 오탐 방지
+
+
+def test_ascii_acronym_matches_when_joined_to_korean_text():
+    engine = RuleEngine(RULES)
+
+    scores = engine.calculate_scores("API서비스를 공개했다")
+    decision = engine.decide(
+        "AI반도체 프로야구 경기 결과 분석",
+        "",
+        "",
+        ModelPrediction("기술개발", 0.80, 0.20, [], []),
+    )
+
+    assert scores["제품/서비스"] >= 1
+    assert decision.final_label == "기술개발"
+
+
+def test_korean_compound_uses_longer_rule_without_substring_double_count():
+    engine = RuleEngine(RULES)
+
+    ranking = engine.rank_rules("AI 스타트업 투자유치 성공")
+
+    assert ranking.score_for("기업동향").matched_terms == ("투자유치",)
+    assert ranking.score_for("기업동향").weighted_score == 2
+    assert ranking.score_for("금융/투자").weighted_score == 0
+
+
+def test_korean_compounds_and_particles_keep_rule_recall():
+    engine = RuleEngine(RULES)
+
+    technology = engine.calculate_scores("AI반도체산업 투자 확대")
+    policy = engine.calculate_scores("정부에서도 AI 지원책을 발표")
+    company = engine.calculate_scores("삼성전자 조직 개편")
+
+    assert technology["기술개발"] >= 2
+    assert policy["정책/규제"] >= 2
+    assert company["기업동향"] >= 2
+
+
+def test_spacing_aliases_have_the_same_score():
+    engine = RuleEngine(RULES)
+
+    spaced = engine.calculate_scores("탄소 규제 시행")
+    compact = engine.calculate_scores("탄소규제 시행")
+    export_spaced = engine.calculate_scores("수출 규제 강화")
+    export_compact = engine.calculate_scores("수출규제 강화")
+
+    assert spaced["정책/규제"] == compact["정책/규제"] == 2
+    assert (
+        export_spaced["국제/통상"]
+        == export_compact["국제/통상"]
+        == 2
+    )
+
+
+def test_longer_cross_label_phrase_suppresses_shorter_rule():
+    engine = RuleEngine(RULES)
+
+    ranking = engine.rank_rules("글로벌 공급망 재편")
+
+    assert ranking.score_for("국제/통상").weighted_score == 2
+    assert ranking.score_for("생산/공급망").weighted_score == 0
+    assert engine.rule_only_decision("글로벌 공급망 재편") == "국제/통상"
+
+
+def test_long_phrase_suppresses_overlapping_shorter_terms():
+    engine = RuleEngine(RULES)
+
+    market_score = engine.rank_rules(
+        "AI 시장 점유율 확대"
+    ).score_for("시장/산업")
+
+    assert market_score.weighted_score == 2
+    assert market_score.match_count == 1
+    assert market_score.matched_terms == ("시장 점유율",)
+
+
+def test_repeated_phrase_counts_as_one_piece_of_evidence():
+    engine = RuleEngine(RULES)
+
+    once = engine.calculate_scores("AI 시장 점유율 확대")
+    repeated = engine.calculate_scores(
+        "AI 시장 점유율 확대, AI 시장 점유율 재확인"
+    )
+
+    assert repeated["시장/산업"] == once["시장/산업"]
+
+
+def test_general_weak_words_do_not_force_a_rule_override():
+    decision = RuleEngine(RULES).decide(
+        title="AI 기술 시장 사업 지원 논의",
+        description="일반적인 현황을 소개했다.",
+        content="",
+        prediction=ModelPrediction("기술개발", 0.30, 0.01, [], []),
+    )
+
+    assert decision.final_label == "검토필요"
+    assert decision.rule_applied is False
+    assert "점수 차이 부족" in decision.rule_reason
+
+
+def test_strong_phrase_has_more_weight_than_weak_word():
+    engine = RuleEngine(RULES)
+
+    strong_score = engine.calculate_scores("AI 시장 점유율 확대")["시장/산업"]
+    weak_score = engine.calculate_scores("AI 시장 분석")["시장/산업"]
+
+    assert strong_score == 2
+    assert weak_score == 1
+
+
+def test_rule_tie_uses_explicit_priority_but_requires_review():
+    engine = RuleEngine(small_rule_set())
+
+    ranking = engine.rank_rules("alpha beta")
+    decision = engine.decide(
+        "alpha beta",
+        "",
+        "",
+        ModelPrediction("기술개발", 0.30, 0.01, [], []),
+    )
+
+    assert ranking.first.label == "제품/서비스"
+    assert ranking.score_margin == 0
+    assert decision.final_label == "검토필요"
+    assert decision.rule_applied is False
+    assert engine.rule_only_decision("alpha beta") == "검토필요"
+
+
+def test_rule_ranking_does_not_depend_on_label_insertion_order():
+    normal = RuleEngine(small_rule_set()).rank_rules("alpha beta")
+    reversed_order = RuleEngine(
+        small_rule_set(reverse_label_order=True)
+    ).rank_rules("alpha beta")
+
+    assert normal.first.label == reversed_order.first.label == "제품/서비스"
+    assert normal.tied_labels == reversed_order.tied_labels
+
+
+def test_rule_override_requires_top1_top2_score_margin():
+    engine = RuleEngine(
+        small_rule_set(product_strength=RuleStrength.STRONG)
+    )
+
+    decision = engine.decide(
+        "alpha beta",
+        "",
+        "",
+        ModelPrediction("기술개발", 0.30, 0.01, [], []),
+    )
+
+    assert decision.final_label == "제품/서비스"
+    assert decision.rule_applied is True
+    assert "2위 대비 +1" in decision.rule_reason
+
+
+def test_weak_rules_alone_do_not_override_a_confident_model():
+    decision = RuleEngine(RULES).decide(
+        "AI 시장 산업 전망 수요",
+        "",
+        "",
+        ModelPrediction("기술개발", 0.90, 0.80, [], []),
+    )
+
+    assert decision.final_label == "기술개발"
+    assert decision.rule_applied is False
+
+
+def test_nfkc_normalization_and_korean_particle_matching():
+    engine = RuleEngine(RULES)
+
+    scores = engine.calculate_scores(
+        "정부가 ＡＩ 정책을 발표했다"
+    )
+
+    assert scores["정책/규제"] == 2

@@ -5,7 +5,7 @@ from news_classifier.collectors.base import NetworkCollectionError, NewsCollecto
 from news_classifier.dedup.title_deduplicator import TitleSourceDeduplicator
 from news_classifier.models import ModelPrediction, NewsItem, PipelineStatus
 from news_classifier.pipeline import NewsPipeline
-from news_classifier.rules.default_rules import RULES
+from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 
 
 class EmptyCollector(NewsCollector):
@@ -68,7 +68,7 @@ def pipeline(collector: NewsCollector, classifier: NewsClassifier) -> NewsPipeli
     return NewsPipeline(
         collector=collector,
         classifier=classifier,
-        postprocessor=ClassificationPostProcessor(RuleEngine(RULES)),
+        postprocessor=ClassificationPostProcessor(RuleEngine(DEFAULT_RULE_SET)),
         deduplicator=TitleSourceDeduplicator(),
     )
 

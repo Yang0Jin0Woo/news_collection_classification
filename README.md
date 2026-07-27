@@ -131,9 +131,10 @@ news_classifier_expanded/
 | `src/news_classifier/pipeline.py` | 전체 처리 흐름과 성공·빈 결과·수집·모델 실패 상태 반환 |
 | `src/news_classifier/collectors/google_rss.py` | Google News RSS 수집 및 네트워크 실패·빈 결과·파싱 오류 구분 |
 | `src/news_classifier/classifiers/zero_shot_classifier.py` | Hugging Face zero-shot 모델 기반 뉴스 1차 카테고리 분류 |
-| `src/news_classifier/classifiers/rule_engine.py` | 카테고리별 키워드 매칭 점수 계산 및 규칙 기반 보정 근거 생성 |
+| `src/news_classifier/classifiers/rule_engine.py` | 토큰 경계·긴 구문 우선·가중 점수·규칙 점수 차이 기반 보정 |
 | `src/news_classifier/classifiers/postprocessor.py` | 모델 점수, margin, 규칙 점수 기반 최종 카테고리 결정 |
-| `src/news_classifier/rules/default_rules.py` | 기본 분류 카테고리 및 키워드 규칙 사전 관리 |
+| `src/news_classifier/rules/policy.py` | 라벨·키워드 강도·동점 우선순위·보정 임계값 통합 정책 정의 |
+| `src/news_classifier/rules/default_rules.py` | 기본 통합 규칙 정책과 규칙 버전 관리 |
 | `src/news_classifier/storage/csv_store.py` | 분류 결과 CSV 저장 및 빈 결과의 고정 헤더 생성 |
 | `src/news_classifier/storage/sqlite_store.py` | 분류 결과 SQLite DB 누적 저장 |
 | `src/news_classifier/dashboard_streamlit.py` | CSV 결과의 카테고리·규칙 보정·검토 필요 현황 시각화 |
@@ -176,6 +177,18 @@ python scripts/collect_evaluation_news.py --output data/evaluation/real_news_can
 
 같은 사건을 다룬 유사 기사는 동일한 분할에 넣어 정보 누출을 방지합니다.
 확정되지 않은 데이터가 포함되면 평가 명령은 실행을 중단합니다.
+
+규칙은 `development` 데이터에서 반복 확인된 오분류만 근거로 수정합니다.
+새 규칙에는 서로 다른 확정 `event_id`를 2개 이상 기록해야 하며, 평가
+실행 시 실제 development 데이터의 존재 여부·확정 상태·정답 라벨을
+검증하고, 해당 사건에서 모델 기준선이 실제로 오분류했는지도 확인합니다.
+`evaluation` 결과를 보고 규칙이나 가중치를 다시 조정하지 않습니다.
+규칙 엔진은 전체 라벨에서 긴 구문을 먼저 매칭하고, 강한
+구문과 일반 단어를 서로 다른 점수로 계산합니다. 규칙 1위와 2위 점수
+차이가 기준보다 작으면 자동 보정하지 않고 검토 대상으로 남깁니다.
+평가 결과에는 규칙 내용과 임계값으로 계산한 SHA-256 지문을 함께 기록합니다.
+현재 기본 가중치는 규칙 구조와 회귀 동작을 검증하기 위한 초기값입니다.
+실제 성능 향상 여부는 확정된 development 데이터의 전후 지표로 판단합니다.
 
 라벨은 다음 기준으로 하나의 핵심 주제를 선택합니다.
 

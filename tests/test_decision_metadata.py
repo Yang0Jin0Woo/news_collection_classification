@@ -2,7 +2,7 @@ from news_classifier.classifiers.postprocessor import ClassificationPostProcesso
 from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.models import ModelPrediction, NewsItem
 from news_classifier.reporting.summary_report import build_summary
-from news_classifier.rules.default_rules import RULES
+from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 
 
 def classify(
@@ -16,7 +16,7 @@ def classify(
         description=description,
         link="https://example.com/news",
     )
-    processor = ClassificationPostProcessor(RuleEngine(RULES))
+    processor = ClassificationPostProcessor(RuleEngine(DEFAULT_RULE_SET))
     return processor.process(item, prediction)
 
 

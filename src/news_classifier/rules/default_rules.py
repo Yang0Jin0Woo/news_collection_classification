@@ -1,7 +1,16 @@
-OTHER_LABEL = "기타/무관"
-MODEL_ONLY_LABELS = frozenset({OTHER_LABEL})
+from news_classifier.rules.policy import (
+    LabelRulePolicy,
+    RuleDecisionPolicy,
+    RuleSet,
+    RuleStrength,
+    RuleTerm,
+    normalize_rule_text,
+    validate_rule_set,
+)
 
-CANDIDATE_LABELS = [
+
+_OTHER_LABEL = "기타/무관"
+_CANDIDATE_LABELS = (
     "기술개발",
     "제품/서비스",
     "기업동향",
@@ -11,10 +20,10 @@ CANDIDATE_LABELS = [
     "시장/산업",
     "노동/노사",
     "국제/통상",
-    OTHER_LABEL,
-]
+    _OTHER_LABEL,
+)
 
-RULES = {
+_LEGACY_KEYWORDS_BY_LABEL = {
     "금융/투자": [
         "etf", "주가", "주식", "증권", "투자", "투자처", "펀드",
         "수익률", "목표가", "매수", "매도", "시총", "상장", "공모",
@@ -94,7 +103,7 @@ RULES = {
         "lg디스플레이", "삼성디스플레이", "boe", "현대차", "두산로보틱스",
         "레인보우로보틱스", "lg전자", "코스모로보틱스", "한국전력", "한전",
         "두산에너빌리티", "현대차·기아", "현대차그룹", "기아",
-        "os 경쟁", "사업 확장", "사업은", "경쟁", "각축",
+        "os 경쟁", "사업 확장", "경쟁", "각축",
     ],
     "노동/노사": [
         "노조", "노동조합", "무노조", "노사", "임금", "파업", "교섭",
@@ -111,46 +120,232 @@ RULES = {
     ],
 }
 
+_DOMAIN_TERMS = (
+    "반도체",
+    "배터리",
+    "이차전지",
+    "2차전지",
+    "ai",
+    "인공지능",
+    "디스플레이",
+    "oled",
+    "로봇",
+    "전력",
+    "에너지",
+    "원전",
+    "smr",
+    "ess",
+)
 
-def validate_rule_configuration(
-    candidate_labels: list[str] = CANDIDATE_LABELS,
-    rules: dict[str, list[str]] = RULES,
-    model_only_labels: frozenset[str] = MODEL_ONLY_LABELS,
-) -> None:
-    """후보 라벨과 규칙 사전의 불일치·중복을 시작 단계에서 검증한다."""
+_UNRELATED_SIGNAL_GROUPS = (
+    ("프로야구", "야구"),
+    ("축구", "농구", "배구"),
+    ("경기 결과", "연장전"),
+    ("선수", "감독"),
+    ("연예", "배우", "가수", "아이돌"),
+    ("드라마", "영화", "예능"),
+    ("날씨", "기상"),
+    ("여행", "축제", "맛집"),
+    ("요리", "레시피"),
+)
 
-    label_set = set(candidate_labels)
-    if len(label_set) != len(candidate_labels):
-        raise ValueError("candidate labels contain duplicates")
+# 기존 규칙을 임의로 늘리지 않고, 의미가 구체적인 기존 구문만 강한 근거로 분리한다.
+# 앞으로 추가하는 규칙은 development 데이터의 confirmed event_id를 근거로 남겨야 한다.
+_STRONG_KEYWORDS = frozenset({
+    "목표가",
+    "상장예비심사",
+    "투자의견",
+    "상장 첫날",
+    "공모가",
+    "증시 입성",
+    "영업이익",
+    "ai 관련주",
+    "시장 규모",
+    "시장 점유율",
+    "수요 둔화",
+    "수요 회복",
+    "데이터센터 수요",
+    "패널 가격",
+    "전력난",
+    "인플레이션 감축법",
+    "배터리 여권",
+    "ai 기본법",
+    "실증특례",
+    "전기요금",
+    "탄소규제",
+    "탄소 규제",
+    "공급망",
+    "양산",
+    "파운드리",
+    "유리기판",
+    "oled 라인",
+    "송전망",
+    "배전망",
+    "ai반도체",
+    "전고체 배터리",
+    "대규모언어모델",
+    "파운데이션 모델",
+    "온디바이스 ai",
+    "에너지밀도",
+    "스마트그리드",
+    "상용화",
+    "신제품",
+    "ai 서비스",
+    "ai 검색",
+    "충전 서비스",
+    "서비스 로봇",
+    "물류 로봇",
+    "배송 로봇",
+    "청소 로봇",
+    "관수 로봇",
+    "가사 로봇",
+    "생활 로봇",
+    "전기차 충전",
+    "투자유치",
+    "파트너십",
+    "컨소시엄",
+    "인수",
+    "합병",
+    "수주",
+    "계약",
+    "사업 확장",
+    "노동조합",
+    "단체교섭",
+    "파업",
+    "쟁의",
+    "조건 없이 대화",
+    "수출통제",
+    "수출 통제",
+    "공급망 동맹",
+    "정상회담",
+    "수출 규제",
+    "수입 규제",
+    "무역장벽",
+    "글로벌 공급망",
+})
 
-    unknown_model_only_labels = set(model_only_labels) - label_set
-    if unknown_model_only_labels:
+_TIE_PRIORITY = {
+    "금융/투자": 10,
+    "노동/노사": 20,
+    "국제/통상": 30,
+    "정책/규제": 40,
+    "생산/공급망": 50,
+    "제품/서비스": 60,
+    "기업동향": 70,
+    "시장/산업": 80,
+    "기술개발": 90,
+}
+
+_TECHNOLOGY_BIAS_OVERRIDE_LABELS = frozenset(
+    set(_LEGACY_KEYWORDS_BY_LABEL) - {"기술개발"}
+)
+
+# 새 규칙은 이 목록에 development origin과 confirmed event_id를 함께 기록한다.
+_DEVELOPMENT_RULE_TERMS: tuple[tuple[str, RuleTerm], ...] = ()
+
+
+def _build_default_rule_set() -> RuleSet:
+    unknown_development_labels = sorted({
+        label
+        for label, _ in _DEVELOPMENT_RULE_TERMS
+        if label not in _CANDIDATE_LABELS or label == _OTHER_LABEL
+    })
+    if unknown_development_labels:
         raise ValueError(
-            f"unknown model-only labels: {sorted(unknown_model_only_labels)}"
+            "development rules contain unknown or no-direct labels: "
+            f"{unknown_development_labels}"
+        )
+    if any(
+        term.origin != "development" or not term.evidence_event_ids
+        for _, term in _DEVELOPMENT_RULE_TERMS
+    ):
+        raise ValueError(
+            "new default rules require development origin and event evidence"
         )
 
-    rule_label_set = set(rules)
-    expected_rule_labels = label_set - set(model_only_labels)
-    if expected_rule_labels != rule_label_set:
-        missing = sorted(expected_rule_labels - rule_label_set)
-        unknown = sorted(rule_label_set - expected_rule_labels)
-        raise ValueError(f"rule labels mismatch: missing={missing}, unknown={unknown}")
+    normalized_strong = {
+        normalize_rule_text(keyword) for keyword in _STRONG_KEYWORDS
+    }
+    known_keywords = {
+        normalize_rule_text(keyword)
+        for keywords in _LEGACY_KEYWORDS_BY_LABEL.values()
+        for keyword in keywords
+    }
+    known_keywords.update(
+        normalize_rule_text(term.phrase)
+        for _, term in _DEVELOPMENT_RULE_TERMS
+    )
+    unknown_strong = sorted(normalized_strong - known_keywords)
+    if unknown_strong:
+        raise ValueError(f"unknown strong rule keywords: {unknown_strong}")
 
-    keyword_owners: dict[str, str] = {}
-    for label, keywords in rules.items():
-        seen_for_label: set[str] = set()
-        for keyword in keywords:
-            normalized = keyword.strip().casefold()
-            if not normalized:
-                raise ValueError(f"empty rule keyword: label={label}")
-            if normalized in seen_for_label:
-                raise ValueError(f"duplicate rule keyword: label={label}, keyword={keyword}")
-            seen_for_label.add(normalized)
+    labels: list[LabelRulePolicy] = []
+    for label in _CANDIDATE_LABELS:
+        if label == _OTHER_LABEL:
+            labels.append(LabelRulePolicy(
+                label=label,
+                terms=(),
+                tie_priority=100,
+                no_direct_rules=True,
+            ))
+            continue
 
-            previous_owner = keyword_owners.get(normalized)
-            if previous_owner is not None:
-                raise ValueError(
-                    "rule keyword belongs to multiple labels: "
-                    f"keyword={keyword}, labels={previous_owner},{label}"
-                )
-            keyword_owners[normalized] = label
+        legacy_terms = tuple(
+            RuleTerm(
+                phrase=keyword,
+                strength=(
+                    RuleStrength.STRONG
+                    if normalize_rule_text(keyword) in normalized_strong
+                    else RuleStrength.WEAK
+                ),
+            )
+            for keyword in _LEGACY_KEYWORDS_BY_LABEL[label]
+        )
+        development_terms = tuple(
+            term
+            for development_label, term in _DEVELOPMENT_RULE_TERMS
+            if development_label == label
+        )
+        terms = legacy_terms + development_terms
+        labels.append(LabelRulePolicy(
+            label=label,
+            terms=terms,
+            tie_priority=_TIE_PRIORITY[label],
+            allow_technology_bias_override=(
+                label in _TECHNOLOGY_BIAS_OVERRIDE_LABELS
+            ),
+        ))
+
+    return RuleSet(
+        version="rules-v2-weighted-longest",
+        matcher_version="nfkc-token-boundary-longest-v1",
+        labels=tuple(labels),
+        domain_terms=_DOMAIN_TERMS,
+        unrelated_signal_groups=_UNRELATED_SIGNAL_GROUPS,
+        decision=RuleDecisionPolicy(),
+        other_label=_OTHER_LABEL,
+        technology_label="기술개발",
+    )
+
+
+DEFAULT_RULE_SET = _build_default_rule_set()
+
+# 기존 공개 이름도 통합 정책을 가리키며, 실제 기준은 DEFAULT_RULE_SET 하나이다.
+CANDIDATE_LABELS = list(DEFAULT_RULE_SET.candidate_labels)
+OTHER_LABEL = DEFAULT_RULE_SET.other_label
+NO_DIRECT_RULE_LABELS = frozenset(
+    item.label for item in DEFAULT_RULE_SET.labels if item.no_direct_rules
+)
+MODEL_ONLY_LABELS = NO_DIRECT_RULE_LABELS
+RULE_KEYWORDS = {
+    item.label: [term.phrase for term in item.terms]
+    for item in DEFAULT_RULE_SET.direct_rule_labels
+}
+RULES = DEFAULT_RULE_SET
+
+
+def validate_rule_configuration(
+    rule_set: RuleSet = DEFAULT_RULE_SET,
+) -> None:
+    """통합된 라벨·키워드·가중치·보정 정책을 검증한다."""
+    validate_rule_set(rule_set)

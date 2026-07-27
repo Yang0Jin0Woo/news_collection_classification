@@ -3,7 +3,7 @@ import pytest
 from data.sample_news_cases import SAMPLE_NEWS_CASES
 from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.models import ModelPrediction
-from news_classifier.rules.default_rules import RULES
+from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 
 
 @pytest.mark.parametrize(
@@ -12,7 +12,7 @@ from news_classifier.rules.default_rules import RULES
     ids=[case["id"] for case in SAMPLE_NEWS_CASES],
 )
 def test_rule_engine_matches_expected_label(case):
-    decision = RuleEngine(RULES).decide(
+    decision = RuleEngine(DEFAULT_RULE_SET).decide(
         title=case["title"],
         description=case["description"],
         content="",
@@ -21,9 +21,12 @@ def test_rule_engine_matches_expected_label(case):
 
     assert decision.final_label == case["expected"]
     assert decision.rule_applied is True
-    assert decision.rule_match_count >= 2
+    assert decision.rule_match_count >= 1
 
 
 def test_sample_cases_cover_every_rule_label():
-    assert {case["expected"] for case in SAMPLE_NEWS_CASES} == set(RULES)
+    rule_labels = {
+        item.label for item in DEFAULT_RULE_SET.direct_rule_labels
+    }
+    assert {case["expected"] for case in SAMPLE_NEWS_CASES} == rule_labels
     assert len({case["id"] for case in SAMPLE_NEWS_CASES}) == len(SAMPLE_NEWS_CASES)

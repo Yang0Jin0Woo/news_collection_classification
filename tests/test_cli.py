@@ -18,7 +18,7 @@ from news_classifier.models import (
     PipelineStatistics,
     PipelineStatus,
 )
-from news_classifier.rules.default_rules import RULES
+from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 from news_classifier.storage.csv_store import CsvNewsStore
 from news_classifier.utils.validation import ValidationError
 
@@ -91,7 +91,7 @@ def successful_result() -> PipelineResult:
         title="AI 반도체 기술 개발",
         link="https://example.com/news",
     )
-    classified = ClassificationPostProcessor(RuleEngine(RULES)).process(
+    classified = ClassificationPostProcessor(RuleEngine(DEFAULT_RULE_SET)).process(
         item,
         ModelPrediction("기술개발", 0.90, 0.50),
     )

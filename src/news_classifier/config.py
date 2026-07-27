@@ -39,10 +39,6 @@ class AppSettings:
     ))
     request_timeout_seconds: int = 15
     max_sequence_length: int = 1200
-    base_rule_override_threshold: float = 0.55
-    min_margin_threshold: float = 0.08
-    min_rule_match_count: int = 2
-    review_needed_score_threshold: float = 0.40
     classification_batch_size: int = 4
 
     @property

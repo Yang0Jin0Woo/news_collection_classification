@@ -18,6 +18,10 @@ from news_classifier.evaluation_dataset import (
 )
 from news_classifier.models import CLASSIFICATION_INPUT_POLICY
 from news_classifier.rules.default_rules import CANDIDATE_LABELS
+from news_classifier.rules.policy import (
+    validate_development_rule_errors,
+    validate_development_rule_evidence,
+)
 from news_classifier.service import build_pipeline
 
 
@@ -48,6 +52,10 @@ def main() -> None:
     items = rows_to_items(rows)
     settings = AppSettings(confidence_calibration_path="")
     pipeline = build_pipeline(settings)
+    validate_development_rule_evidence(
+        pipeline.postprocessor.rule_engine.rule_set,
+        rows,
+    )
     predictions = pipeline.classifier.classify_many(
         [evaluation_input(item) for item in items]
     )
@@ -55,6 +63,11 @@ def main() -> None:
         raise RuntimeError("model prediction count does not match calibration cases")
     if any(prediction.label == "분류실패" for prediction in predictions):
         raise RuntimeError("model failed while generating calibration predictions")
+    validate_development_rule_errors(
+        pipeline.postprocessor.rule_engine.rule_set,
+        rows,
+        [prediction.label for prediction in predictions],
+    )
 
     samples = [
         CalibrationSample(

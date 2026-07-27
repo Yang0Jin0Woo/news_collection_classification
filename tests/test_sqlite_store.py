@@ -3,7 +3,7 @@ import sqlite3
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
 from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.models import ModelPrediction, NewsItem
-from news_classifier.rules.default_rules import RULES
+from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 from news_classifier.storage.sqlite_store import SqliteNewsStore
 
 
@@ -36,7 +36,7 @@ CREATE TABLE classified_news (
 
 
 def rule_result():
-    return ClassificationPostProcessor(RuleEngine(RULES)).process(
+    return ClassificationPostProcessor(RuleEngine(DEFAULT_RULE_SET)).process(
         NewsItem(
             keyword="AI",
             title="상장 첫날 따따블 코스모로보틱스",

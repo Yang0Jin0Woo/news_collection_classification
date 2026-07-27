@@ -1,130 +1,330 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
+import re
 
 from news_classifier.classifiers.confidence import is_ambiguous
 from news_classifier.models import ModelPrediction, RuleDecision
-from news_classifier.rules.default_rules import OTHER_LABEL
-from news_classifier.utils.text import clean_text
-
-
-DOMAIN_TERMS = (
-    "반도체", "배터리", "이차전지", "2차전지", "ai", "인공지능",
-    "디스플레이", "oled", "로봇", "전력", "에너지", "원전", "smr", "ess",
-)
-
-CONTEXT_SIGNALS: dict[str, tuple[str, ...]] = {
-    "금융/투자": (
-        "주가", "증권", "투자", "목표가", "상향", "하향", "상장", "공모",
-        "대장주", "따따블", "폭등", "급등", "강세", "실적", "영업이익",
-    ),
-    "시장/산업": (
-        "시장", "산업", "수요", "전망", "점유율", "가격", "경쟁", "성장",
-        "업황", "수급", "생태계", "전력난",
-    ),
-    "정책/규제": (
-        "정부", "정책", "규제", "법안", "지원", "보조금", "인증", "표준",
-        "요금", "제도", "관세", "수출통제", "가이드라인",
-    ),
-    "생산/공급망": (
-        "공급망", "생산", "양산", "공장", "라인", "수율", "소재", "광물",
-        "부품", "조달", "납품", "증설", "설비", "제조", "송전망", "변압기",
-    ),
-    "제품/서비스": (
-        "출시", "공개", "서비스", "개시", "도입", "운영", "탑재", "적용",
-        "앱", "api", "솔루션", "제품", "신제품", "패키지",
-    ),
-    "기업동향": (
-        "협력", "제휴", "인수", "합병", "수주", "계약", "사업", "진출",
-        "확장", "파트너십", "대표", "조직", "채용", "경쟁",
-    ),
-    "노동/노사": (
-        "노조", "노사", "임금", "파업", "교섭", "고용", "근로자", "직원",
-    ),
-    "국제/통상": (
-        "미국", "중국", "일본", "eu", "수출", "수입", "통상", "무역",
-        "제재", "관세", "협상", "해외", "글로벌",
-    ),
-}
-
-UNRELATED_SIGNAL_GROUPS = (
-    ("프로야구", "야구"),
-    ("축구", "농구", "배구"),
-    ("경기 결과", "연장전"),
-    ("선수", "감독"),
-    ("연예", "배우", "가수", "아이돌"),
-    ("드라마", "영화", "예능"),
-    ("날씨", "기상"),
-    ("여행", "축제", "맛집"),
-    ("요리", "레시피"),
+from news_classifier.rules.policy import (
+    RuleSet,
+    RuleTerm,
+    normalize_rule_text,
+    validate_rule_set,
 )
 
 
-def _contains_any(text: str, keywords: tuple[str, ...]) -> bool:
-    return any(keyword in text for keyword in keywords)
+_ASCII_WORD_CHARACTER = re.compile(r"[A-Za-z0-9]")
+_KOREAN_CHARACTER = re.compile(r"[가-힣]")
 
 
 @dataclass(frozen=True)
-class RuleEngineConfig:
-    # 모델 결과를 그대로 신뢰할 최소 점수
-    base_rule_override_threshold: float = 0.55
+class LabelRuleScore:
+    label: str
+    weighted_score: int
+    match_count: int
+    strong_match_count: int
+    matched_terms: tuple[str, ...]
 
-    # top1-top2 점수 차이를 판단하는 최소 차이
-    min_margin_threshold: float = 0.08
 
-    # 규칙 보정을 적용하기 위한 최소 키워드 매칭 수
-    min_rule_match_count: int = 2
+@dataclass(frozen=True)
+class RuleRanking:
+    ranked: tuple[LabelRuleScore, ...]
+    score_margin: int
+    tied_labels: tuple[str, ...]
 
-    # 모델이 강하게 예측해도 규칙 근거가 이 수 이상이면 규칙 보정을 허용
-    strong_rule_override_match_count: int = 2
+    @property
+    def first(self) -> LabelRuleScore:
+        return self.ranked[0]
 
-    # 검토필요로 분류할 낮은 모델 점수 기준
-    review_needed_score_threshold: float = 0.40
+    @property
+    def second(self) -> LabelRuleScore:
+        return self.ranked[1]
 
-    # 실제 개발 데이터로 보정 가능한 애매한 모델 예측 기준
-    ambiguity_score_threshold: float = 0.50
-    ambiguity_margin_threshold: float = 0.05
+    def score_for(self, label: str) -> LabelRuleScore:
+        for item in self.ranked:
+            if item.label == label:
+                return item
+        raise KeyError(label)
 
-    # 낮은 신뢰도일 때 단일 키워드만으로도 보정할 수 있는 선명한 카테고리
-    single_match_override_labels: tuple[str, ...] = (
-        "금융/투자",
-        "노동/노사",
-        "국제/통상",
-        "정책/규제",
+
+def _uses_ascii_boundaries(normalized_phrase: str) -> bool:
+    return not bool(_KOREAN_CHARACTER.search(normalized_phrase))
+
+
+def _start_is_allowed(
+    text: str,
+    match_start: int,
+    *,
+    ascii_boundaries: bool,
+) -> bool:
+    if match_start == 0:
+        return True
+    if not ascii_boundaries:
+        return True
+    return not bool(_ASCII_WORD_CHARACTER.fullmatch(text[match_start - 1]))
+
+
+def _suffix_is_allowed(
+    text: str,
+    match_end: int,
+    *,
+    ascii_boundaries: bool,
+) -> bool:
+    if not ascii_boundaries:
+        return True
+    return (
+        match_end >= len(text)
+        or not bool(_ASCII_WORD_CHARACTER.fullmatch(text[match_end]))
     )
 
-    # 기술개발로 쏠리기 쉬운 도메인에서, 명확한 비기술 신호가 있으면 보정할 라벨
-    strong_rule_override_labels: tuple[str, ...] = (
-        "금융/투자",
-        "제품/서비스",
-        "기업동향",
-        "생산/공급망",
-        "시장/산업",
-        "국제/통상",
-        "정책/규제",
-        "노동/노사",
-    )
+
+@lru_cache(maxsize=1024)
+def _phrase_pattern(normalized_phrase: str) -> re.Pattern[str]:
+    parts: list[str] = []
+    previous_character = ""
+    for character in normalized_phrase:
+        if character.isspace():
+            if not parts or parts[-1] != r"\s*":
+                parts.append(r"\s*")
+            previous_character = ""
+            continue
+        script_transition = (
+            previous_character
+            and (
+                bool(_KOREAN_CHARACTER.fullmatch(previous_character))
+                != bool(_KOREAN_CHARACTER.fullmatch(character))
+            )
+            and (
+                previous_character.isalnum()
+                and character.isalnum()
+            )
+        )
+        if script_transition and (not parts or parts[-1] != r"\s*"):
+            parts.append(r"\s*")
+        parts.append(re.escape(character))
+        previous_character = character
+    return re.compile("".join(parts))
+
+
+def _phrase_spans(text: str, phrase: str) -> tuple[tuple[int, int], ...]:
+    normalized_phrase = normalize_rule_text(phrase)
+    if not normalized_phrase:
+        return ()
+
+    spans: list[tuple[int, int]] = []
+    ascii_boundaries = _uses_ascii_boundaries(normalized_phrase)
+    for match in _phrase_pattern(normalized_phrase).finditer(text):
+        start, end = match.span()
+        if not _start_is_allowed(
+            text,
+            start,
+            ascii_boundaries=ascii_boundaries,
+        ):
+            continue
+        if not _suffix_is_allowed(
+            text,
+            end,
+            ascii_boundaries=ascii_boundaries,
+        ):
+            continue
+        spans.append((start, end))
+    return tuple(spans)
+
+
+def _has_phrase(text: str, phrase: str) -> bool:
+    return bool(_phrase_spans(text, phrase))
+
+
+def _overlaps(span: tuple[int, int], occupied: list[tuple[int, int]]) -> bool:
+    start, end = span
+    return any(start < occupied_end and end > occupied_start for occupied_start, occupied_end in occupied)
+
+
+def _term_sort_key(term: RuleTerm) -> tuple[int, int, str]:
+    normalized = normalize_rule_text(term.phrase)
+    semantic_length = sum(character.isalnum() for character in normalized)
+    return (-semantic_length, -int(term.strength), normalized)
 
 
 class RuleEngine:
-    def __init__(self, rules: dict[str, list[str]], config: RuleEngineConfig | None = None):
-        self.rules = rules
-        self.config = config or RuleEngineConfig()
+    def __init__(self, rule_set: RuleSet):
+        validate_rule_set(rule_set)
+        self.rule_set = rule_set
 
-    # 제목, 설명, 본문에서 카테고리별 키워드 매칭 점수 계산
-    def calculate_scores(self, title: str, description: str = "", content: str = "") -> dict[str, int]:
-        text = f"{clean_text(title)} {clean_text(description)} {clean_text(content)}".lower()
-        has_domain_context = _contains_any(text, DOMAIN_TERMS)
+    def _score_labels(self, text: str) -> tuple[LabelRuleScore, ...]:
+        priority = {
+            item.label: item.tie_priority
+            for item in self.rule_set.direct_rule_labels
+        }
+        occupied: list[tuple[int, int]] = []
+        matched_terms: dict[str, list[str]] = {
+            item.label: [] for item in self.rule_set.direct_rule_labels
+        }
+        weighted_scores = {
+            item.label: 0 for item in self.rule_set.direct_rule_labels
+        }
+        strong_match_counts = {
+            item.label: 0 for item in self.rule_set.direct_rule_labels
+        }
+        terms = [
+            (label_policy, term)
+            for label_policy in self.rule_set.direct_rule_labels
+            for term in label_policy.terms
+        ]
 
-        scores: dict[str, int] = {}
-        for label, keywords in self.rules.items():
-            scores[label] = sum(1 for keyword in keywords if keyword.lower() in text)
-            if has_domain_context and _contains_any(text, CONTEXT_SIGNALS.get(label, ())):
-                scores[label] += 1
+        def labeled_term_sort_key(item):
+            label_policy, term = item
+            length, strength, normalized = _term_sort_key(term)
+            return (
+                length,
+                strength,
+                priority[label_policy.label],
+                normalized,
+                label_policy.label,
+            )
 
-        return scores
+        terms.sort(key=labeled_term_sort_key)
 
-    # 모델 예측 결과와 규칙 점수를 함께 보고 최종 카테고리 결정
+        for label_policy, term in terms:
+            available_spans = [
+                span
+                for span in _phrase_spans(text, term.phrase)
+                if not _overlaps(span, occupied)
+            ]
+            if not available_spans:
+                continue
+            occupied.extend(available_spans)
+            matched_terms[label_policy.label].append(term.phrase)
+            weighted_scores[label_policy.label] += int(term.strength)
+            if int(term.strength) > 1:
+                strong_match_counts[label_policy.label] += 1
+
+        return tuple(
+            LabelRuleScore(
+                label=item.label,
+                weighted_score=weighted_scores[item.label],
+                match_count=len(matched_terms[item.label]),
+                strong_match_count=strong_match_counts[item.label],
+                matched_terms=tuple(matched_terms[item.label]),
+            )
+            for item in self.rule_set.direct_rule_labels
+        )
+
+    def rank_rules(
+        self,
+        title: str,
+        description: str = "",
+        content: str = "",
+    ) -> RuleRanking:
+        text = normalize_rule_text(f"{title} {description} {content}")
+        priority = {
+            item.label: item.tie_priority
+            for item in self.rule_set.direct_rule_labels
+        }
+        scores = self._score_labels(text)
+        ranked = tuple(sorted(
+            scores,
+            key=lambda item: (
+                -item.weighted_score,
+                priority[item.label],
+                item.label,
+            ),
+        ))
+        if len(ranked) < 2:
+            raise ValueError("at least two direct rule labels are required")
+
+        first_score = ranked[0].weighted_score
+        tied_labels = tuple(
+            item.label for item in ranked if item.weighted_score == first_score
+        )
+        return RuleRanking(
+            ranked=ranked,
+            score_margin=first_score - ranked[1].weighted_score,
+            tied_labels=tied_labels,
+        )
+
+    def calculate_scores(
+        self,
+        title: str,
+        description: str = "",
+        content: str = "",
+    ) -> dict[str, int]:
+        ranking = self.rank_rules(title, description, content)
+        return {
+            item.label: item.weighted_score
+            for item in sorted(
+                ranking.ranked,
+                key=lambda score: self.rule_set.candidate_labels.index(score.label),
+            )
+        }
+
+    def _unrelated_signal_count(
+        self,
+        title: str,
+        description: str,
+        content: str,
+    ) -> int:
+        text = normalize_rule_text(f"{title} {description} {content}")
+        has_domain_context = any(
+            _has_phrase(text, term) for term in self.rule_set.domain_terms
+        )
+        if has_domain_context:
+            return 0
+        return sum(
+            any(_has_phrase(text, term) for term in group)
+            for group in self.rule_set.unrelated_signal_groups
+        )
+
+    def rule_only_decision(
+        self,
+        title: str,
+        description: str = "",
+        content: str = "",
+    ) -> str:
+        unrelated_count = self._unrelated_signal_count(
+            title,
+            description,
+            content,
+        )
+        if unrelated_count >= 2:
+            return self.rule_set.other_label
+
+        ranking = self.rank_rules(title, description, content)
+        decision = self.rule_set.decision
+        if (
+            ranking.first.weighted_score >= decision.min_rule_score
+            and ranking.score_margin >= decision.min_rule_score_margin
+        ):
+            return ranking.first.label
+        return "검토필요"
+
+    @staticmethod
+    def _rule_reason(prefix: str, ranking: RuleRanking) -> str:
+        first = ranking.first
+        terms = ", ".join(first.matched_terms[:3])
+        return (
+            f"{prefix}: {first.label} 규칙 점수 {first.weighted_score}, "
+            f"근거 {first.match_count}개, 2위 대비 +{ranking.score_margin}"
+            + (f" ({terms})" if terms else "")
+        )
+
+    @staticmethod
+    def _decision(
+        *,
+        final_label: str,
+        rule_applied: bool,
+        rule_reason: str,
+        ranking: RuleRanking,
+    ) -> RuleDecision:
+        return RuleDecision(
+            final_label=final_label,
+            rule_applied=rule_applied,
+            rule_reason=rule_reason,
+            rule_best_label=ranking.first.label,
+            rule_match_count=ranking.first.match_count,
+        )
+
     def decide(
         self,
         title: str,
@@ -132,124 +332,100 @@ class RuleEngine:
         content: str,
         prediction: ModelPrediction,
     ) -> RuleDecision:
-        normalized_text = (
-            f"{clean_text(title)} {clean_text(description)} "
-            f"{clean_text(content)}"
-        ).lower()
-        domain_matches = sum(
-            term in normalized_text for term in DOMAIN_TERMS
+        unrelated_count = self._unrelated_signal_count(
+            title,
+            description,
+            content,
         )
-        unrelated_matches = sum(
-            _contains_any(normalized_text, group)
-            for group in UNRELATED_SIGNAL_GROUPS
-        )
-        if domain_matches == 0 and unrelated_matches >= 2:
+        if unrelated_count >= 2:
             return RuleDecision(
-                final_label=OTHER_LABEL,
+                final_label=self.rule_set.other_label,
                 rule_applied=True,
                 rule_reason=(
-                    f"비관련 문맥 {unrelated_matches}개 매칭, "
+                    f"비관련 문맥 {unrelated_count}개 매칭, "
                     "기술 도메인 근거 없음"
                 ),
-                rule_best_label=OTHER_LABEL,
-                rule_match_count=unrelated_matches,
+                rule_best_label=self.rule_set.other_label,
+                rule_match_count=unrelated_count,
             )
 
-        label_scores = self.calculate_scores(title, description, content)
-
-        # 가장 많이 매칭된 규칙 카테고리 선택. 동점이면 금융/노사/통상/정책처럼 신호가 선명한 라벨을 우선한다.
-        best_rule_label = (
-            max(
-                label_scores,
-                key=lambda label: (
-                    label_scores[label],
-                    label in self.config.single_match_override_labels,
-                ),
-            )
-            if label_scores
-            else prediction.label
+        ranking = self.rank_rules(title, description, content)
+        decision = self.rule_set.decision
+        first_policy = self.rule_set.label_policy(ranking.first.label)
+        model_confident = (
+            prediction.score >= decision.model_keep_score
+            and prediction.margin >= decision.model_keep_margin
         )
-        best_rule_score = label_scores.get(best_rule_label, 0)
         ambiguous = is_ambiguous(
             prediction.score,
             prediction.margin,
-            min_score=self.config.ambiguity_score_threshold,
-            min_margin=self.config.ambiguity_margin_threshold,
+            min_score=decision.ambiguity_score,
+            min_margin=decision.ambiguity_margin,
+        )
+        clear_rule = (
+            ranking.first.weighted_score >= decision.min_rule_score
+            and ranking.score_margin >= decision.min_rule_score_margin
+        )
+        strong_override = (
+            ranking.first.weighted_score >= decision.strong_override_score
+            and ranking.score_margin >= decision.strong_override_margin
+            and ranking.first.strong_match_count >= 1
         )
 
-        # 로봇/AI처럼 모델이 기술개발로 과하게 쏠릴 때, 명확한 비기술 규칙 근거가 있으면 보정
-        if (
-            prediction.label == "기술개발"
-            and best_rule_label != prediction.label
-            and best_rule_label in self.config.strong_rule_override_labels
-            and best_rule_score >= self.config.strong_rule_override_match_count
-        ):
-            return RuleDecision(
-                final_label=best_rule_label,
-                rule_applied=True,
-                rule_reason=f"기술개발 편향 보정: {best_rule_label} 키워드 {best_rule_score}개 매칭",
-                rule_best_label=best_rule_label,
-                rule_match_count=best_rule_score,
-            )
-
-        # 모델 점수와 차이가 충분하면 모델 결과 유지
-        if (
-            prediction.score >= self.config.base_rule_override_threshold
-            and prediction.margin >= self.config.min_margin_threshold
-        ):
-            return RuleDecision(
+        if model_confident:
+            if (
+                prediction.label == self.rule_set.technology_label
+                and ranking.first.label != prediction.label
+                and first_policy.allow_technology_bias_override
+                and strong_override
+            ):
+                return self._decision(
+                    final_label=ranking.first.label,
+                    rule_applied=True,
+                    rule_reason=self._rule_reason(
+                        "기술개발 편향 보정",
+                        ranking,
+                    ),
+                    ranking=ranking,
+                )
+            return self._decision(
                 final_label=prediction.label,
                 rule_applied=False,
                 rule_reason="",
-                rule_best_label=best_rule_label,
-                rule_match_count=best_rule_score,
+                ranking=ranking,
             )
 
-        # 규칙 키워드 근거가 충분하면 규칙 기반 카테고리로 보정
-        if best_rule_score >= self.config.min_rule_match_count:
-            return RuleDecision(
-                final_label=best_rule_label,
+        if clear_rule:
+            return self._decision(
+                final_label=ranking.first.label,
                 rule_applied=True,
-                rule_reason=f"{best_rule_label} 키워드 {best_rule_score}개 매칭",
-                rule_best_label=best_rule_label,
-                rule_match_count=best_rule_score,
+                rule_reason=self._rule_reason("규칙 보정", ranking),
+                ranking=ranking,
             )
 
-        # 낮은 신뢰도 기사에서 금융/노사/통상/정책처럼 신호가 분명한 키워드는 더 적극 반영
         if (
-            ambiguous
-            and best_rule_label in self.config.single_match_override_labels
-            and best_rule_score >= 1
+            prediction.score < decision.review_model_score
+            or ambiguous
         ):
-            return RuleDecision(
-                final_label=best_rule_label,
-                rule_applied=True,
-                rule_reason=f"낮은 신뢰도에서 {best_rule_label} 키워드 {best_rule_score}개 매칭",
-                rule_best_label=best_rule_label,
-                rule_match_count=best_rule_score,
+            reason = (
+                "모델과 규칙 근거가 모두 불충분"
+                if ranking.first.weighted_score == 0
+                else (
+                    f"규칙 1·2위 점수 차이 부족 "
+                    f"({ranking.first.weighted_score} 대 "
+                    f"{ranking.second.weighted_score})"
+                )
             )
-
-        # 모델 점수도 낮고 규칙 근거도 없으면 검토필요 처리
-        if (
-            best_rule_score == 0
-            and (
-                prediction.score < self.config.review_needed_score_threshold
-                or ambiguous
-            )
-        ):
-            return RuleDecision(
+            return self._decision(
                 final_label="검토필요",
                 rule_applied=False,
-                rule_reason="모델 점수 낮고 규칙 근거 없음",
-                rule_best_label=best_rule_label,
-                rule_match_count=best_rule_score,
+                rule_reason=reason,
+                ranking=ranking,
             )
 
-        # 그 외에는 모델 예측 결과 유지
-        return RuleDecision(
+        return self._decision(
             final_label=prediction.label,
             rule_applied=False,
             rule_reason="",
-            rule_best_label=best_rule_label,
-            rule_match_count=best_rule_score,
+            ranking=ranking,
         )

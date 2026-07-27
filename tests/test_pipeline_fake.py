@@ -6,7 +6,7 @@ from news_classifier.dedup.title_deduplicator import TitleSourceDeduplicator
 from news_classifier.models import ModelPrediction, NewsItem
 from news_classifier.models import PipelineStatus
 from news_classifier.pipeline import NewsPipeline
-from news_classifier.rules.default_rules import RULES
+from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 
 
 class FakeCollector(NewsCollector):
@@ -49,7 +49,7 @@ def test_pipeline_runs_with_fake_dependencies():
     pipeline = NewsPipeline(
         collector=FakeCollector(),
         classifier=FakeClassifier(),
-        postprocessor=ClassificationPostProcessor(RuleEngine(RULES)),
+        postprocessor=ClassificationPostProcessor(RuleEngine(DEFAULT_RULE_SET)),
         deduplicator=TitleSourceDeduplicator(),
     )
     result = pipeline.run("AI", limit=10)
@@ -67,7 +67,7 @@ def test_pipeline_uses_batch_classifier_and_prints_progress(capsys):
     pipeline = NewsPipeline(
         collector=ThreeItemCollector(),
         classifier=classifier,
-        postprocessor=ClassificationPostProcessor(RuleEngine(RULES)),
+        postprocessor=ClassificationPostProcessor(RuleEngine(DEFAULT_RULE_SET)),
         deduplicator=TitleSourceDeduplicator(),
     )
 

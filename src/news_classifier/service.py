@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from news_classifier.classifiers.confidence import load_confidence_thresholds
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
-from news_classifier.classifiers.rule_engine import RuleEngine, RuleEngineConfig
+from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.classifiers.zero_shot_classifier import (
     HYPOTHESIS_TEMPLATE,
     ZeroShotNewsClassifier,
@@ -15,7 +15,7 @@ from news_classifier.models import CLASSIFICATION_INPUT_POLICY
 from news_classifier.pipeline import NewsPipeline
 from news_classifier.rules.default_rules import (
     CANDIDATE_LABELS,
-    RULES,
+    DEFAULT_RULE_SET,
     validate_rule_configuration,
 )
 from news_classifier.utils.http import HttpClient
@@ -23,7 +23,7 @@ from news_classifier.utils.http import HttpClient
 
 def build_pipeline(settings: AppSettings | None = None) -> NewsPipeline:
     settings = settings or AppSettings()
-    validate_rule_configuration()
+    validate_rule_configuration(DEFAULT_RULE_SET)
     confidence_thresholds = load_confidence_thresholds(
         settings.confidence_calibration_path,
         expected_model_name=settings.classification_model,
@@ -42,15 +42,7 @@ def build_pipeline(settings: AppSettings | None = None) -> NewsPipeline:
         max_sequence_length=settings.max_sequence_length,
         batch_size=settings.classification_batch_size,
     )
-    rule_engine = RuleEngine(
-        RULES,
-        RuleEngineConfig(
-            base_rule_override_threshold=settings.base_rule_override_threshold,
-            min_margin_threshold=settings.min_margin_threshold,
-            min_rule_match_count=settings.min_rule_match_count,
-            review_needed_score_threshold=settings.review_needed_score_threshold,
-        ),
-    )
+    rule_engine = RuleEngine(DEFAULT_RULE_SET)
     postprocessor = ClassificationPostProcessor(
         rule_engine,
         confidence_thresholds=confidence_thresholds,
