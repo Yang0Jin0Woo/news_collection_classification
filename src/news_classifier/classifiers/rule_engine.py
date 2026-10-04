@@ -151,6 +151,35 @@ class RuleEngine:
     def __init__(self, rule_set: RuleSet):
         validate_rule_set(rule_set)
         self.rule_set = rule_set
+        self._development_phrases = {
+            policy.label: {
+                normalize_rule_text(term.phrase)
+                for term in policy.terms
+                if term.origin == "development"
+            }
+            for policy in rule_set.labels
+        }
+
+    def _development_conflict_labels(self, ranking: RuleRanking) -> tuple[str, ...]:
+        """새 규칙이 실제 기여한 경우 서로 다른 강한 사건 근거의 충돌 확인."""
+        strong_labels = tuple(
+            score.label for score in ranking.ranked if score.strong_match_count
+        )
+        if len(strong_labels) < 2:
+            return ()
+        development_contributed = any(
+            normalize_rule_text(phrase) in self._development_phrases[score.label]
+            for score in ranking.ranked
+            for phrase in score.matched_terms
+        )
+        return strong_labels if development_contributed else ()
+
+    @staticmethod
+    def _conflict_reason(labels: tuple[str, ...]) -> str:
+        return (
+            f"주제 근거 충돌: {', '.join(labels)}에 강한 근거 동시 확인, "
+            "신규 규칙 자동 보정 보류"
+        )
 
     def _score_labels(self, text: str) -> tuple[LabelRuleScore, ...]:
         priority = {
@@ -292,6 +321,8 @@ class RuleEngine:
             return self.rule_set.other_label
 
         ranking = self.rank_rules(title, description, content)
+        if self._development_conflict_labels(ranking):
+            return "검토필요"
         decision = self.rule_set.decision
         if (
             ranking.first.weighted_score >= decision.min_rule_score
@@ -368,6 +399,7 @@ class RuleEngine:
             )
 
         ranking = self.rank_rules(title, description, content)
+        conflict_labels = self._development_conflict_labels(ranking)
         decision = self.rule_set.decision
         first_policy = self.rule_set.label_policy(ranking.first.label)
         model_confident = (
@@ -388,6 +420,7 @@ class RuleEngine:
             ranking.first.weighted_score >= decision.strong_override_score
             and ranking.score_margin >= decision.strong_override_margin
             and ranking.first.strong_match_count >= 1
+            and not conflict_labels
         )
 
         if model_confident:
@@ -410,6 +443,14 @@ class RuleEngine:
                 final_label=prediction.label,
                 rule_applied=False,
                 rule_reason="",
+                ranking=ranking,
+            )
+
+        if conflict_labels:
+            return self._decision(
+                final_label="검토필요",
+                rule_applied=False,
+                rule_reason=self._conflict_reason(conflict_labels),
                 ranking=ranking,
             )
 

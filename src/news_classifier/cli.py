@@ -52,9 +52,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     collect.add_argument("--enrich-content", action="store_true")  # 기사 본문 보강 여부
     collect.add_argument(
+        "--no-review-enrichment", action="store_true",
+        help="Disable automatic content enrichment and one retry for review articles",
+    )
+    collect.add_argument(
         "--confidence-profile",
         default=None,
         help="Use confidence thresholds calibrated on development data",
+    )
+    collect.add_argument(
+        "--decision-profile", default=None,
+        help="Use final decision thresholds validated on independent reviewed news",
     )
 
     sub.add_parser("dashboard", help="Open the Streamlit dashboard")
@@ -109,6 +117,10 @@ def run_cli(argv: list[str] | None = None) -> int:
                 settings,
                 confidence_calibration_path=args.confidence_profile,
             )
+        if args.decision_profile is not None:
+            settings = replace(settings, decision_calibration_path=args.decision_profile)
+        if args.no_review_enrichment:
+            settings = replace(settings, review_enrichment_enabled=False)
         try:
             pipeline = build_pipeline(settings)
         except (OSError, ValueError) as exc:

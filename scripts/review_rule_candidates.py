@@ -6,65 +6,51 @@ import csv
 import json
 from pathlib import Path
 
-from news_classifier.classifiers.rule_engine import _has_phrase
 from news_classifier.evaluation_dataset import dataset_sha256
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
+from news_classifier.rules.event_candidates import (
+    CANDIDATE_PHRASES,
+    EVENT_CANDIDATE_POLICY,
+    HUMAN_REVIEW_CHECKLIST,
+    article_review_records,
+    audit_candidate as _audit_candidate,
+)
 from news_classifier.rules.policy import normalize_rule_text
 
 
-# 수집 기사에서 확인할 구체적인 표현 후보. 정답 라벨이나 확정된 새 규칙이 아님.
-# 기타/무관은 직접 키워드 규칙을 추가하지 않는 기존 구조 유지.
-CANDIDATE_PHRASES = {
-    "기술개발": ("특허 출원", "예측 모델"),
-    "제품/서비스": ("렌탈 서비스", "서비스 시작"),
-    "기업동향": ("지원 협약", "인수 추진"),
-    "생산/공급망": ("양산 돌입", "생산시설 증설"),
-    "정책/규제": ("국회 통과", "윤리기준"),
-    "금융/투자": ("공모주 청약", "공모가"),
-    "시장/산업": ("시장 전망", "시장 규모"),
-    "노동/노사": ("취업박람회", "공개 채용", "신입채용"),
-    "국제/통상": ("통상 협상", "무역협정"),
-}
+def audit_candidate(phrase, label, rows, rule_set=DEFAULT_RULE_SET, *, candidate_phrases=None):
+    return _audit_candidate(
+        phrase, label, rows, rule_set, candidate_phrases=candidate_phrases,
+    )
 
 
-def audit_candidate(phrase, label, rows, rule_set=DEFAULT_RULE_SET):
-    if label not in rule_set.candidate_labels or rule_set.label_policy(label).no_direct_rules:
-        raise ValueError("candidate must use an existing direct-rule category")
-    normalized = normalize_rule_text(phrase)
-    if not normalized:
-        raise ValueError("candidate phrase must not be empty")
-    alias = normalized.replace(" ", "")
-    existing = []
-    overlaps = []
-    for policy in rule_set.direct_rule_labels:
-        for term in policy.terms:
-            term_text = normalize_rule_text(term.phrase)
-            if term_text.replace(" ", "") == alias:
-                existing.append({"category": policy.label, "phrase": term.phrase})
-            elif _has_phrase(normalized, term_text) or _has_phrase(term_text, normalized):
-                overlaps.append({"category": policy.label, "phrase": term.phrase})
-    matches = [
-        {"id": row["id"], "event_id": row.get("event_id", ""),
-         "title": row["title"], "link": row.get("link", "")}
-        for row in rows
-        if _has_phrase(normalize_rule_text(f"{row['title']} {row.get('description', '')}"), phrase)
-    ]
-    return {
-        "phrase": phrase,
-        "proposed_category": label,
-        "status": "existing_or_conflicting_rule" if existing else "pending_human_review",
-        "existing_aliases": existing,
-        "overlapping_rules": overlaps,
-        "matching_article_count": len(matches),
-        "matches": matches,
-        "human_confirmation_required": True,
-    }
+def parse_candidate(value):
+    label, separator, phrase = value.partition(":")
+    label, phrase = label.strip(), phrase.strip()
+    if (
+        not separator
+        or label not in DEFAULT_RULE_SET.candidate_labels
+        or label == DEFAULT_RULE_SET.other_label
+        or not normalize_rule_text(phrase)
+    ):
+        raise argparse.ArgumentTypeError(
+            "--candidate는 '카테고리:표현' 형식이며 기타/무관은 사용할 수 없습니다"
+        )
+    return label, phrase
 
 
 def main():
-    parser = argparse.ArgumentParser(description="규칙 후보의 중복과 출현 기사 점검")
-    parser.add_argument("--dataset", required=True)
-    parser.add_argument("--output", required=True)
+    parser = argparse.ArgumentParser(
+        description="16개 일반 뉴스 주제의 국문/영문 사건 표현 후보 감사. 정답 확정 및 규칙 자동 적용 없음",
+        epilog="후보 감사 → 원문과 독립 사건 확인 → development 정답/기존 오류 확인 → 별도 evaluation 검증 후 활성화",
+    )
+    parser.add_argument("--dataset", required=True, help="development 또는 미지정 기사 후보 CSV. evaluation 사용 금지")
+    parser.add_argument("--output", required=True, help="새 감사 JSON 경로. 원본 CSV 및 기존 JSON 덮어쓰기 금지")
+    parser.add_argument(
+        "--candidate", action="append", type=parse_candidate, default=[],
+        metavar="CATEGORY:PHRASE",
+        help="검토할 표현을 명시(반복 가능). 지정하면 기본 후보 대신 이 표현만 감사",
+    )
     args = parser.parse_args()
     dataset = Path(args.dataset)
     output = Path(args.output)
@@ -74,23 +60,51 @@ def main():
         rows = list(csv.DictReader(file))
     if not rows:
         parser.error("기사 후보가 없는 데이터")
-    if any(row.get("split", "").strip() == "evaluation" for row in rows):
-        parser.error("평가용 기사로 규칙 후보를 선정할 수 없음")
+    selected = args.candidate or [
+        (label, phrase)
+        for label, phrases in CANDIDATE_PHRASES.items()
+        for phrase in phrases
+    ]
+    catalog = {label: list(phrases) for label, phrases in CANDIDATE_PHRASES.items()}
+    for label, phrase in selected:
+        if phrase not in catalog.setdefault(label, []):
+            catalog[label].append(phrase)
+    try:
+        candidates = [
+            audit_candidate(phrase, label, rows, candidate_phrases=catalog)
+            for label, phrase in selected
+        ]
+    except ValueError as exc:
+        parser.error(str(exc))
     payload = {
+        "schema_version": 2,
+        "candidate_policy": EVENT_CANDIDATE_POLICY,
         "dataset": str(dataset),
         "dataset_sha256": dataset_sha256(dataset),
+        "query_independent": True,
+        "source_modified": False,
+        "automatic_activation": False,
+        "covered_categories": list(CANDIDATE_PHRASES),
+        "model_only_categories": [DEFAULT_RULE_SET.other_label],
+        "minimum_independent_development_events": DEFAULT_RULE_SET.minimum_development_evidence_events,
+        "human_review_checklist": list(HUMAN_REVIEW_CHECKLIST),
+        "source_keywords": sorted({row.get("keyword", "").strip() for row in rows if row.get("keyword", "").strip()}),
+        "source_scope_note": "이 보고서는 입력 CSV에 저장된 검색어/기사 범위만 감사하며 모든 검색어에서의 성능을 검증한 결과가 아님",
+        "articles_for_human_confirmation": article_review_records(rows),
         "note": (
             "주제와 표현은 제안이며 정답 아님. 같은 사건의 다른 제목을 사람이 묶은 뒤 "
-            "development 정답과 모델 오류 확인 필요. evaluation 기사는 후보 선정에 사용 금지."
+            "development 정답과 기존 최종 판단의 오류/검토 확인 필요. evaluation 기사는 후보 선정에 사용 금지. "
+            "제목/설명/본문의 표현 출현은 주제 정답의 증거가 아니며 자동 기사 ID는 독립 사건 ID가 아님."
         ),
-        "candidates": [
-            audit_candidate(phrase, label, rows)
-            for label, phrases in CANDIDATE_PHRASES.items()
-            for phrase in phrases
-        ],
+        "candidates": candidates,
     }
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    # exists() 확인 후에도 다른 작업이 만들었으면 보존하는 배타적 생성.
+    try:
+        with output.open("x", encoding="utf-8") as file:
+            json.dump(payload, file, ensure_ascii=False, indent=2)
+    except FileExistsError:
+        parser.error("기존 결과 보존: 새 --output 경로 지정 필요")
     print(f"규칙 후보 점검 저장: {output}")
 
 

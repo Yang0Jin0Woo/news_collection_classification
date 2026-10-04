@@ -37,6 +37,10 @@ class AppSettings:
     confidence_calibration_path: str = field(default_factory=lambda: os.getenv(
         "NEWS_CONFIDENCE_CALIBRATION", ""
     ))
+    decision_calibration_path: str = field(default_factory=lambda: os.getenv(
+        "NEWS_DECISION_CALIBRATION", ""
+    ))
+    review_enrichment_enabled: bool = True
     request_timeout_seconds: int = 15
     max_sequence_length: int = 1200
     classification_batch_size: int = 4

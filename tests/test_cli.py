@@ -31,6 +31,19 @@ def test_collect_keyword_is_optional():
     assert args.keyword is None
 
 
+def test_collect_review_enrichment_and_decision_profile_options():
+    parser = build_parser()
+    default = parser.parse_args(["collect", "--keyword", "공통"])
+    assert not default.no_review_enrichment
+    assert default.decision_profile is None
+    explicit = parser.parse_args([
+        "collect", "--keyword", "공통", "--no-review-enrichment",
+        "--decision-profile", "validated.json",
+    ])
+    assert explicit.no_review_enrichment
+    assert explicit.decision_profile == "validated.json"
+
+
 @pytest.mark.parametrize("limit", ["0", "101", "not-a-number"])
 def test_collect_rejects_invalid_limit(limit):
     parser = build_parser()
@@ -253,6 +266,59 @@ def test_cli_dashboard_uses_streamlit_launcher(monkeypatch):
     )
 
     assert run_cli(["dashboard"]) == 7
+
+
+def test_cli_passes_policy_options_through_settings(monkeypatch, tmp_path):
+    captured = {}
+
+    def build(settings):
+        captured["settings"] = settings
+        return StubPipeline(successful_result())
+
+    monkeypatch.setattr("news_classifier.service.build_pipeline", build)
+    assert run_cli([
+        "collect", "--keyword", "새 검색어", "--csv", str(tmp_path / "out.csv"),
+        "--no-review-enrichment", "--decision-profile", "validated.json",
+    ]) == 0
+    assert captured["settings"].review_enrichment_enabled is False
+    assert captured["settings"].decision_calibration_path == "validated.json"
+
+
+def test_cli_does_not_replace_previous_csv_after_reclassification_failure(monkeypatch, tmp_path):
+    path = tmp_path / "previous.csv"
+    CsvNewsStore(str(path)).save(successful_result().results)
+    previous_bytes = path.read_bytes()
+    failed = PipelineResult(
+        status=PipelineStatus.MODEL_ERROR,
+        errors=[PipelineError("RECLASSIFICATION", "MODEL_PREDICTION_FAILURE", "재판단 실패")],
+    )
+    monkeypatch.setattr("news_classifier.service.build_pipeline", lambda settings: StubPipeline(failed))
+    assert run_cli(["collect", "--keyword", "공통", "--csv", str(path)]) == 1
+    assert path.read_bytes() == previous_bytes
+
+
+def test_service_connects_loaded_decision_policy_and_input_scope(monkeypatch):
+    from dataclasses import replace
+    from news_classifier.config import AppSettings
+    from news_classifier.service import build_pipeline
+
+    selected = replace(DEFAULT_RULE_SET.decision, ambiguity_score=.4, ambiguity_margin=.01)
+    captured = {}
+
+    def load(path, **bindings):
+        captured.update(bindings)
+        assert path == "validated.json"
+        return SimpleNamespace(policy=selected, input_mode="with_body")
+
+    monkeypatch.setattr("news_classifier.service.load_decision_profile", load)
+    pipeline = build_pipeline(AppSettings(
+        confidence_calibration_path="", decision_calibration_path="validated.json",
+    ))
+    assert captured["base_rule_set"] == DEFAULT_RULE_SET
+    assert pipeline.postprocessor.rule_engine.rule_set.decision == selected
+    assert pipeline.postprocessor.baseline_rule_engine.rule_set == DEFAULT_RULE_SET
+    assert pipeline.postprocessor.decision_input_mode == "with_body"
+    assert pipeline.review_enrichment_enabled
 
 
 def test_dashboard_launcher_runs_streamlit_module(monkeypatch):

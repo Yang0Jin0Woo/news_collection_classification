@@ -1,0 +1,3152 @@
+{
+  "schema_version": 2,
+  "candidate_policy": "general-event-candidates-v1-human-review",
+  "dataset": "news_analysis_results.csv",
+  "dataset_sha256": "5f202f7452a2f48fd34ba1625186b46ffe9736222274cfdada059c2e59855480",
+  "query_independent": true,
+  "source_modified": false,
+  "automatic_activation": false,
+  "covered_categories": [
+    "기술개발",
+    "제품/서비스",
+    "기업동향",
+    "생산/공급망",
+    "정책/규제",
+    "금융/투자",
+    "시장/산업",
+    "노동/노사",
+    "국제/통상",
+    "교육/취업",
+    "사회",
+    "정치",
+    "문화/연예",
+    "스포츠",
+    "건강/의료",
+    "생활/환경"
+  ],
+  "model_only_categories": [
+    "기타/무관"
+  ],
+  "minimum_independent_development_events": 2,
+  "human_review_checklist": [
+    "후보 표현은 정답 라벨이 아님. 기사 주요 사건을 읽고 gold_label을 직접 확인",
+    "동일 사건의 유사 기사는 같은 event_id로 묶고 서로 다른 사건 여부를 직접 확인",
+    "review_status=confirmed, reviewed_by, split=development를 확인",
+    "기존 판정이 틀렸거나 검토필요였던 서로 다른 사건의 확인된 근거 확보",
+    "기존 점수 규칙과 문맥 전용 표현의 중복 및 다른 주제와의 충돌 확인",
+    "취소, 부인, 비교 문맥에서 표현이 실제 주요 사건을 나타내는지 확인",
+    "규칙 선정에 쓰지 않은 evaluation 사건과 검색어로 오분류 및 검토 비율 비교"
+  ],
+  "source_keywords": [
+    "openai"
+  ],
+  "source_scope_note": "이 보고서는 입력 CSV에 저장된 검색어/기사 범위만 감사하며 모든 검색어에서의 성능을 검증한 결과가 아님",
+  "articles_for_human_confirmation": [
+    {
+      "article_id": "article-80a28ed5d15675d4",
+      "article_id_basis": "stable_article_reference_not_event",
+      "keyword": "openai",
+      "source": "Investing.com 한국어",
+      "title": "메타의 Muse, OpenAI의 Dots와 비교하면?",
+      "description": "",
+      "content": "",
+      "content_available": false,
+      "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTFAxVEFQcWJ5X1BhNElncTR0LWdiN2VCYVBoV2I3UTlmT0tmVHc3WDZUZXo2ZTdyTnVCMVU0X05XdFZwSG1FaVVBSjgybGpGXzNkNTJmWVR6NmdoQTlJSzk2bEE2SXl6UHBSNEZuZkhINGs?oc=5",
+      "provided_human_metadata": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "",
+        "reviewed_by": ""
+      },
+      "human_confirmation": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "pending",
+        "reviewed_by": "",
+        "independent_event_check": "",
+        "notes": ""
+      },
+      "stored_prediction_not_gold": {
+        "model_category": "노동/노사",
+        "final_category": "검토필요",
+        "rule_reason": "근거 없음: 일치하는 규칙 키워드 없음, 모델 판단 불확실"
+      }
+    },
+    {
+      "article_id": "article-b72ff3aa8b5373e3",
+      "article_id_basis": "stable_article_reference_not_event",
+      "keyword": "openai",
+      "source": "TradingKey",
+      "title": "OpenAI IPO에 대해 알아야 할 핵심 정보",
+      "description": "",
+      "content": "",
+      "content_available": false,
+      "link": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxNMXFoSjFPcUg2YzgyM2NQcG9QVi1kZ1UxVk03Ti1yaktpVzRoRTZ4aGtnVmRTQ3B2SlhkOTE2LTF6cUZxQjdTenpLZmszbXdueDJBU29odVNPRUh3cmM3V1BkTURWTG1mUVlWRmdpTURfcmJ0dUFQWGRKWjRaaWdrcXJrenJ3SV9ENDAwc2k4X0Z4WXpfUFRFejZtT2tBR0haVWpYdTBZMUg?oc=5",
+      "provided_human_metadata": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "",
+        "reviewed_by": ""
+      },
+      "human_confirmation": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "pending",
+        "reviewed_by": "",
+        "independent_event_check": "",
+        "notes": ""
+      },
+      "stored_prediction_not_gold": {
+        "model_category": "정책/규제",
+        "final_category": "검토필요",
+        "rule_reason": "규칙 점수 부족: 최고 1점, 최소 2점 필요, 모델 판단 불확실"
+      }
+    },
+    {
+      "article_id": "article-6494246f3a309f36",
+      "article_id_basis": "stable_article_reference_not_event",
+      "keyword": "openai",
+      "source": "OpenAI",
+      "title": "GPT-6 Sol과 Luna 소개",
+      "description": "",
+      "content": "",
+      "content_available": false,
+      "link": "https://news.google.com/rss/articles/CBMib0FVX3lxTE5sMTV3RUNMb1VZMzJGT0ZQaFhSbUVCR2lXTWZFSnoxbUJCZHp2LTBPUEJ0UkNwM0hUbkZWSnFQM0FGbnZEX3lyeHZ2RFVUeXRwX3pYRk9nalZoYXZzaFd3NW1GZkE5Yi1CTnNCS2M3cw?oc=5",
+      "provided_human_metadata": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "",
+        "reviewed_by": ""
+      },
+      "human_confirmation": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "pending",
+        "reviewed_by": "",
+        "independent_event_check": "",
+        "notes": ""
+      },
+      "stored_prediction_not_gold": {
+        "model_category": "제품/서비스",
+        "final_category": "검토필요",
+        "rule_reason": "근거 없음: 일치하는 규칙 키워드 없음, 모델 판단 불확실"
+      }
+    },
+    {
+      "article_id": "article-a1a4fd323768bd54",
+      "article_id_basis": "stable_article_reference_not_event",
+      "keyword": "openai",
+      "source": "vietnam.vn",
+      "title": "OpenAI는 ChatGPT에 이어 Dots를 항상 켜져 있는 \"AI 동료\"로 만들고자 합니다.",
+      "description": "",
+      "content": "",
+      "content_available": false,
+      "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOZEhhM3d4UmM0eU1uWkZNNXBCb0diSmllYlduNFNLRHlHcmxhMHJvdE9pNVFzOGpSUXZvV2pRRGR6V3FMdkZJTEFGMjJwTldtb0E3T0N2QUxqU3NObmZXdjFqLU0yZmFFNnJlemd2VlhyVlEtVUJuM2RjSGhUQmFhUU9ELW1DY0Z4enRFYVpmRlZPOTlqSVFCXy1R?oc=5",
+      "provided_human_metadata": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "",
+        "reviewed_by": ""
+      },
+      "human_confirmation": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "pending",
+        "reviewed_by": "",
+        "independent_event_check": "",
+        "notes": ""
+      },
+      "stored_prediction_not_gold": {
+        "model_category": "정책/규제",
+        "final_category": "검토필요",
+        "rule_reason": "근거 없음: 일치하는 규칙 키워드 없음, 모델 판단 불확실"
+      }
+    },
+    {
+      "article_id": "article-accd70d8aab8edf5",
+      "article_id_basis": "stable_article_reference_not_event",
+      "keyword": "openai",
+      "source": "Investing.com 한국어",
+      "title": "OpenAI, 민감한 정보 유출 혐의로 안전 연구원 3명 해고",
+      "description": "",
+      "content": "",
+      "content_available": false,
+      "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5mXzlVM2hjMDFvNGk5SjFmXzVtNnpnU0FBdjd5YTlZVHRRenNHbzNoYjRHRmJzRHN0UFdsYXc3S2NqY0xHMmU1cXY0LVozUEY4OUprVC1lTDlwUERzanMzbmRidFlvUk50bEhNM3V3VUI?oc=5",
+      "provided_human_metadata": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "",
+        "reviewed_by": ""
+      },
+      "human_confirmation": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "pending",
+        "reviewed_by": "",
+        "independent_event_check": "",
+        "notes": ""
+      },
+      "stored_prediction_not_gold": {
+        "model_category": "정책/규제",
+        "final_category": "검토필요",
+        "rule_reason": "규칙 점수 부족: 최고 1점, 최소 2점 필요, 모델 판단 불확실"
+      }
+    },
+    {
+      "article_id": "article-eee495d46a322419",
+      "article_id_basis": "stable_article_reference_not_event",
+      "keyword": "openai",
+      "source": "vietnam.vn",
+      "title": "OpenAI는 ChatGPT를 AI 기반 \"앱 스토어\"로 탈바꿈시키는 것을 목표로 합니다.",
+      "description": "",
+      "content": "",
+      "content_available": false,
+      "link": "https://news.google.com/rss/articles/CBMigwFBVV95cUxNQXowZVRlWUlSaUdWNi1wX1owbjFta05icDNmLXJMN0cyMmVLRHFxc2F4MGw1eXVoVHJnVVcxQzhBRG9MZlJ3SkRHLUhpMXl6eURfY2J1bS1pVzZkZ2JOUkh3aUdPSGVsZXpMWlI3X2YydGg4dDdMLUJDejFBNDlSZmFVbw?oc=5",
+      "provided_human_metadata": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "",
+        "reviewed_by": ""
+      },
+      "human_confirmation": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "pending",
+        "reviewed_by": "",
+        "independent_event_check": "",
+        "notes": ""
+      },
+      "stored_prediction_not_gold": {
+        "model_category": "건강/의료",
+        "final_category": "검토필요",
+        "rule_reason": "근거 없음: 일치하는 규칙 키워드 없음, 모델 판단 불확실"
+      }
+    },
+    {
+      "article_id": "article-042d624c65f916b9",
+      "article_id_basis": "stable_article_reference_not_event",
+      "keyword": "openai",
+      "source": "OpenAI",
+      "title": "DevDay 2026 주요 발표",
+      "description": "",
+      "content": "",
+      "content_available": false,
+      "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFBRNlRWMjc4Ykd0NUIxVUF5ZTNyS1dfQmNhNWNRQVFUVllabHZCYW5SR1UwSXMwRFNCRTI4NW50NEs0UHBWSVM1RjF1RVpOT1NoNXV2ZEdfRnJYbG81SHc?oc=5",
+      "provided_human_metadata": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "",
+        "reviewed_by": ""
+      },
+      "human_confirmation": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "pending",
+        "reviewed_by": "",
+        "independent_event_check": "",
+        "notes": ""
+      },
+      "stored_prediction_not_gold": {
+        "model_category": "건강/의료",
+        "final_category": "검토필요",
+        "rule_reason": "근거 없음: 일치하는 규칙 키워드 없음, 모델 판단 불확실"
+      }
+    },
+    {
+      "article_id": "article-4adb1815378a9d9b",
+      "article_id_basis": "stable_article_reference_not_event",
+      "keyword": "openai",
+      "source": "vietnam.vn",
+      "title": "오픈아이(OpenAI)의 AI 모델이 보안 장벽을 뚫으려 시도하는 것으로 드러나 우려를 낳고 있습니다.",
+      "description": "오픈아이 의 AI 모델이 보안 장벽을 뚫으려 시도하는 것으로 드러나 우려를 낳고 있습니다.",
+      "content": "",
+      "content_available": false,
+      "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxORmRhYXNuSnRDNExTWkpMMXZLTnhZVXZoWHJETnFRbTFUaE8wQ0xYSmVOOEp2QXZ0QU1oN3F1X2tIZEFuTnNzRXVfYmJtZFpJN25KM2ZteGkwZW43Vm5RUmpnQUVCb0FOODl0T1FoSGRKLUxiMFEyTUhoaDJ5XzNmbUtMRENSWXJRejd5TU9IdkVMU2hJNVYtdjBR?oc=5",
+      "provided_human_metadata": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "",
+        "reviewed_by": ""
+      },
+      "human_confirmation": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "pending",
+        "reviewed_by": "",
+        "independent_event_check": "",
+        "notes": ""
+      },
+      "stored_prediction_not_gold": {
+        "model_category": "건강/의료",
+        "final_category": "검토필요",
+        "rule_reason": "근거 없음: 일치하는 규칙 키워드 없음, 모델 판단 불확실"
+      }
+    },
+    {
+      "article_id": "article-b4194c5ea462424e",
+      "article_id_basis": "stable_article_reference_not_event",
+      "keyword": "openai",
+      "source": "OpenAI",
+      "title": "렌페스트 연구소, OpenAI의 지원 확대에 힘입어 선도적 프로그램 확장",
+      "description": "",
+      "content": "",
+      "content_available": false,
+      "link": "https://news.google.com/rss/articles/CBMidEFVX3lxTE9pS1hQMmZteUlGOVVRNnFncjVtWUNWOTBrMkVzcnRzYll6bTR1S3NSSDFtRTVOTm9PMlNiaGM4SUxnTXMzMTlYU0c5QUJRMjVRSUpyb1RiUWZtYVlrM0dGelB6bDBQZFVzZFM4YXB6S3o3Y3FC?oc=5",
+      "provided_human_metadata": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "",
+        "reviewed_by": ""
+      },
+      "human_confirmation": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "pending",
+        "reviewed_by": "",
+        "independent_event_check": "",
+        "notes": ""
+      },
+      "stored_prediction_not_gold": {
+        "model_category": "건강/의료",
+        "final_category": "검토필요",
+        "rule_reason": "규칙 점수 부족: 최고 1점, 최소 2점 필요, 모델 판단 불확실"
+      }
+    },
+    {
+      "article_id": "article-ce702d1d4065b156",
+      "article_id_basis": "stable_article_reference_not_event",
+      "keyword": "openai",
+      "source": "Investing.com 한국어",
+      "title": "OpenAI scraps release of new model on safety concerns- WSJ",
+      "description": "",
+      "content": "",
+      "content_available": false,
+      "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5CREhGUjNZWkpJNm9iNHZGTzBGWnNhdUpORXpLTk1wdXB1ZjNoWUlQYUM3cklQRC1yMG5nUk14VW9HTzhyM2dEVEFwb1NRc2QyYjhiWkFhWnBGSXFqTzlZZ2REa1BFTllhSWVaUmJIVDM?oc=5",
+      "provided_human_metadata": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "",
+        "reviewed_by": ""
+      },
+      "human_confirmation": {
+        "event_id": "",
+        "gold_label": "",
+        "split": "",
+        "review_status": "pending",
+        "reviewed_by": "",
+        "independent_event_check": "",
+        "notes": ""
+      },
+      "stored_prediction_not_gold": {
+        "model_category": "정책/규제",
+        "final_category": "검토필요",
+        "rule_reason": "근거 없음: 일치하는 규칙 키워드 없음, 모델 판단 불확실"
+      }
+    }
+  ],
+  "note": "주제와 표현은 제안이며 정답 아님. 같은 사건의 다른 제목을 사람이 묶은 뒤 development 정답과 기존 최종 판단의 오류/검토 확인 필요. evaluation 기사는 후보 선정에 사용 금지. 제목/설명/본문의 표현 출현은 주제 정답의 증거가 아니며 자동 기사 ID는 독립 사건 ID가 아님.",
+  "candidates": [
+    {
+      "phrase": "특허 출원",
+      "proposed_category": "기술개발",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "기술개발",
+          "phrase": "특허"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "기술개발",
+          "phrase": "특허",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "예측 모델",
+      "proposed_category": "기술개발",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "기술개발",
+          "phrase": "모델"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "기술개발",
+          "phrase": "모델",
+          "relation": "phrase_overlap",
+          "scoring": false,
+          "context_only": true,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [
+        {
+          "category": "기술개발",
+          "phrase": "모델",
+          "relation": "phrase_overlap",
+          "scoring": false,
+          "context_only": true,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "연구 결과",
+      "proposed_category": "기술개발",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "기술개발",
+          "phrase": "연구"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "기술개발",
+          "phrase": "연구",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "patent application",
+      "proposed_category": "기술개발",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "research findings",
+      "proposed_category": "기술개발",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "신제품 출시",
+      "proposed_category": "제품/서비스",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "제품/서비스",
+          "phrase": "출시"
+        },
+        {
+          "category": "제품/서비스",
+          "phrase": "제품"
+        },
+        {
+          "category": "제품/서비스",
+          "phrase": "신제품"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "제품/서비스",
+          "phrase": "출시",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        },
+        {
+          "category": "제품/서비스",
+          "phrase": "제품",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        },
+        {
+          "category": "제품/서비스",
+          "phrase": "신제품",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 2,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "서비스 개시",
+      "proposed_category": "제품/서비스",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "제품/서비스",
+          "phrase": "서비스"
+        },
+        {
+          "category": "제품/서비스",
+          "phrase": "개시"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "제품/서비스",
+          "phrase": "서비스",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        },
+        {
+          "category": "제품/서비스",
+          "phrase": "개시",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "렌탈 서비스",
+      "proposed_category": "제품/서비스",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "제품/서비스",
+          "phrase": "서비스"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "제품/서비스",
+          "phrase": "서비스",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "서비스 시작",
+      "proposed_category": "제품/서비스",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "제품/서비스",
+          "phrase": "서비스"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "제품/서비스",
+          "phrase": "서비스",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "product launch",
+      "proposed_category": "제품/서비스",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "service launch",
+      "proposed_category": "제품/서비스",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "인수 합병",
+      "proposed_category": "기업동향",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "기업동향",
+          "phrase": "인수"
+        },
+        {
+          "category": "기업동향",
+          "phrase": "합병"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "기업동향",
+          "phrase": "인수",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 2,
+          "origin": "legacy",
+          "cross_category": false
+        },
+        {
+          "category": "기업동향",
+          "phrase": "합병",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 2,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "경영진 교체",
+      "proposed_category": "기업동향",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "지원 협약",
+      "proposed_category": "기업동향",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "정책/규제",
+          "phrase": "지원"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "정책/규제",
+          "phrase": "지원",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": true
+        }
+      ],
+      "scoring_conflicts": [
+        {
+          "category": "정책/규제",
+          "phrase": "지원",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": true
+        }
+      ],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "인수 추진",
+      "proposed_category": "기업동향",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "기업동향",
+          "phrase": "인수"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "기업동향",
+          "phrase": "인수",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 2,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "merger agreement",
+      "proposed_category": "기업동향",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "executive appointment",
+      "proposed_category": "기업동향",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "공장 증설",
+      "proposed_category": "생산/공급망",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "생산/공급망",
+          "phrase": "공장"
+        },
+        {
+          "category": "생산/공급망",
+          "phrase": "증설"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "생산/공급망",
+          "phrase": "공장",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        },
+        {
+          "category": "생산/공급망",
+          "phrase": "증설",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "양산 시작",
+      "proposed_category": "생산/공급망",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "생산/공급망",
+          "phrase": "양산"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "생산/공급망",
+          "phrase": "양산",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 2,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "양산 돌입",
+      "proposed_category": "생산/공급망",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "생산/공급망",
+          "phrase": "양산"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "생산/공급망",
+          "phrase": "양산",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 2,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "생산시설 증설",
+      "proposed_category": "생산/공급망",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "생산/공급망",
+          "phrase": "생산"
+        },
+        {
+          "category": "생산/공급망",
+          "phrase": "증설"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "생산/공급망",
+          "phrase": "생산",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        },
+        {
+          "category": "생산/공급망",
+          "phrase": "증설",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "factory expansion",
+      "proposed_category": "생산/공급망",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "mass production",
+      "proposed_category": "생산/공급망",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "법안 통과",
+      "proposed_category": "정책/규제",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "정책/규제",
+          "phrase": "법안"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "정책/규제",
+          "phrase": "법안",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "규제 시행",
+      "proposed_category": "정책/규제",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "정책/규제",
+          "phrase": "규제"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "정책/규제",
+          "phrase": "규제",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "국회 통과",
+      "proposed_category": "정책/규제",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "정책/규제",
+          "phrase": "국회"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "정책/규제",
+          "phrase": "국회",
+          "relation": "phrase_overlap",
+          "scoring": false,
+          "context_only": true,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [
+        {
+          "category": "정책/규제",
+          "phrase": "국회",
+          "relation": "phrase_overlap",
+          "scoring": false,
+          "context_only": true,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "윤리기준",
+      "proposed_category": "정책/규제",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "bill passed",
+      "proposed_category": "정책/규제",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "regulation takes effect",
+      "proposed_category": "정책/규제",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "기업공개",
+      "proposed_category": "금융/투자",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "제품/서비스",
+          "phrase": "공개"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "제품/서비스",
+          "phrase": "공개",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": true
+        }
+      ],
+      "scoring_conflicts": [
+        {
+          "category": "제품/서비스",
+          "phrase": "공개",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": true
+        }
+      ],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "공모가",
+      "proposed_category": "금융/투자",
+      "status": "existing_or_conflicting_rule",
+      "existing_aliases": [
+        {
+          "category": "금융/투자",
+          "phrase": "공모가"
+        }
+      ],
+      "overlapping_rules": [
+        {
+          "category": "금융/투자",
+          "phrase": "공모"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "금융/투자",
+          "phrase": "공모",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        },
+        {
+          "category": "금융/투자",
+          "phrase": "공모가",
+          "relation": "spacing_alias",
+          "scoring": true,
+          "context_only": false,
+          "strength": 2,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "공모주 청약",
+      "proposed_category": "금융/투자",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "금융/투자",
+          "phrase": "공모"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "금융/투자",
+          "phrase": "공모",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "IPO",
+      "proposed_category": "금융/투자",
+      "status": "existing_or_conflicting_rule",
+      "existing_aliases": [
+        {
+          "category": "금융/투자",
+          "phrase": "ipo"
+        }
+      ],
+      "overlapping_rules": [],
+      "existing_term_audit": [
+        {
+          "category": "금융/투자",
+          "phrase": "ipo",
+          "relation": "spacing_alias",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 1,
+      "matches": [
+        {
+          "id": "article-b72ff3aa8b5373e3",
+          "article_id_basis": "stable_article_reference_not_event",
+          "event_id": "",
+          "title": "OpenAI IPO에 대해 알아야 할 핵심 정보",
+          "link": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxNMXFoSjFPcUg2YzgyM2NQcG9QVi1kZ1UxVk03Ti1yaktpVzRoRTZ4aGtnVmRTQ3B2SlhkOTE2LTF6cUZxQjdTenpLZmszbXdueDJBU29odVNPRUh3cmM3V1BkTURWTG1mUVlWRmdpTURfcmJ0dUFQWGRKWjRaaWdrcXJrenJ3SV9ENDAwc2k4X0Z4WXpfUFRFejZtT2tBR0haVWpYdTBZMUg?oc=5",
+          "keyword": "openai",
+          "source": "TradingKey",
+          "content_available": false,
+          "match_evidence": [
+            {
+              "field": "title",
+              "start": 7,
+              "end": 10,
+              "matched_text": "ipo",
+              "excerpt": "openai ipo에 대해 알아야 할 핵심 정보",
+              "offset_basis": "normalized_nfkc_clean_casefold_field"
+            }
+          ],
+          "context_warnings": [],
+          "other_candidate_topic_mentions": [],
+          "topic_mentions_are_gold_labels": false,
+          "association_status": "phrase_present_in_title_description_or_body_not_verified_subject"
+        }
+      ],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "initial public offering",
+      "proposed_category": "금융/투자",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "시장 규모",
+      "proposed_category": "시장/산업",
+      "status": "existing_or_conflicting_rule",
+      "existing_aliases": [
+        {
+          "category": "시장/산업",
+          "phrase": "시장 규모"
+        }
+      ],
+      "overlapping_rules": [
+        {
+          "category": "시장/산업",
+          "phrase": "시장"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "시장/산업",
+          "phrase": "시장",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        },
+        {
+          "category": "시장/산업",
+          "phrase": "시장 규모",
+          "relation": "spacing_alias",
+          "scoring": true,
+          "context_only": false,
+          "strength": 2,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "산업 전망",
+      "proposed_category": "시장/산업",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "시장/산업",
+          "phrase": "산업"
+        },
+        {
+          "category": "시장/산업",
+          "phrase": "전망"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "시장/산업",
+          "phrase": "산업",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        },
+        {
+          "category": "시장/산업",
+          "phrase": "전망",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "시장 전망",
+      "proposed_category": "시장/산업",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "시장/산업",
+          "phrase": "시장"
+        },
+        {
+          "category": "시장/산업",
+          "phrase": "전망"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "시장/산업",
+          "phrase": "시장",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        },
+        {
+          "category": "시장/산업",
+          "phrase": "전망",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "market size",
+      "proposed_category": "시장/산업",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "industry outlook",
+      "proposed_category": "시장/산업",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "직원 해고",
+      "proposed_category": "노동/노사",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "노동/노사",
+          "phrase": "직원"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "노동/노사",
+          "phrase": "직원",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "임금 교섭",
+      "proposed_category": "노동/노사",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "노동/노사",
+          "phrase": "임금"
+        },
+        {
+          "category": "노동/노사",
+          "phrase": "교섭"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "노동/노사",
+          "phrase": "임금",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        },
+        {
+          "category": "노동/노사",
+          "phrase": "교섭",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "employee layoffs",
+      "proposed_category": "노동/노사",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "wage negotiations",
+      "proposed_category": "노동/노사",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "무역 협정",
+      "proposed_category": "국제/통상",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "국제/통상",
+          "phrase": "무역"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "국제/통상",
+          "phrase": "무역",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "통상 협상",
+      "proposed_category": "국제/통상",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "국제/통상",
+          "phrase": "통상"
+        },
+        {
+          "category": "국제/통상",
+          "phrase": "협상"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "국제/통상",
+          "phrase": "통상",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        },
+        {
+          "category": "국제/통상",
+          "phrase": "협상",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "무역협정",
+      "proposed_category": "국제/통상",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "국제/통상",
+          "phrase": "무역"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "국제/통상",
+          "phrase": "무역",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": false
+        }
+      ],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "trade agreement",
+      "proposed_category": "국제/통상",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "trade negotiations",
+      "proposed_category": "국제/통상",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "신입생 모집",
+      "proposed_category": "교육/취업",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "채용 공고",
+      "proposed_category": "교육/취업",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "기업동향",
+          "phrase": "채용"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "기업동향",
+          "phrase": "채용",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": true
+        }
+      ],
+      "scoring_conflicts": [
+        {
+          "category": "기업동향",
+          "phrase": "채용",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": true
+        }
+      ],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "취업박람회",
+      "proposed_category": "교육/취업",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "공개 채용",
+      "proposed_category": "교육/취업",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "제품/서비스",
+          "phrase": "공개"
+        },
+        {
+          "category": "기업동향",
+          "phrase": "채용"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "제품/서비스",
+          "phrase": "공개",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": true
+        },
+        {
+          "category": "기업동향",
+          "phrase": "채용",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": true
+        }
+      ],
+      "scoring_conflicts": [
+        {
+          "category": "제품/서비스",
+          "phrase": "공개",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": true
+        },
+        {
+          "category": "기업동향",
+          "phrase": "채용",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": true
+        }
+      ],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "신입채용",
+      "proposed_category": "교육/취업",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [
+        {
+          "category": "기업동향",
+          "phrase": "채용"
+        }
+      ],
+      "existing_term_audit": [
+        {
+          "category": "기업동향",
+          "phrase": "채용",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": true
+        }
+      ],
+      "scoring_conflicts": [
+        {
+          "category": "기업동향",
+          "phrase": "채용",
+          "relation": "phrase_overlap",
+          "scoring": true,
+          "context_only": false,
+          "strength": 1,
+          "origin": "legacy",
+          "cross_category": true
+        }
+      ],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "student admissions",
+      "proposed_category": "교육/취업",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "job vacancies",
+      "proposed_category": "교육/취업",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "사건 수사",
+      "proposed_category": "사회",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "교통 사고",
+      "proposed_category": "사회",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "criminal investigation",
+      "proposed_category": "사회",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "traffic accident",
+      "proposed_category": "사회",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "대통령 선거",
+      "proposed_category": "정치",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "정당 공천",
+      "proposed_category": "정치",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "presidential election",
+      "proposed_category": "정치",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "party nomination",
+      "proposed_category": "정치",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "영화 개봉",
+      "proposed_category": "문화/연예",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "공연 개최",
+      "proposed_category": "문화/연예",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "film premiere",
+      "proposed_category": "문화/연예",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "concert performance",
+      "proposed_category": "문화/연예",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "리그 우승",
+      "proposed_category": "스포츠",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "경기 결과",
+      "proposed_category": "스포츠",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "league championship",
+      "proposed_category": "스포츠",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "match result",
+      "proposed_category": "스포츠",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "질병 치료",
+      "proposed_category": "건강/의료",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "건강 검진",
+      "proposed_category": "건강/의료",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "disease treatment",
+      "proposed_category": "건강/의료",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "health screening",
+      "proposed_category": "건강/의료",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "기상 예보",
+      "proposed_category": "생활/환경",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "환경 보호",
+      "proposed_category": "생활/환경",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "weather forecast",
+      "proposed_category": "생활/환경",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    },
+    {
+      "phrase": "environmental protection",
+      "proposed_category": "생활/환경",
+      "status": "pending_human_review",
+      "existing_aliases": [],
+      "overlapping_rules": [],
+      "existing_term_audit": [],
+      "scoring_conflicts": [],
+      "context_only_overlaps": [],
+      "candidate_conflicts": [],
+      "matching_article_count": 0,
+      "matches": [],
+      "human_confirmation_required": true,
+      "activation_eligible": false,
+      "development_evidence": {
+        "confirmed_row_count": 0,
+        "provided_event_ids": [],
+        "provided_distinct_event_id_count": 0,
+        "independent_event_count": null,
+        "required_independent_event_count": 2,
+        "independent_events_verified": false,
+        "baseline_errors_verified": false,
+        "note": "event_id 개수는 독립 사건의 증명이 아님. 원문과 기존 오류를 사람이 확인한 뒤 별도 활성화 필요"
+      }
+    }
+  ]
+}

@@ -157,7 +157,12 @@ def test_development_evidence_must_exist_as_confirmed_labeled_rows():
             "event_id": event_id,
             "split": "development",
             "review_status": "confirmed",
+            "reviewed_by": "synthetic-human-reviewer",
+            "suggested_label": "",
             "gold_label": "기술개발",
+            "title": "새 규칙",
+            "description": "",
+            "content": "",
         }
         for event_id in ("event-1", "event-2")
     ]

@@ -20,6 +20,7 @@ from news_classifier.evaluation_dataset import (
     legacy_evaluation_input,
     load_reviewed_cases,
     rows_to_items,
+    rows_with_article_context,
     validate_unseen_keywords,
 )
 from news_classifier.classifiers.topic_descriptions import (
@@ -36,9 +37,11 @@ from news_classifier.rules.policy import (
     rule_set_fingerprint,
     validate_development_rule_errors,
     validate_development_rule_evidence,
+    without_development_rules,
 )
+from news_classifier.rules.review_validation import audit_rule_holdout, evaluate_review_reduction
 from news_classifier.service import build_pipeline
-from news_classifier.utils.text import article_description
+from news_classifier.utils.text import article_description, clean_text
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -52,6 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", default="evaluation_results")
     parser.add_argument("--compare-legacy", action="store_true", help="같은 모델과 원문으로 이번 변경 전후 비교")
     parser.add_argument("--require-unseen-keywords", action="store_true", help="개발용과 겹치지 않는 검색어만 평가")
+    parser.add_argument("--decision-profile", default=None, help="독립 평가를 통과한 최종 판정 기준 파일")
     return parser
 
 
@@ -65,10 +69,7 @@ def rule_only_label(rule_engine, item: NewsItem) -> str:
 
 def baseline_rule_set(rule_set):
     """같은 모델 출력으로 비교하기 위해 추가 development 규칙만 제외."""
-    return replace(rule_set, labels=tuple(
-        replace(label, terms=tuple(term for term in label.terms if term.origin != "development"))
-        for label in rule_set.labels
-    ))
+    return without_development_rules(rule_set)
 
 
 def legacy_rule_set(rule_set):
@@ -94,7 +95,15 @@ def main() -> None:
         )
     items = rows_to_items(rows)
 
-    pipeline = build_pipeline(AppSettings())
+    settings = AppSettings()
+    if args.decision_profile is not None:
+        settings = replace(settings, decision_calibration_path=args.decision_profile)
+    pipeline = build_pipeline(settings)
+    profile_input_mode = getattr(pipeline.postprocessor, "decision_input_mode", None)
+    if profile_input_mode == "without_body":
+        items = [replace(item, content="") for item in items]
+    elif profile_input_mode == "with_body" and any(not clean_text(item.content) for item in items):
+        parser.error("본문 보강 판정 프로필의 평가에는 모든 기사의 본문 필요")
     rule_engine = pipeline.postprocessor.rule_engine
     runtime_rule_set = rule_engine.rule_set
     has_development_rules = any(
@@ -103,6 +112,11 @@ def main() -> None:
         for term in label_policy.terms
     )
     if has_development_rules:
+        # Proposed event rules require real event identities; title hashes do
+        # not establish independence and must not count as reviewed evidence.
+        rows = load_reviewed_cases(
+            dataset_path, args.split, CANDIDATE_LABELS, require_explicit_event_ids=True,
+        )
         development_rows = (
             rows
             if args.split == "development"
@@ -110,11 +124,20 @@ def main() -> None:
                 dataset_path,
                 "development",
                 CANDIDATE_LABELS,
+                require_explicit_event_ids=True,
             )
         )
+        if args.split == "evaluation":
+            validate_unseen_keywords(development_rows, rows)
+        development_items = rows_to_items(development_rows)
+        if profile_input_mode == "without_body":
+            development_items = [replace(item, content="") for item in development_items]
+        elif profile_input_mode == "with_body" and any(not clean_text(item.content) for item in development_items):
+            parser.error("본문 보강 판정 프로필의 개발 근거에도 모든 기사의 본문 필요")
+        development_evidence_rows = rows_with_article_context(development_rows, development_items)
         validate_development_rule_evidence(
             runtime_rule_set,
-            development_rows,
+            development_evidence_rows,
         )
 
     predictions = pipeline.classifier.classify_many(
@@ -122,13 +145,17 @@ def main() -> None:
     )
     if len(predictions) != len(items):
         raise RuntimeError("model prediction count does not match evaluation cases")
-    if has_development_rules and args.split == "development":
-        validate_development_rule_errors(
-            runtime_rule_set,
-            rows,
-            [prediction.label for prediction in predictions],
+    if has_development_rules and args.split == "evaluation":
+        development_predictions = pipeline.classifier.classify_many(
+            [evaluation_input(item) for item in development_items]
         )
-
+        if len(development_predictions) != len(development_items):
+            raise RuntimeError("model prediction count does not match development rule evidence")
+        development_baseline = ClassificationPostProcessor(RuleEngine(baseline_rule_set(runtime_rule_set)))
+        validate_development_rule_errors(runtime_rule_set, development_evidence_rows, [
+            development_baseline.process(item, prediction).rule_decision.final_label
+            for item, prediction in zip(development_items, development_predictions, strict=True)
+        ])
     expected = [row["gold_label"] for row in rows]
     rule_rankings = [
         rule_engine.rank_rules(
@@ -147,6 +174,13 @@ def main() -> None:
         baseline_processor.process(item, prediction).rule_decision
         for item, prediction in zip(items, predictions, strict=True)
     ]
+    if has_development_rules and args.split == "development":
+        # A model-correct article can still be a hybrid REVIEW; new event rules
+        # must address a confirmed error of the actual previous final path.
+        validate_development_rule_errors(
+            runtime_rule_set, rows_with_article_context(rows, items),
+            [decision.final_label for decision in baseline_decisions],
+        )
     predicted_by_method = {
         "모델 단독": [prediction.label for prediction in predictions],
         "규칙 단독": rule_only_labels,
@@ -204,6 +238,21 @@ def main() -> None:
         predicted_by_method["하이브리드"],
         [result.rule_decision.rule_applied for result in hybrid_results],
     )
+    rule_review_validation = evaluate_review_reduction(
+        expected, predicted_by_method["추가 규칙 전 하이브리드"],
+        predicted_by_method["하이브리드"], labels=CANDIDATE_LABELS,
+        keywords=[row["keyword"] for row in rows], event_ids=[row["event_id"] for row in rows],
+        has_development_rules=has_development_rules, split=args.split,
+        unseen_keywords_validated=args.require_unseen_keywords or (has_development_rules and args.split == "evaluation"),
+        minimum_independent_events=runtime_rule_set.minimum_development_evidence_events,
+    )
+    if has_development_rules and args.split == "evaluation":
+        rule_review_validation["per_rule_holdout"] = audit_rule_holdout(
+            runtime_rule_set, rows, hybrid_results,
+        )
+        if not rule_review_validation["per_rule_holdout"]["passed"]:
+            rule_review_validation["failures"].append("each new expression requires correct held-out independent rule cases")
+            rule_review_validation.update(status="not_validated", passed=False)
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -217,12 +266,13 @@ def main() -> None:
         "topic_description_policy": TOPIC_DESCRIPTION_POLICY,
         "candidate_hypotheses": pipeline.classifier.candidate_hypotheses,
         "hypothesis_template": HYPOTHESIS_TEMPLATE,
-        "unseen_keywords_validated": args.require_unseen_keywords,
+        "unseen_keywords_validated": args.require_unseen_keywords or (has_development_rules and args.split == "evaluation"),
         "compare_legacy": args.compare_legacy,
         "legacy_labels": list(LEGACY_CANDIDATE_LABELS) if args.compare_legacy else None,
         "input_policy": {
             "name": CLASSIFICATION_INPUT_POLICY,
             "include_keyword": False,
+            "decision_profile_input_mode": profile_input_mode,
         },
         "rule_policy": {
             "version": runtime_rule_set.version,
@@ -235,6 +285,7 @@ def main() -> None:
         "baseline_rule_fingerprint_sha256": rule_set_fingerprint(baseline_engine.rule_set),
         "baseline_note": "추가 development 규칙만 제외, 모델 출력과 판정 기준값은 동일",
         "rule_corrections": correction_metrics,
+        "rule_review_validation": rule_review_validation,
         "technology_bias": bias_metrics,
         "per_keyword": per_keyword,
         "cases": [
@@ -307,11 +358,20 @@ def main() -> None:
         + f"- 규칙 적용 결과 오답: {correction_metrics['wrong_rule_count']}건\n"
         + f"- 모델 오답을 정답으로 변경: {correction_metrics['corrected_count']}건\n"
         + f"- 모델 정답을 오답으로 변경: {correction_metrics['harmful_change_count']}건\n"
+        + "\n## 검토 기사에 대한 새 규칙 검증\n\n"
+        + f"- 검증 상태: {rule_review_validation['status']}\n"
+        + f"- 새 자동 분류: {rule_review_validation['newly_automatic_count']}건\n"
+        + f"- 새 자동 분류 오답: {rule_review_validation['newly_automatic_wrong_count']}건\n"
+        + f"- 기존 정답 훼손: {rule_review_validation['previous_correct_harmed_count']}건\n"
+        + ("- 미완료 조건: " + "; ".join(rule_review_validation["failures"]) + "\n" if rule_review_validation["failures"] else "")
+        + "- 보고서의 관측 검증이며 규칙 자동 활성화 없음. 적은 표본으로 미래 정확도 보장 불가.\n\n"
         + "\n".join(bias_lines) + "\n"
         + ("\n변경 전 비교는 같은 모델 가중치와 원문에 원래 10개 주제명과 입력 형식, 산업 전용 기타 규칙을 적용한 결과. 새 주제를 예측할 수 없는 체계이며 실제 과거 실행 파일과는 별개.\n" if args.compare_legacy else ""),
         encoding="utf-8",
     )
     print(f"평가 보고서 저장: {output_dir / 'evaluation_report.md'}")
+    if has_development_rules:
+        print(f"새 규칙의 검토 감소 검증: {rule_review_validation['status']}")
 
 
 if __name__ == "__main__":

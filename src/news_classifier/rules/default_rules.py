@@ -15,8 +15,9 @@ from news_classifier.rules.policy import (
 
 _OTHER_LABEL = "기타/무관"
 _CANDIDATE_LABELS = LEGACY_CANDIDATE_LABELS[:-1] + GENERAL_NEWS_LABELS + (_OTHER_LABEL,)
-# 새 일반 뉴스 주제는 모델 후보로 추가. 사람이 확인한 근거 없는 직접 규칙은 미추가.
-_MODEL_ONLY_LABELS = frozenset(GENERAL_NEWS_LABELS + (_OTHER_LABEL,))
+# 일반 뉴스도 확인된 development 근거가 생기면 직접 규칙을 사용할 수 있다.
+# 기타/무관은 구체적인 사건 키워드로 확정하지 않는다.
+_PERMANENT_MODEL_ONLY_LABELS = frozenset((_OTHER_LABEL,))
 
 _LEGACY_KEYWORDS_BY_LABEL = {
     "금융/투자": [
@@ -231,6 +232,7 @@ _TIE_PRIORITY = {
     "기업동향": 70,
     "시장/산업": 80,
     "기술개발": 90,
+    **{label: 100 + index * 10 for index, label in enumerate(GENERAL_NEWS_LABELS)},
 }
 
 # 분야/기관/제품 종류는 기사에 유지하되 사건을 나타내는 점수 근거에서는 제외.
@@ -287,7 +289,7 @@ def _build_default_rule_set() -> RuleSet:
     unknown_development_labels = sorted({
         label
         for label, _ in _DEVELOPMENT_RULE_TERMS
-        if label not in _CANDIDATE_LABELS or label in _MODEL_ONLY_LABELS
+        if label not in _CANDIDATE_LABELS or label in _PERMANENT_MODEL_ONLY_LABELS
     })
     if unknown_development_labels:
         raise ValueError(
@@ -320,15 +322,6 @@ def _build_default_rule_set() -> RuleSet:
 
     labels: list[LabelRulePolicy] = []
     for label in _CANDIDATE_LABELS:
-        if label in _MODEL_ONLY_LABELS:
-            labels.append(LabelRulePolicy(
-                label=label,
-                terms=(),
-                tie_priority=100,
-                no_direct_rules=True,
-            ))
-            continue
-
         legacy_terms = tuple(
             RuleTerm(
                 phrase=keyword,
@@ -339,7 +332,7 @@ def _build_default_rule_set() -> RuleSet:
                     else RuleStrength.WEAK
                 ),
             )
-            for keyword in _LEGACY_KEYWORDS_BY_LABEL[label]
+            for keyword in _LEGACY_KEYWORDS_BY_LABEL.get(label, ())
         )
         development_terms = tuple(
             term
@@ -350,14 +343,15 @@ def _build_default_rule_set() -> RuleSet:
         labels.append(LabelRulePolicy(
             label=label,
             terms=terms,
-            tie_priority=_TIE_PRIORITY[label],
+            tie_priority=_TIE_PRIORITY.get(label, 170),
             allow_technology_bias_override=(
                 label in _TECHNOLOGY_BIAS_OVERRIDE_LABELS
             ),
+            no_direct_rules=not terms,
         ))
 
-    return RuleSet(
-        version="rules-v4-general-news",
+    rule_set = RuleSet(
+        version="rules-v5-evidence-general-news",
         matcher_version="nfkc-token-boundary-longest-v1",
         labels=tuple(labels),
         domain_terms=_DOMAIN_TERMS,
@@ -366,6 +360,9 @@ def _build_default_rule_set() -> RuleSet:
         other_label=_OTHER_LABEL,
         technology_label="기술개발",
     )
+    # 일반 주제의 승격에도 기존 최소 독립 사건 수·중복·강도 검증을 동일 적용.
+    validate_rule_set(rule_set)
+    return rule_set
 
 
 DEFAULT_RULE_SET = _build_default_rule_set()

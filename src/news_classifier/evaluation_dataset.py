@@ -35,24 +35,35 @@ def load_reviewed_cases(
     path: Path,
     split: str,
     labels: list[str],
+    *,
+    require_explicit_event_ids: bool = False,
 ) -> list[dict[str, str]]:
     with path.open("r", newline="", encoding="utf-8-sig") as file:
         reader = csv.DictReader(file)
         missing_columns = REQUIRED_COLUMNS - set(reader.fieldnames or [])
         if missing_columns:
             raise ValueError(f"missing dataset columns: {sorted(missing_columns)}")
+        if require_explicit_event_ids and "event_id" not in (reader.fieldnames or []):
+            raise ValueError("explicit event_id column is required for decision calibration")
         all_rows = list(reader)
 
     ids: set[str] = set()
     event_splits: dict[str, set[str]] = {}
     for row in all_rows:
+        if any(row.get(field) is None for field in REQUIRED_COLUMNS):
+            raise ValueError("dataset contains a malformed row with missing values")
         case_id = row["id"].strip()
         if not case_id or case_id in ids:
             raise ValueError(f"duplicate or empty case id: {case_id}")
         ids.add(case_id)
 
+        raw_event_id = (row.get("event_id") or "").strip().casefold()
+        if (require_explicit_event_ids
+                and row["split"].strip() in {"development", "evaluation"}
+                and not raw_event_id):
+            raise ValueError(f"case {case_id} requires an explicitly reviewed event_id")
         event_id = (
-            row.get("event_id", "").strip().casefold()
+            raw_event_id
             or event_id_from_title(row["title"])
         )
         row["event_id"] = event_id
@@ -106,6 +117,19 @@ def rows_to_items(rows: list[dict[str, str]]) -> list[NewsItem]:
             content=row.get("content", ""),
         )
         for row in rows
+    ]
+
+
+def rows_with_article_context(
+    rows: list[dict[str, str]], items: list[NewsItem],
+) -> list[dict[str, str]]:
+    """검증 근거도 실제 판정 입력과 일치하도록 원본을 보존한 행 복사."""
+    if len(rows) != len(items):
+        raise ValueError("reviewed rows and actual article inputs must align")
+    return [
+        {**row, "title": item.title, "description": item.description,
+         "source": item.source, "content": item.content}
+        for row, item in zip(rows, items, strict=True)
     ]
 
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 from news_classifier.classifiers.confidence import load_confidence_thresholds
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
 from news_classifier.classifiers.rule_engine import RuleEngine
@@ -11,6 +13,7 @@ from news_classifier.collectors.article_scraper import ArticleScraper
 from news_classifier.collectors.google_rss import GoogleNewsRssCollector
 from news_classifier.config import AppSettings
 from news_classifier.dedup.title_deduplicator import TitleSourceDeduplicator
+from news_classifier.decision_calibration import load_decision_profile
 from news_classifier.models import CLASSIFICATION_INPUT_POLICY
 from news_classifier.pipeline import NewsPipeline
 from news_classifier.rules.default_rules import (
@@ -43,10 +46,23 @@ def build_pipeline(settings: AppSettings | None = None) -> NewsPipeline:
     http_client = HttpClient(settings.headers, settings.request_timeout_seconds)
     collector = GoogleNewsRssCollector(http_client)
     scraper = ArticleScraper(http_client)
-    rule_engine = RuleEngine(DEFAULT_RULE_SET)
+    decision_profile = load_decision_profile(
+        settings.decision_calibration_path,
+        base_rule_set=DEFAULT_RULE_SET,
+        expected_model_name=settings.classification_model,
+        expected_model_revision=settings.classification_model_revision,
+        expected_candidate_labels=CANDIDATE_LABELS,
+        expected_candidate_hypotheses=classifier.candidate_hypotheses,
+        expected_hypothesis_template=HYPOTHESIS_TEMPLATE,
+        expected_input_policy=CLASSIFICATION_INPUT_POLICY,
+        expected_max_sequence_length=settings.max_sequence_length,
+    )
+    rule_engine = RuleEngine(replace(DEFAULT_RULE_SET, decision=decision_profile.policy))
     postprocessor = ClassificationPostProcessor(
         rule_engine,
         confidence_thresholds=confidence_thresholds,
+        baseline_rule_engine=RuleEngine(DEFAULT_RULE_SET),
+        decision_input_mode=decision_profile.input_mode,
     )
     return NewsPipeline(
         collector=collector,
@@ -54,4 +70,5 @@ def build_pipeline(settings: AppSettings | None = None) -> NewsPipeline:
         postprocessor=postprocessor,
         deduplicator=TitleSourceDeduplicator(),
         article_scraper=scraper,
+        review_enrichment_enabled=settings.review_enrichment_enabled,
     )

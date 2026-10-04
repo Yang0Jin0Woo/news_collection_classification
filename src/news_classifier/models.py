@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 import json
@@ -120,12 +120,26 @@ class RuleDecision:
 
 
 @dataclass(frozen=True)
+class ReviewReclassification:
+    """불확실한 기사 본문 보강과 재판단 기록. 기존 판단을 덮어 숨기지 않음."""
+    status: str
+    initial_model_category: str
+    initial_model_score: float
+    initial_score_margin: float
+    initial_final_category: str
+    initial_rule_reason: str
+    enrichment_status: str = ""
+    http_status: int | None = None
+
+
+@dataclass(frozen=True)
 class ClassifiedNews:
     item: NewsItem
     model_prediction: ModelPrediction
     rule_decision: RuleDecision
     model_confidence_level: str
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    review_reclassification: ReviewReclassification | None = None
 
     @property
     def model_confidence(self) -> float:
@@ -192,6 +206,10 @@ class ClassifiedNews:
                 ],
                 ensure_ascii=False,
             ),
+            "review_reclassification": json.dumps(
+                asdict(self.review_reclassification) if self.review_reclassification else {},
+                ensure_ascii=False,
+            ),
         }
 
 
@@ -222,4 +240,5 @@ CLASSIFIED_NEWS_COLUMNS = [
     "created_at",
     "group_article_count",
     "related_articles",
+    "review_reclassification",
 ]

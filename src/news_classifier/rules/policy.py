@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from enum import IntEnum
 import hashlib
 import json
@@ -238,7 +238,8 @@ def validate_rule_set(rule_set: RuleSet) -> None:
                 )
             if any(not event_id.strip() for event_id in term.evidence_event_ids):
                 raise ValueError("rule evidence event ids must not be empty")
-            if len(term.evidence_event_ids) != len(set(term.evidence_event_ids)):
+            normalized_event_ids = {event_id.strip().casefold() for event_id in term.evidence_event_ids}
+            if len(term.evidence_event_ids) != len(normalized_event_ids):
                 raise ValueError("rule evidence event ids contain duplicates")
             if (
                 term.origin == "development"
@@ -294,13 +295,27 @@ def validate_rule_set(rule_set: RuleSet) -> None:
         raise ValueError("unrelated signal terms must not be empty")
 
 
+def without_development_rules(rule_set: RuleSet) -> RuleSet:
+    """Keep the same decision gates while comparing against pre-addition rules."""
+    labels = []
+    for label in rule_set.labels:
+        terms = tuple(term for term in label.terms if term.origin != "development")
+        labels.append(replace(label, terms=terms, no_direct_rules=not terms))
+    return replace(rule_set, labels=tuple(labels))
+
+
 def validate_development_rule_evidence(
     rule_set: RuleSet,
     rows: Iterable[Mapping[str, str]],
 ) -> None:
+    # Import at validation time to keep the matcher dependent on the policy,
+    # rather than creating a module-level circular import.
+    from news_classifier.classifiers.rule_engine import RuleEngine
+
+    rule_engine = RuleEngine(rule_set)
     evidence_rows: dict[str, list[Mapping[str, str]]] = {}
     for row in rows:
-        event_id = row.get("event_id", "").strip().casefold()
+        event_id = (row.get("event_id") or "").strip().casefold()
         if event_id:
             evidence_rows.setdefault(event_id, []).append(row)
 
@@ -317,15 +332,56 @@ def validate_development_rule_evidence(
                         f"{raw_event_id}"
                     )
                 if any(
-                    row.get("split", "").strip() != "development"
-                    or row.get("review_status", "").strip() != "confirmed"
-                    or row.get("gold_label", "").strip() != label_policy.label
+                    (row.get("split") or "").strip() != "development"
+                    or (row.get("review_status") or "").strip() != "confirmed"
+                    or (row.get("gold_label") or "").strip() != label_policy.label
                     for row in matches
                 ):
                     raise ValueError(
                         "rule evidence must be confirmed development data "
                         f"with gold label {label_policy.label}: {raw_event_id}"
                     )
+                if any(not (row.get("reviewed_by") or "").strip() for row in matches):
+                    raise ValueError(
+                        "rule evidence requires a named human reviewer: "
+                        f"{raw_event_id}"
+                    )
+                if any((row.get("suggested_label") or "").strip() for row in matches):
+                    raise ValueError(
+                        "rule evidence must not contain suggested labels: "
+                        f"{raw_event_id}"
+                    )
+                if not any(
+                    rule_term_matches_row(rule_engine, label_policy.label, term, row)
+                    for row in matches
+                ):
+                    raise ValueError(
+                        "rule evidence phrase does not score in article context: "
+                        f"keyword={term.phrase}, event={raw_event_id}"
+                    )
+
+
+def rule_term_matches_row(
+    rule_engine,
+    label: str,
+    term: RuleTerm,
+    row: Mapping[str, str],
+) -> bool:
+    """기사의 실제 점수 근거 확인. 검색어 및 출처만의 일치는 제외한다."""
+    from news_classifier.utils.text import article_description
+
+    title = row.get("title") or ""
+    description = article_description(
+        title,
+        row.get("description") or "",
+        row.get("source") or "",
+    )
+    ranking = rule_engine.rank_rules(title, description, row.get("content") or "")
+    normalized_phrase = normalize_rule_text(term.phrase)
+    return any(
+        normalize_rule_text(phrase) == normalized_phrase
+        for phrase in ranking.score_for(label).matched_terms
+    )
 
 
 def validate_development_rule_errors(
@@ -335,18 +391,11 @@ def validate_development_rule_errors(
 ) -> None:
     if len(rows) != len(baseline_labels):
         raise ValueError("rule evidence rows and baseline labels must align")
+    validate_development_rule_evidence(rule_set, rows)
+    from news_classifier.classifiers.rule_engine import RuleEngine
 
-    errors_by_event: dict[str, bool] = {}
-    for row, predicted_label in zip(rows, baseline_labels, strict=True):
-        event_id = row.get("event_id", "").strip().casefold()
-        if not event_id:
-            continue
-        gold_label = row.get("gold_label", "").strip()
-        is_error = (
-            predicted_label not in {"", "분류실패"}
-            and predicted_label != gold_label
-        )
-        errors_by_event[event_id] = errors_by_event.get(event_id, False) or is_error
+    rule_engine = RuleEngine(rule_set)
+    valid_baseline_labels = set(rule_set.candidate_labels) | {"검토필요"}
 
     for label_policy in rule_set.labels:
         for term in label_policy.terms:
@@ -354,8 +403,16 @@ def validate_development_rule_errors(
                 continue
             for raw_event_id in term.evidence_event_ids:
                 event_id = raw_event_id.strip().casefold()
-                if not errors_by_event.get(event_id, False):
+                has_supporting_error = any(
+                    (row.get("event_id") or "").strip().casefold() == event_id
+                    and predicted_label in valid_baseline_labels
+                    and predicted_label != (row.get("gold_label") or "").strip()
+                    and rule_term_matches_row(rule_engine, label_policy.label, term, row)
+                    for row, predicted_label in zip(rows, baseline_labels, strict=True)
+                )
+                if not has_supporting_error:
                     raise ValueError(
-                        "rule evidence is not a confirmed baseline error: "
+                        "rule evidence is not a confirmed baseline error "
+                        "on the same phrase-supporting article: "
                         f"{raw_event_id}"
                     )
