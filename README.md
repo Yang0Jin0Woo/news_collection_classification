@@ -152,3 +152,20 @@ python -m pytest -q
 검토 원인 분석은 `scripts/audit_review_reasons.py`, 본문 보강 전후 비교는 `scripts/compare_body_enrichment.py` 사용
 
 [본문 보강 동작 비교 기록](data/evaluation/body_replay_20261004_1904.json)은 같은 저장 기사의 재실행 결과이며 실제 정확도 평가 자료와 구분
+
+### 정답 확인과 재검증
+
+검토 기사와 자동 분류 기사 모두 원문 확인 → 주요 사건과 배경 표현 기록 → 확인된 오분류 원인 수정 → 별도 사건과 검색어로 재검증
+
+`scripts/review_rule_candidates.py`의 확인 양식에 정답과 주요 사건 기록, 규칙 단어의 위치와 주변 문장은 확인용 자료로만 사용
+
+`scripts/evaluate_news.py`에서 검토 비율, 자동 분류 오답, 기존 정답 훼손 비교
+
+사용자가 확인한 [개발 기사 2건](data/evaluation/user_confirmed_context_20261004.json)으로 배경 근거의 자동 보정 보류안 비교, 독립 평가 전 기본 실행에 적용 없음
+
+```powershell
+python scripts/compare_rule_context.py --dataset data/evaluation/user_confirmed_context_20261004.json --output evaluation_results/rule_context_comparison.json
+```
+
+수정안은 제목, 설명과 본문 첫 두 문장의 근거를 추가 확인하는 실험용 처리, 주요 사건의 완전한 판별 미보장
+사람이 확인한 별도 사건과 검색어, 기존 자동 정답 기사까지 추가 평가 후 적용 여부 결정

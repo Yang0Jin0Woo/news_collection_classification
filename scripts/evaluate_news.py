@@ -33,6 +33,7 @@ from news_classifier.rules.default_rules import (
     CANDIDATE_LABELS,
     LEGACY_UNRELATED_SIGNAL_GROUPS,
 )
+from news_classifier.rules.event_candidates import rule_evidence_records
 from news_classifier.rules.policy import (
     rule_set_fingerprint,
     validate_development_rule_errors,
@@ -344,6 +345,18 @@ def main() -> None:
                 ),
                 "hybrid_label": predicted_by_method["하이브리드"][idx],
                 "baseline_hybrid_label": baseline_decisions[idx].final_label,
+                "previous_correct_harmed": (
+                    baseline_decisions[idx].final_label == row["gold_label"]
+                    and predicted_by_method["하이브리드"][idx] != row["gold_label"]
+                ),
+                "previous_wrong_corrected": (
+                    baseline_decisions[idx].final_label != row["gold_label"]
+                    and predicted_by_method["하이브리드"][idx] == row["gold_label"]
+                ),
+                "rule_evidence_not_semantic_judgment": rule_evidence_records(
+                    {**row, "title": item.title, "description": item.description,
+                     "source": item.source, "content": item.content}, rule_engine,
+                ),
                 "hybrid_rule_applied": hybrid_results[idx].rule_decision.rule_applied,
                 "hybrid_reason": hybrid_results[idx].rule_decision.rule_reason,
             }

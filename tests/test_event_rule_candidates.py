@@ -6,11 +6,13 @@ import re
 import pytest
 
 from scripts import review_rule_candidates
+from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 from news_classifier.rules.event_candidates import (
     CANDIDATE_PHRASES,
     article_review_records,
     audit_candidate,
+    rule_evidence_records,
 )
 from news_classifier.rules.policy import RuleTerm
 
@@ -204,3 +206,49 @@ def test_missing_id_does_not_mix_unmatched_row_into_development_evidence():
         {"title": "Unrelated", "event_id": "other", "split": "development", "gold_label": "금융/투자", "review_status": "confirmed", "reviewed_by": "human"},
     ]
     assert audit("IPO", "금융/투자", rows)["development_evidence"]["confirmed_row_count"] == 0
+
+
+@pytest.mark.parametrize("category", ["검토필요", "기술개발", "기업동향"])
+def test_human_review_includes_review_and_automatic_articles_without_inferred_gold(category):
+    rows = [{"title": "학교 인력 양성 소식", "content": "담당자는 과거 회사 합병 업무를 맡았던 경력자다.",
+             "final_category": category, "keyword": "미사용 검색어"}]
+    original = deepcopy(rows)
+    engine = RuleEngine(DEFAULT_RULE_SET)
+    before = engine.rank_rules(rows[0]["title"], "", rows[0]["content"])
+    record = article_review_records(rows, rule_engine=engine)[0]
+    form = record["human_confirmation"]
+    assert all(form[field] == "" for field in (
+        "gold_label", "main_event", "main_event_evidence", "background_evidence", "existing_decision_correct",
+    ))
+    assert form["review_status"] == "pending"
+    context = record["rule_evidence_not_semantic_judgment"]
+    merger = next(term for term in context["terms"] if term["phrase"] == "합병")
+    assert merger["body_only"] is True
+    assert merger["locations"] == ["content"]
+    assert any(warning["kind"] == "possible_background" for warning in merger["context_warnings"])
+    assert not context["background_classification_performed"]
+    assert not context["automatic_decision_changed"]
+    assert rows == original
+    assert engine.rank_rules(rows[0]["title"], "", rows[0]["content"]) == before
+
+
+def test_body_only_main_event_is_not_automatically_treated_as_background():
+    context = rule_evidence_records({"title": "회사 소식", "content": "두 회사가 합병 계약을 체결했다."}, RuleEngine(DEFAULT_RULE_SET))
+    assert context["terms"] and all(term["role"].startswith("pending_human") for term in context["terms"])
+    assert not context["background_classification_performed"]
+
+
+def test_rule_context_audit_uses_only_scored_terms_not_company_or_query_mentions():
+    context = rule_evidence_records({"title": "일반 소식", "keyword": "IPO", "source": "IPO", "content": "삼성전자"}, RuleEngine(DEFAULT_RULE_SET))
+    assert context["terms"] == []
+
+
+def test_rule_context_audit_is_query_independent_and_explains_overlapping_terms():
+    engine = RuleEngine(DEFAULT_RULE_SET)
+    row = {"title": "인수 합병 소식", "keyword": "AI"}
+    first = rule_evidence_records(row, engine)
+    assert first == rule_evidence_records({**row, "keyword": "스포츠"}, engine)
+    phrases = [term["phrase"] for term in first["terms"] if term["category"] == "기업동향"]
+    ranking = engine.rank_rules(row["title"])
+    assert phrases == list(ranking.score_for("기업동향").matched_terms)
+    assert all("title" in term["locations"] for term in first["terms"])

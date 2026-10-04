@@ -6,6 +6,7 @@ import re
 
 from news_classifier.classifiers.confidence import is_ambiguous
 from news_classifier.models import ModelPrediction, RuleDecision
+from news_classifier.utils.text import clean_text
 from news_classifier.rules.policy import (
     RuleSet,
     RuleTerm,
@@ -16,6 +17,7 @@ from news_classifier.rules.policy import (
 
 _ASCII_WORD_CHARACTER = re.compile(r"[A-Za-z0-9]")
 _KOREAN_CHARACTER = re.compile(r"[가-힣]")
+EVENT_ANCHOR_POLICY = "title-description-first-two-sentences-v1-experimental"
 
 
 @dataclass(frozen=True)
@@ -148,9 +150,13 @@ def _term_sort_key(term: RuleTerm) -> tuple[int, int, str]:
 
 
 class RuleEngine:
-    def __init__(self, rule_set: RuleSet):
+    def __init__(self, rule_set: RuleSet, *, experimental_event_anchors: bool = False):
         validate_rule_set(rule_set)
+        if type(experimental_event_anchors) is not bool:
+            raise ValueError("experimental_event_anchors must be boolean")
         self.rule_set = rule_set
+        # Evaluation-only prototype. Default CLI/service and saved profiles remain unchanged.
+        self.experimental_event_anchors = experimental_event_anchors
         self._development_phrases = {
             policy.label: {
                 normalize_rule_text(term.phrase)
@@ -159,6 +165,24 @@ class RuleEngine:
             }
             for policy in rule_set.labels
         }
+
+    def _has_event_anchor(self, title: str, description: str, content: str, label: str) -> bool:
+        """제목/설명/본문 첫 두 문장에 같은 주제의 충분한 근거가 있는지 비교용 확인.
+
+        위치만으로 주요 사건을 확정하는 기능은 아님. 독립 정답 평가 전 기본 적용 금지.
+        """
+        if not self.experimental_event_anchors:
+            return True
+        body = clean_text(content)
+        sentences = re.split(r"(?<=[.!?。！？])\s+", body)
+        lead = " ".join(sentences[:2])[:500]
+        anchor = self.rank_rules(clean_text(title)[:250], clean_text(description)[:300], lead)
+        policy = self.rule_set.decision
+        return (
+            anchor.first.label == label
+            and anchor.first.weighted_score >= policy.min_rule_score
+            and anchor.score_margin >= policy.min_rule_score_margin
+        )
 
     def _development_conflict_labels(self, ranking: RuleRanking) -> tuple[str, ...]:
         """새 규칙이 실제 기여한 경우 서로 다른 강한 사건 근거의 충돌 확인."""
@@ -327,6 +351,7 @@ class RuleEngine:
         if (
             ranking.first.weighted_score >= decision.min_rule_score
             and ranking.score_margin >= decision.min_rule_score_margin
+            and self._has_event_anchor(title, description, content, ranking.first.label)
         ):
             return ranking.first.label
         return "검토필요"
@@ -421,6 +446,7 @@ class RuleEngine:
             and ranking.score_margin >= decision.strong_override_margin
             and ranking.first.strong_match_count >= 1
             and not conflict_labels
+            and self._has_event_anchor(title, description, content, ranking.first.label)
         )
 
         if model_confident:
@@ -455,6 +481,12 @@ class RuleEngine:
             )
 
         if clear_rule:
+            if not self._has_event_anchor(title, description, content, ranking.first.label):
+                return self._decision(
+                    final_label="검토필요", rule_applied=False, ranking=ranking,
+                    rule_reason=(f"주요 사건 근거 부족: {ranking.first.label}의 규칙 근거가 "
+                                 "제목, 설명, 본문 첫 두 문장에서 충분하지 않아 보정 보류"),
+                )
             return self._decision(
                 final_label=ranking.first.label,
                 rule_applied=True,

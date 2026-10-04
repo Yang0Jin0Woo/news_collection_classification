@@ -63,6 +63,7 @@ def _review_reason(row: dict[str, str]) -> str:
         ("규칙점수부족", "insufficient_rule_score"),
         ("주제간점수차이부족", "insufficient_rule_margin"),
         ("주제근거충돌", "conflicting_rule_evidence"),
+        ("주요사건근거부족", "insufficient_event_anchor"),
     ):
         if reason.startswith(prefix):
             return bucket

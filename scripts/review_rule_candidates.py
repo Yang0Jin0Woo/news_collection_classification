@@ -6,6 +6,7 @@ import csv
 import json
 from pathlib import Path
 
+from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.evaluation_dataset import dataset_sha256
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 from news_classifier.rules.event_candidates import (
@@ -77,7 +78,7 @@ def main():
     except ValueError as exc:
         parser.error(str(exc))
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "candidate_policy": EVENT_CANDIDATE_POLICY,
         "dataset": str(dataset),
         "dataset_sha256": dataset_sha256(dataset),
@@ -90,7 +91,7 @@ def main():
         "human_review_checklist": list(HUMAN_REVIEW_CHECKLIST),
         "source_keywords": sorted({row.get("keyword", "").strip() for row in rows if row.get("keyword", "").strip()}),
         "source_scope_note": "이 보고서는 입력 CSV에 저장된 검색어/기사 범위만 감사하며 모든 검색어에서의 성능을 검증한 결과가 아님",
-        "articles_for_human_confirmation": article_review_records(rows),
+        "articles_for_human_confirmation": article_review_records(rows, rule_engine=RuleEngine(DEFAULT_RULE_SET)),
         "note": (
             "주제와 표현은 제안이며 정답 아님. 같은 사건의 다른 제목을 사람이 묶은 뒤 "
             "development 정답과 기존 최종 판단의 오류/검토 확인 필요. evaluation 기사는 후보 선정에 사용 금지. "

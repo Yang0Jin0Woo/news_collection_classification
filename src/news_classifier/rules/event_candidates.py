@@ -4,8 +4,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 import hashlib
 
-from news_classifier.classifiers.rule_engine import _has_phrase, _phrase_spans
-from news_classifier.rules.policy import RuleSet, normalize_rule_text
+from news_classifier.classifiers.rule_engine import RuleEngine, _has_phrase, _phrase_spans
+from news_classifier.rules.policy import RuleSet, normalize_rule_text, rule_set_fingerprint
 from news_classifier.utils.text import article_description, clean_text, strip_source_suffix
 
 
@@ -39,10 +39,14 @@ CONTEXT_WARNING_PHRASES: dict[str, tuple[str, ...]] = {
     ),
     "denial": ("부인", "사실무근", "아니다", "않았다", "denies", "denied", "not", "no plans"),
     "comparison": ("비교", "대비", "versus", "vs", "compared", "comparison"),
+    "possible_background": ("과거", "출신", "이력", "경력", "former", "formerly", "previously"),
 }
 
 HUMAN_REVIEW_CHECKLIST = (
     "후보 표현은 정답 라벨이 아님. 기사 주요 사건을 읽고 gold_label을 직접 확인",
+    "검토 기사뿐 아니라 이미 MODEL/RULE로 확정한 기사도 원문과 정답 확인",
+    "main_event와 main_event_evidence를 작성하고 background_evidence에 배경 표현 및 원문 문장 기록",
+    "본문에만 등장한 표현이나 배경 경고는 오분류 확정이 아님. 실제 주요 사건과의 관계를 사람이 확인",
     "동일 사건의 유사 기사는 같은 event_id로 묶고 서로 다른 사건 여부를 직접 확인",
     "review_status=confirmed, reviewed_by, split=development를 확인",
     "기존 판정이 틀렸거나 검토필요였던 서로 다른 사건의 확인된 근거 확보",
@@ -65,7 +69,9 @@ def article_review_id(row: Mapping[str, str]) -> tuple[str, str]:
     return f"article-{digest}", "stable_article_reference_not_event"
 
 
-def article_review_records(rows: Sequence[Mapping[str, str]]) -> list[dict]:
+def article_review_records(
+    rows: Sequence[Mapping[str, str]], *, rule_engine: RuleEngine | None = None,
+) -> list[dict]:
     """원본 예측과 후보 제안으로부터 분리한 사람이 채울 확인 양식. 원본 변경 없음."""
     records = []
     for row in rows:
@@ -84,12 +90,16 @@ def article_review_records(rows: Sequence[Mapping[str, str]]) -> list[dict]:
             "human_confirmation": {
                 "event_id": "", "gold_label": "", "split": "", "review_status": "pending",
                 "reviewed_by": "", "independent_event_check": "", "notes": "",
+                "main_event": "", "main_event_evidence": "", "background_evidence": "",
+                "existing_decision_correct": "",
             },
             "stored_prediction_not_gold": {
                 key: row.get(key, "")
                 for key in ("model_category", "final_category", "rule_reason")
             },
         })
+        if rule_engine is not None:
+            records[-1]["rule_evidence_not_semantic_judgment"] = rule_evidence_records(row, rule_engine)
     return records
 
 
@@ -151,6 +161,38 @@ def context_warnings(fields: Mapping[str, str], evidence: Sequence[Mapping]) -> 
                         "status": "human_context_check_required",
                     })
     return warnings
+
+
+def rule_evidence_records(row: Mapping[str, str], rule_engine: RuleEngine) -> dict:
+    """실제 점수에 반영된 표현의 위치만 설명. 배경/주요 사건 판단 및 규칙 변경 없음."""
+    fields = article_fields(row)
+    # Runtime postprocessing retains the supplied title; evidence uses that same text.
+    fields["title"] = clean_text(str(row.get("title", "") or ""))
+    ranking = rule_engine.rank_rules(fields["title"], fields["description"], fields["content"])
+    terms = []
+    for score in ranking.ranked:
+        for phrase in score.matched_terms:
+            evidence = phrase_evidence(phrase, fields)
+            locations = sorted({item["field"] for item in evidence})
+            terms.append({
+                "category": score.label, "phrase": phrase,
+                "category_score": score.weighted_score,
+                "locations": locations, "body_only": locations == ["content"],
+                "occurrence_basis": "all_occurrences_of_scored_phrase_not_individual_scoring_spans",
+                "match_evidence": evidence,
+                "context_warnings": context_warnings(fields, evidence),
+                "role": "pending_human_main_event_or_background_confirmation",
+            })
+    return {
+        "rule_fingerprint_sha256": rule_set_fingerprint(rule_engine.rule_set),
+        "rule_best_label_not_gold": ranking.first.label,
+        "rule_best_score": ranking.first.weighted_score,
+        "rule_score_margin": ranking.score_margin,
+        "terms": terms,
+        "automatic_decision_changed": False,
+        "background_classification_performed": False,
+        "note": "본문 위치와 주변 표현만으로 배경 확정 불가. 주요 사건과 원문을 사람이 확인한 후 수정하고 별도 사건과 미사용 검색어로 재평가 필요.",
+    }
 
 
 def audit_candidate(
