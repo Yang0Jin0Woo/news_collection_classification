@@ -309,6 +309,23 @@ class RuleEngine:
             + (f" ({terms})" if terms else "")
         )
 
+    def _review_reason(self, ranking: RuleRanking) -> str:
+        """근거 없음, 총점 부족, 주제 간 차이 부족 순서로 검토 원인 구분."""
+        first_score = ranking.first.weighted_score
+        policy = self.rule_set.decision
+        if first_score == 0:
+            return "근거 없음: 일치하는 규칙 키워드 없음, 모델 판단 불확실"
+        if first_score < policy.min_rule_score:
+            return (
+                f"규칙 점수 부족: 최고 {first_score}점, "
+                f"최소 {policy.min_rule_score}점 필요, 모델 판단 불확실"
+            )
+        return (
+            f"주제 간 점수 차이 부족: {first_score} 대 "
+            f"{ranking.second.weighted_score}, 차이 {ranking.score_margin}점, "
+            f"최소 {policy.min_rule_score_margin}점 필요, 모델 판단 불확실"
+        )
+
     @staticmethod
     def _decision(
         *,
@@ -407,19 +424,10 @@ class RuleEngine:
             prediction.score < decision.review_model_score
             or ambiguous
         ):
-            reason = (
-                "모델과 규칙 근거가 모두 불충분"
-                if ranking.first.weighted_score == 0
-                else (
-                    f"규칙 1·2위 점수 차이 부족 "
-                    f"({ranking.first.weighted_score} 대 "
-                    f"{ranking.second.weighted_score})"
-                )
-            )
             return self._decision(
                 final_label="검토필요",
                 rule_applied=False,
-                rule_reason=reason,
+                rule_reason=self._review_reason(ranking),
                 ranking=ranking,
             )
 

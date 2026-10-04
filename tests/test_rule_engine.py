@@ -1,3 +1,7 @@
+from dataclasses import replace
+
+import pytest
+
 from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.models import ModelPrediction
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET as RULES
@@ -410,7 +414,7 @@ def test_general_weak_words_do_not_force_a_rule_override():
 
     assert decision.final_label == "검토필요"
     assert decision.rule_applied is False
-    assert "점수 차이 부족" in decision.rule_reason
+    assert "규칙 점수 부족" in decision.rule_reason
 
 
 def test_strong_phrase_has_more_weight_than_weak_word():
@@ -488,3 +492,44 @@ def test_nfkc_normalization_and_korean_particle_matching():
     )
 
     assert scores["정책/규제"] == 2
+
+
+@pytest.mark.parametrize(
+    ("title", "strength", "reason"),
+    [
+        ("unmatched", RuleStrength.WEAK, "근거 없음"),
+        ("beta", RuleStrength.WEAK, "규칙 점수 부족"),
+        ("alpha beta", RuleStrength.WEAK, "규칙 점수 부족"),
+        ("alpha beta", RuleStrength.STRONG, "주제 간 점수 차이 부족"),
+    ],
+)
+def test_review_reason_distinguishes_missing_score_and_margin(title, strength, reason):
+    rules = small_rule_set(product_strength=strength)
+    rules = replace(rules, decision=replace(rules.decision, min_rule_score_margin=2))
+    decision = RuleEngine(rules).decide(
+        title, "", "", ModelPrediction("기술개발", 0.30, 0.01, [], [])
+    )
+
+    assert decision.final_label == "검토필요"
+    assert decision.rule_applied is False
+    assert decision.rule_reason.startswith(reason + ":")
+
+
+def test_review_reason_uses_custom_minimum_score():
+    rules = small_rule_set(product_strength=RuleStrength.STRONG)
+    rules = replace(rules, decision=replace(rules.decision, min_rule_score=3))
+    decision = RuleEngine(rules).decide(
+        "beta", "", "", ModelPrediction("기술개발", 0.30, 0.01, [], [])
+    )
+
+    assert "최고 2점, 최소 3점 필요" in decision.rule_reason
+
+
+def test_rule_at_minimum_score_and_margin_still_applies():
+    decision = RuleEngine(small_rule_set(product_strength=RuleStrength.STRONG)).decide(
+        "alpha beta", "", "", ModelPrediction("기술개발", 0.30, 0.01, [], [])
+    )
+
+    assert decision.final_label == "제품/서비스"
+    assert decision.rule_applied is True
+    assert decision.rule_reason.startswith("규칙 보정:")

@@ -18,6 +18,7 @@ env/
 *.log
 
 *.csv
+data/evaluation/rule_candidate_audit_*.json
 news.db
 news_archive.db
 *.sqlite

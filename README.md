@@ -106,6 +106,7 @@ news-classifier collect --keyword "AI 반도체" --limit 20 --sqlite
 | `REVIEW` | 모델 판단도 불확실하고 규칙 근거도 부족하여 사람 검토 필요 |
 
 `final_category`는 최종 주제 또는 검토필요 상태, `rule_reason`은 보정이나 검토 판단의 이유.
+검토 사유는 `근거 없음`, `규칙 점수 부족`, `주제 간 점수 차이 부족`으로 구분. 여러 조건이 부족한 경우 근거 없음, 총점 부족, 점수 차이 부족 순서로 우선 표시.
 `model_confidence`는 원래 모델 예측의 참고 점수이며, 규칙 적용 후 최종 주제의 정답 확률을 보장하는 값은 아님.
 
 - **정상 분류 또는 검색 결과 0건:** 종료 코드 `0`, 0건이면 열 이름(헤더)만 있는 CSV 저장
@@ -136,3 +137,22 @@ python -m pytest -q
 - 실제 평가에는 사람이 확정한 정답과 개발용/평가용 데이터 분리 필요, 추천 라벨의 정답 사용 불가
 - 기본 분류 입력은 기사 제목과 설명 및 선택적 본문이며, 검색어에 의한 판단 편향 방지를 위해 검색어의 모델 입력 제외
 - 제목과 언론사 기준의 중복 제거로 의미가 비슷한 다른 기사 판별 미지원, 사이트에 따른 본문 수집 실패 가능
+
+### 규칙 보강 절차
+
+1. 다양한 검색어의 후보 기사 수집과 기존 파일 보존. 검색어별 결과의 순환 선택으로 앞 검색어에만 치우친 표본 방지.
+2. 기사 링크와 내용을 사람이 확인한 뒤 `gold_label`에 정답 주제, `reviewed_by`에 검토자, `review_status`에 `confirmed` 기록. 같은 사건의 다른 기사에는 동일한 `event_id` 지정.
+3. 규칙 후보 확인에 사용한 기사는 `split=development` 지정. 후보 점검 결과의 제안 주제는 정답으로 간주 불가.
+4. 기존 규칙 중복과 다른 주제의 사용 사례 확인 후, 서로 다른 사건 최소 2개와 기존 모델의 오답을 근거로 규칙 추가. 출현 횟수나 구문 길이만으로 강한 근거 확정 금지.
+5. 규칙 확정 후 후보 선정에 사용하지 않은 별도 사건의 평가 기사 준비. `split=evaluation` 지정, 각 split에 10개 주제 포함 필요.
+6. 동일한 모델 출력으로 추가 규칙 전후의 검토 비율, 자동 결정 정확도, 잘못된 규칙 적용과 정답을 오답으로 변경한 건수 비교. 실제 평가 전 판정 기준값 유지.
+
+```powershell
+python scripts/collect_evaluation_news.py --output data/evaluation/new_candidates.csv
+python scripts/review_rule_candidates.py --dataset data/evaluation/new_candidates.csv --output data/evaluation/new_candidate_audit.json
+# 사람이 정답 확인을 완료한 데이터만 평가 가능
+python scripts/evaluate_news.py --dataset data/evaluation/reviewed_news.csv --split development --output-dir evaluation_results/development
+python scripts/evaluate_news.py --dataset data/evaluation/reviewed_news.csv --split evaluation --output-dir evaluation_results/evaluation
+```
+
+`기타/무관`은 직접 키워드를 추가하지 않고 기존 무관 문맥 신호 방식 유지. 후보 CSV에는 정답이나 추천 라벨의 자동 입력 없음.

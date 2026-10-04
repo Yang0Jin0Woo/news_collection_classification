@@ -26,7 +26,44 @@ class EvaluationReport:
     confusion_matrix: dict[str, dict[str, int]]
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        return {
+            **asdict(self),
+            "review_rate": self.review_count / self.total,
+            "wrong_decided_count": sum(
+                count
+                for gold, row in self.confusion_matrix.items()
+                for prediction, count in row.items()
+                if prediction in self.per_category and prediction != gold
+            ),
+        }
+
+
+def calculate_rule_correction_metrics(
+    expected: list[str],
+    model_labels: list[str],
+    final_labels: list[str],
+    rule_applied: list[bool],
+) -> dict[str, int | float]:
+    """규칙 적용과 실제 라벨 변경을 구분하고, 정답을 오답으로 바꾼 경우 별도 집계."""
+    if not (len(expected) == len(model_labels) == len(final_labels) == len(rule_applied)):
+        raise ValueError("rule correction inputs must have matching lengths")
+    applied = [
+        (gold, model, final)
+        for gold, model, final, used in zip(
+            expected, model_labels, final_labels, rule_applied, strict=True
+        )
+        if used
+    ]
+    changed = [(gold, model, final) for gold, model, final in applied if model != final]
+    wrong = sum(gold != final for gold, _, final in applied)
+    return {
+        "rule_applied_count": len(applied),
+        "rule_changed_count": len(changed),
+        "wrong_rule_count": wrong,
+        "wrong_rule_rate": _safe_divide(wrong, len(applied)),
+        "corrected_count": sum(model != gold and final == gold for gold, model, final in changed),
+        "harmful_change_count": sum(model == gold and final != gold for gold, model, final in changed),
+    }
 
 
 def _safe_divide(numerator: int, denominator: int) -> float:
@@ -111,13 +148,15 @@ def render_comparison_markdown(
         "",
         "## 방식별 비교",
         "",
-        "| 방식 | 정확도 | 거시 평균 F1 | 결정 커버리지 | 결정 건 정확도 | 검토 | 오류 | 평가 건수 |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|",
+        "| 방식 | 정확도 | 거시 평균 F1 | 결정 커버리지 | 결정 건 정확도 | 검토 비율 | 오분류 | 검토 | 오류 | 평가 건수 |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for name, report in reports.items():
         lines.append(
             f"| {name} | {report.accuracy:.4f} | {report.macro_f1:.4f} | "
             f"{report.coverage:.4f} | {report.decided_accuracy:.4f} | "
+            f"{report.review_count / report.total:.4f} | "
+            f"{report.to_dict()['wrong_decided_count']} | "
             f"{report.review_count} | {report.error_count} | {report.total} |"
         )
 
