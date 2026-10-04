@@ -29,37 +29,52 @@ AI 예측과 기사 속 규칙 근거를 비교한 최종 판단, 결과와 판�
 
 ## 실행 방법
 
-Python 3.11~3.13과 인터넷 연결 필요, 아래 명령은 Windows PowerShell 기준
+Python 3.11~3.13과 인터넷 연결 필요, Windows PowerShell 기준
 
-작업 위치는 `pyproject.toml`이 있는 `news_classifier_expanded` 폴더
+실행 위치: `pyproject.toml`이 있는 `news_classifier_expanded` 폴더
 
-가상환경은 상위 폴더의 `.venv` 하나만 사용, 기존 환경의 재생성이나 재설치 불필요
+가상환경은 패키지를 따로 설치하는 공간, 상위 폴더의 `.venv` 하나만 사용
 
-### 기존 환경에서 실행
+- 처음 사용: 1번 설치 → 3번 실행
+- 새 터미널에서 재사용: 2번 활성화 → 3번 실행
 
-```powershell
-..\.venv\Scripts\Activate.ps1
-news-classifier collect --keyword "AI 반도체"
-news-classifier dashboard
-```
+### 1. 최초 설치
 
-`AI 반도체`는 검색어 예시이며 원하는 검색어로 변경 가능
-
-최대 수집량 기본 10건, 중복 묶기 후 대표 기사 수 감소 가능
-
-최초 실행 시 모델 다운로드와 로딩 시간 소요, CUDA 사용 가능 시 GPU 자동 선택 및 그 외 CPU 사용
-
-대시보드는 터미널에 표시된 Local URL로 접속, 종료는 `Ctrl+C` 입력
-
-### 새 환경의 최초 설치
-
-프로젝트 폴더에서 상위 가상환경이 없는 경우에만 실행
+상위 `.venv`가 없을 때 한 번만 실행, 설치 완료 후 3번 진행
 
 ```powershell
 python -m venv ..\.venv
 ..\.venv\Scripts\Activate.ps1
 python -m pip install -e .
 ```
+
+### 2. 환경 활성화
+
+설치된 환경을 새 터미널에서 활성화, 최초 설치 직후나 이미 활성화된 경우 생략
+
+```powershell
+..\.venv\Scripts\Activate.ps1
+```
+
+### 3. 실행
+
+`AI 반도체`를 원하는 검색어로 변경 후 수집 실행
+
+```powershell
+news-classifier collect --keyword "AI 반도체"
+```
+
+수집 완료 후 대시보드 실행
+
+```powershell
+news-classifier dashboard
+```
+
+Local URL로 접속, 종료는 `Ctrl+C` 입력
+
+기본 최대 10건 수집, 중복 묶기 후 대표 기사 수 감소 가능
+
+최초 모델 다운로드와 로딩 시간 소요, CUDA 사용 가능 시 GPU 선택 및 그 외 CPU 사용
 
 macOS와 Linux의 활성화 명령은 `source ../.venv/bin/activate` 사용
 
