@@ -103,6 +103,8 @@ def _reclassification(rows, fields):
         "enrichment_status_counts": {},
         "enrichment_status_missing_count": None,
         "http_status_counts": {},
+        "extraction_method_counts": {},
+        "extraction_reason_counts": {},
     }
     if not supported:
         return payload
@@ -162,6 +164,18 @@ def _reclassification(rows, fields):
             not isinstance(record.get("enrichment_status"), str) or not record["enrichment_status"].strip()
             for _, record in records
         ),
+        "extraction_method_counts": dict(sorted(Counter(
+            record["extraction_diagnostics"]["method"] for _, record in records
+            if isinstance(record.get("extraction_diagnostics"), dict)
+            and isinstance(record["extraction_diagnostics"].get("method"), str)
+            and record["extraction_diagnostics"]["method"]
+        ).items())),
+        "extraction_reason_counts": dict(sorted(Counter(
+            record["extraction_diagnostics"]["reason"] for _, record in records
+            if isinstance(record.get("extraction_diagnostics"), dict)
+            and isinstance(record["extraction_diagnostics"].get("reason"), str)
+            and record["extraction_diagnostics"]["reason"]
+        ).items())),
         "http_status_counts": dict(sorted(Counter(
             str(record["http_status"]) for _, record in records
             if type(record.get("http_status")) is int and 100 <= record["http_status"] <= 599

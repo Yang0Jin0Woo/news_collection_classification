@@ -232,3 +232,16 @@ def test_retry_metadata_does_not_reconstruct_missing_initial_reason_or_final_sta
     assert metadata["resolution_unknown_count"] == 1
     assert metadata["initial_rule_reasons"] == {}
     assert metadata["initial_rule_reason_unknown_count"] == 1
+
+
+def test_extraction_reasons_and_methods_are_counted_only_when_explicitly_recorded(tmp_path):
+    records = [{"status": "RECLASSIFIED", "initial_final_category": "검토필요",
+                "extraction_diagnostics": {"method": "BODY_CONTAINER_BLOCKS", "reason": "body_found"}},
+               {"status": "NO_USABLE_PARAGRAPHS", "initial_final_category": "검토필요",
+                "extraction_diagnostics": {"method": "", "reason": "multiple_body_candidates"}},
+               {"status": "NO_USABLE_PARAGRAPHS", "initial_final_category": "검토필요"}]
+    source = write_csv(tmp_path / "diagnostics.csv", [
+        {"title": str(i), "review_reclassification": json.dumps(record)} for i, record in enumerate(records)])
+    metadata = audit.audit_csv(source, .5, .05)["summary"]["review_reclassification"]
+    assert metadata["extraction_method_counts"] == {"BODY_CONTAINER_BLOCKS": 1}
+    assert metadata["extraction_reason_counts"] == {"body_found": 1, "multiple_body_candidates": 1}

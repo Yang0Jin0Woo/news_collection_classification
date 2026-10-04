@@ -359,3 +359,5 @@ def test_resolved_google_source_flows_through_review_retry_and_saved_audit(block
         assert len(classifier.calls) == 2
         assert not row.review_required
         assert audit["status"] == "RECLASSIFIED"
+        assert audit["extraction_diagnostics"]["method"] == "ARTICLE_BLOCKS"
+        assert audit["extraction_diagnostics"]["reason"] == "body_found"

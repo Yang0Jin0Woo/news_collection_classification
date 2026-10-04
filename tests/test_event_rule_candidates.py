@@ -36,6 +36,14 @@ def test_candidate_match_ignores_search_keyword(keyword):
     assert report["matches"][0]["keyword"] == keyword
 
 
+@pytest.mark.parametrize("phrase,label", [("인재 양성", "교육/취업"), ("생산 능력 확대", "생산/공급망")])
+def test_new_event_expressions_are_pending_candidates_not_default_rules(phrase, label):
+    assert phrase in CANDIDATE_PHRASES[label]
+    report = audit(phrase, label, [{"keyword": "어떤 검색어든", "title": phrase + " 계획 발표"}])
+    assert report["matching_article_count"] == 1 and not report["activation_eligible"]
+    assert not any(term.origin == "development" for policy in DEFAULT_RULE_SET.labels for term in policy.terms)
+
+
 def test_keyword_and_source_only_occurrences_are_not_candidate_evidence():
     rows = [{"keyword": "IPO", "title": "A company report - IPO", "description": "IPO", "source": "IPO"}]
     report = audit("IPO", "금융/투자", rows)

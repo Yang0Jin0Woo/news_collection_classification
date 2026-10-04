@@ -132,6 +132,7 @@ class ReviewReclassification:
     http_status: int | None = None
     resolved_url: str = ""
     resolution_status: str = ""
+    extraction_diagnostics: dict = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
