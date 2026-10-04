@@ -42,7 +42,41 @@ def render_dashboard(default_path: str = "news_analysis_results.csv") -> None:
     metric_columns[2].metric("검토 필요", review_count)
 
     if "final_category" in filtered.columns:
-        st.bar_chart(filtered.groupby("final_category").size())
+        category_counts = (
+            filtered.groupby("final_category")
+            .size()
+            .rename_axis("카테고리")
+            .reset_index(name="기사 수")
+        )
+        st.vega_lite_chart(
+            category_counts,
+            {
+                "mark": {"type": "bar", "size": 24},
+                "encoding": {
+                    "x": {
+                        "field": "카테고리",
+                        "type": "nominal",
+                        "sort": "-y",
+                        "axis": {
+                            "labelAngle": -30,
+                            "labelOverlap": False,
+                            "labelLimit": 140,
+                        },
+                    },
+                    "y": {
+                        "field": "기사 수",
+                        "type": "quantitative",
+                        "axis": {"tickMinStep": 1},
+                    },
+                    "tooltip": [
+                        {"field": "카테고리", "type": "nominal"},
+                        {"field": "기사 수", "type": "quantitative"},
+                    ],
+                },
+            },
+            width="stretch",
+            height=320,
+        )
 
     display_columns = [
         "title",
@@ -63,7 +97,7 @@ def render_dashboard(default_path: str = "news_analysis_results.csv") -> None:
     ]
     st.dataframe(
         filtered[available_columns] if available_columns else filtered,
-        use_container_width=True,
+        width="stretch",
     )
 
 
