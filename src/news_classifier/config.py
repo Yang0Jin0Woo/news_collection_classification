@@ -40,6 +40,9 @@ class AppSettings:
     decision_calibration_path: str = field(default_factory=lambda: os.getenv(
         "NEWS_DECISION_CALIBRATION", ""
     ))
+    event_rule_profile_path: str = field(default_factory=lambda: os.getenv(
+        "NEWS_EVENT_RULE_PROFILE", ""
+    ))
     review_enrichment_enabled: bool = True
     request_timeout_seconds: int = 15
     max_sequence_length: int = 1200

@@ -113,6 +113,7 @@ def _reclassification(rows, fields):
         "TIMEOUT", "BLOCKED_HTTP", "HTTP_ERROR", "REQUEST_FAILED",
         "GOOGLE_NEWS_WRAPPER", "RSS_WRAPPER", "CONSENT_OR_BLOCK_PAGE",
         "NO_USABLE_PARAGRAPHS",
+        "SOURCE_URL_UNRESOLVED", "UNSAFE_URL", "REDIRECT_LIMIT",
     }
     records = []
     unknown = not_applicable = 0

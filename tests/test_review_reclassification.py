@@ -324,3 +324,38 @@ def test_diagnostic_scraper_cannot_replace_item_or_group_identity():
     assert row.review_reclassification.enrichment_status == "BODY_EXTRACTED"
     assert row.review_reclassification.http_status == 200
     assert len(classifier.calls) == 2
+
+
+@pytest.mark.parametrize("blocked", [False, True])
+def test_resolved_google_source_flows_through_review_retry_and_saved_audit(blocked):
+    source = "https://news.google.com/rss/articles/CBMi" + "A" * 24
+    publisher = "https://publisher.example/news"
+    calls = []
+
+    def fetch(url):
+        calls.append(url)
+        if url == publisher and blocked:
+            return HttpFetchResult(None, "BLOCKED_HTTP", 403)
+        html = (f'<link rel="canonical" href="{publisher}">' if url == source
+                else "<article><p>학교 입학 상담과 신입생 교육 행사에 대한 충분히 긴 본문 내용으로 재판단에 필요한 상세 정보 제공.</p></article>")
+        return HttpFetchResult(SimpleNamespace(text=html, url=url), "SUCCESS", 200)
+
+    classifier = Classifier()
+    scraper = ArticleScraper(SimpleNamespace(get_public_with_diagnostics=fetch))
+    result = make_pipeline(collector=Collector(link=source), classifier=classifier, scraper=scraper).run("임의의 검색어")
+    row = result.results[0]
+    audit = json.loads(row.to_row()["review_reclassification"])
+    assert row.item.link == source
+    assert calls == [source, publisher]
+    assert audit["resolved_url"] == publisher
+    assert audit["resolution_status"] == "HTML_SOURCE_URL"
+    assert audit["initial_model_score"] == .3
+    assert audit["initial_final_category"] == "검토필요"
+    if blocked:
+        assert len(classifier.calls) == 1
+        assert row.review_required
+        assert audit["status"] == "BLOCKED_HTTP" and audit["http_status"] == 403
+    else:
+        assert len(classifier.calls) == 2
+        assert not row.review_required
+        assert audit["status"] == "RECLASSIFIED"

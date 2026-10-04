@@ -64,6 +64,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--decision-profile", default=None,
         help="Use final decision thresholds validated on independent reviewed news",
     )
+    collect.add_argument("--rule-profile", default=None,
+                         help="Apply event rules exported after independent human-reviewed evaluation")
 
     sub.add_parser("dashboard", help="Open the Streamlit dashboard")
 
@@ -119,6 +121,8 @@ def run_cli(argv: list[str] | None = None) -> int:
             )
         if args.decision_profile is not None:
             settings = replace(settings, decision_calibration_path=args.decision_profile)
+        if args.rule_profile is not None:
+            settings = replace(settings, event_rule_profile_path=args.rule_profile)
         if args.no_review_enrichment:
             settings = replace(settings, review_enrichment_enabled=False)
         try:

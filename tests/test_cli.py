@@ -279,9 +279,11 @@ def test_cli_passes_policy_options_through_settings(monkeypatch, tmp_path):
     assert run_cli([
         "collect", "--keyword", "새 검색어", "--csv", str(tmp_path / "out.csv"),
         "--no-review-enrichment", "--decision-profile", "validated.json",
+        "--rule-profile", "confirmed_rules.json",
     ]) == 0
     assert captured["settings"].review_enrichment_enabled is False
     assert captured["settings"].decision_calibration_path == "validated.json"
+    assert captured["settings"].event_rule_profile_path == "confirmed_rules.json"
 
 
 def test_cli_does_not_replace_previous_csv_after_reclassification_failure(monkeypatch, tmp_path):

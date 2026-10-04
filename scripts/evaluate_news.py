@@ -40,6 +40,7 @@ from news_classifier.rules.policy import (
     without_development_rules,
 )
 from news_classifier.rules.review_validation import audit_rule_holdout, evaluate_review_reduction
+from news_classifier.rules.event_profile import create_event_rule_profile, read_rule_proposals, runtime_bindings
 from news_classifier.service import build_pipeline
 from news_classifier.utils.text import article_description, clean_text
 
@@ -54,8 +55,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--output-dir", default="evaluation_results")
     parser.add_argument("--compare-legacy", action="store_true", help="같은 모델과 원문으로 이번 변경 전후 비교")
+    parser.add_argument("--compare-short-labels", action="store_true", help="같은 17개 주제와 입력으로 짧은 주제명과 사건 설명 비교")
     parser.add_argument("--require-unseen-keywords", action="store_true", help="개발용과 겹치지 않는 검색어만 평가")
     parser.add_argument("--decision-profile", default=None, help="독립 평가를 통과한 최종 판정 기준 파일")
+    parser.add_argument("--rules-file", default=None, help="development 사건 ID가 명시된 규칙 제안 JSON")
+    parser.add_argument("--export-rule-profile", default=None, help="독립 평가 통과 시에만 새 규칙 적용용 JSON 생성")
     return parser
 
 
@@ -85,6 +89,14 @@ def legacy_rule_set(rule_set):
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+    if args.export_rule_profile:
+        if not args.rules_file or args.split != "evaluation":
+            parser.error("규칙 프로필 생성은 --rules-file 및 --split evaluation 필요")
+        export_path = Path(args.export_rule_profile)
+        if export_path.exists() or export_path.resolve() in {Path(args.dataset).resolve(), Path(args.rules_file).resolve()}:
+            parser.error("원본 및 기존 프로필 보존: 새 --export-rule-profile 경로 필요")
+    if args.rules_file and args.decision_profile:
+        parser.error("새 규칙은 판정 기준 변경과 분리하여 먼저 평가 필요")
     if args.require_unseen_keywords and args.split != "evaluation":
         parser.error("새 검색어 검증은 --split evaluation에서만 가능")
     dataset_path = Path(args.dataset)
@@ -96,6 +108,8 @@ def main() -> None:
     items = rows_to_items(rows)
 
     settings = AppSettings()
+    if args.rules_file:
+        settings = replace(settings, event_rule_profile_path="", decision_calibration_path="")
     if args.decision_profile is not None:
         settings = replace(settings, decision_calibration_path=args.decision_profile)
     pipeline = build_pipeline(settings)
@@ -105,6 +119,10 @@ def main() -> None:
     elif profile_input_mode == "with_body" and any(not clean_text(item.content) for item in items):
         parser.error("본문 보강 판정 프로필의 평가에는 모든 기사의 본문 필요")
     rule_engine = pipeline.postprocessor.rule_engine
+    if args.rules_file:
+        proposed = read_rule_proposals(args.rules_file, rule_engine.rule_set)
+        rule_engine = RuleEngine(proposed)
+        pipeline.postprocessor = ClassificationPostProcessor(rule_engine)
     runtime_rule_set = rule_engine.rule_set
     has_development_rules = any(
         term.origin == "development"
@@ -212,6 +230,17 @@ def main() -> None:
             legacy_processor.process(item, prediction).rule_decision.final_label
             for item, prediction in zip(items, predictions, strict=True)
         ]
+    if args.compare_short_labels:
+        short_predictions = pipeline.classifier.classify_many_legacy(
+            [evaluation_input(item) for item in items], candidate_labels=CANDIDATE_LABELS,
+        )
+        if len(short_predictions) != len(items):
+            raise RuntimeError("short-label prediction count does not match evaluation cases")
+        predicted_by_method["짧은 주제명 모델"] = [prediction.label for prediction in short_predictions]
+        predicted_by_method["짧은 주제명 하이브리드"] = [
+            pipeline.postprocessor.process(item, prediction).rule_decision.final_label
+            for item, prediction in zip(items, short_predictions, strict=True)
+        ]
     reports = {
         name: calculate_metrics(expected, predicted, CANDIDATE_LABELS)
         for name, predicted in predicted_by_method.items()
@@ -268,6 +297,7 @@ def main() -> None:
         "hypothesis_template": HYPOTHESIS_TEMPLATE,
         "unseen_keywords_validated": args.require_unseen_keywords or (has_development_rules and args.split == "evaluation"),
         "compare_legacy": args.compare_legacy,
+        "compare_short_labels": args.compare_short_labels,
         "legacy_labels": list(LEGACY_CANDIDATE_LABELS) if args.compare_legacy else None,
         "input_policy": {
             "name": CLASSIFICATION_INPUT_POLICY,
@@ -372,6 +402,19 @@ def main() -> None:
     print(f"평가 보고서 저장: {output_dir / 'evaluation_report.md'}")
     if has_development_rules:
         print(f"새 규칙의 검토 감소 검증: {rule_review_validation['status']}")
+    if args.export_rule_profile:
+        try:
+            payload = create_event_rule_profile(
+                runtime_rule_set, rule_review_validation,
+                runtime_bindings(settings, pipeline.classifier, CLASSIFICATION_INPUT_POLICY,
+                                 HYPOTHESIS_TEMPLATE, baseline_engine.rule_set), dataset_sha256(dataset_path),
+            )
+        except ValueError as exc:
+            parser.error(f"규칙 적용용 파일 생성 중단: {exc}")
+        export_path.parent.mkdir(parents=True, exist_ok=True)
+        with export_path.open("x", encoding="utf-8") as file:
+            json.dump(payload, file, ensure_ascii=False, indent=2, allow_nan=False)
+        print(f"검증된 규칙 적용용 파일 생성: {export_path}")
 
 
 if __name__ == "__main__":

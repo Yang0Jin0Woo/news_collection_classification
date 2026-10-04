@@ -8,7 +8,7 @@
 - **수집과 정제:** Google News RSS의 최근 7일 뉴스 수집, 제목 정리, 완전 중복 및 동일 사건의 유사 기사 묶기
 - **AI 분류:** 사전학습 모델 mDeBERTa와 사건 중심 주제 설명을 이용한 별도 추가 학습 없는 분류
 - **규칙 기반 판단:** 모델 예측 점수와 상위 두 주제의 점수 차이, 기사 속 키워드 근거 비교를 통한 최종 판단
-- **검토 기사 재판단:** 본문이 없는 검토 기사의 본문 보강과 최대 1회 재분류, 최초 판단과 처리 결과 기록
+- **검토 기사 재판단:** Google 뉴스 링크의 언론사 원문 조회, 본문 보강과 최대 1회 재분류, 최초 판단과 처리 결과 기록
 - **규칙 오탐 개선:** 단어 경계 확인, 긴 구문 우선, 중복 가산 방지, 분야명과 고유명사의 점수 제외, 강한 근거 2점과 일반 근거 1점 적용
 - **결과 관리:** CSV 저장과 Streamlit 대시보드 조회, 선택적 SQLite 누적 저장
 
@@ -40,17 +40,25 @@
 cd .\news_classifier_expanded
 ```
 
-### 2. 가상환경 생성과 설치
+### 2. 상위 가상환경 활성화
 
 가상환경: 다른 Python 프로젝트와 사용 패키지를 분리하는 실행 공간.
+이 작업 환경은 `C:\news_classifier_expanded_project\.venv` 하나만 사용. 프로젝트 내부 `news_classifier_expanded\.venv`는 생성하지 않음. 상위 환경의 GPU 지원 PyTorch와 프로젝트 설치 확인 완료, 기존 환경은 재생성이나 재설치 불필요.
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+# 기존 터미널에서 다른 가상환경이 활성화되어 있으면 먼저 deactivate 실행
+..\.venv\Scripts\Activate.ps1
+```
+
+새 컴퓨터에서 상위 가상환경이 없는 경우에만 아래 명령으로 준비. GPU 사용에는 해당 환경의 CUDA 지원 PyTorch 및 GPU 사용 가능 여부 확인 필요.
+
+```powershell
+python -m venv ..\.venv
+..\.venv\Scripts\Activate.ps1
 python -m pip install -e .
 ```
 
-macOS와 Linux에서는 활성화 명령을 `source .venv/bin/activate`로 대체.
+macOS와 Linux에서는 활성화 명령을 `source ../.venv/bin/activate`로 대체.
 기본 실행은 `.env` 파일 생성 없이 가능, 설정 변경 시 `.env.example`을 복사한 `.env` 파일 사용.
 
 ### 3. 뉴스 수집과 분류
@@ -60,6 +68,7 @@ news-classifier collect --keyword "AI 반도체"
 ```
 
 기본 최대 수집량 10건, 정제와 동일 사건 묶기 후 대표 기사 수 감소 가능. 공통 단어만 겹치는 서로 다른 기사는 유지.
+가상환경을 활성화하지 않고 상위 Python을 직접 사용하려면 `..\.venv\Scripts\python.exe -m news_classifier.cli collect --keyword "실제 검색어"` 실행. `run_news.ps1`도 상위 Python으로 고정, `./run_news.ps1 collect --keyword "실제 검색어"` 또는 `./run_news.ps1 dashboard` 사용 가능. 인수 없이 실행하면 기존의 대화형 검색과 `out.csv`, `news.db` 저장 방식 유지.
 
 ### 4. 대시보드 확인
 
@@ -84,6 +93,7 @@ CSV 결과의 주제별 기사 수, 규칙 적용 수, 검토 필요 기사 확�
 | `--no-review-enrichment` | 기본 검토 기사 본문 보강과 재판단 비활성화 |
 | `--confidence-profile FILE.json` | 모델 신뢰도 높음/보통/낮음 표시 기준 지정, 최종 판정 기준과 별개 |
 | `--decision-profile FILE.json` | 독립 평가를 통과한 최종 판정 기준 적용, 입력 조건 불일치 시 기본 기준 유지 |
+| `--rule-profile FILE.json` | 사람이 확인한 기사로 독립 평가를 통과한 사건 규칙 적용, 후보 감사 파일 직접 사용 불가 |
 
 ```powershell
 news-classifier collect --keyword "AI 반도체" --limit 20 --sqlite
@@ -122,6 +132,7 @@ news-classifier collect --keyword "AI 반도체" --limit 20 --sqlite
 
 `group_article_count`는 대표를 포함한 묶음 기사 수, `related_articles`는 다른 기사들의 제목, 언론사, 발행일과 원문 링크를 보존한 JSON 목록. 분류 입력에는 대표 기사의 내용만 사용.
 `review_reclassification`은 최초 모델 점수와 검토 사유, 본문 보강과 재판단 상태의 JSON 기록. `RECLASSIFIED`는 재판단 수행이며 정답 확정이나 검토 해소를 보장하는 상태는 아님. `enrichment_status`에 본문 확보, 시간 초과, 접근 차단, Google 뉴스 중계 페이지, RSS 문서, 본문 문단 없음 등의 원인 기록. HTTP 응답이 있으면 `http_status`도 기록. 이전 CSV의 `NO_CONTENT`는 상세 원인 없는 과거 기록이며 자동 변경 없음. 모델 재판단 실패는 전체 실행 오류로 처리하고 저장 중단.
+`resolved_url`은 조회한 언론사 URL, `resolution_status`는 조회 경로 기록. 원래 기사 링크와 중복 묶음 정보 보존. 원문 주소 조회 실패는 `SOURCE_URL_UNRESOLVED`, 허용하지 않는 주소는 `UNSAFE_URL`, 리다이렉트 한도 초과는 `REDIRECT_LIMIT`으로 구분.
 터미널과 대시보드의 카테고리 통계 및 검토 수는 대표 기사 기준. 대표는 수집 순서상 첫 기사이며, 모델 점수에 따른 대표 선택 없음.
 
 - **정상 분류 또는 검색 결과 0건:** 종료 코드 `0`, 0건이면 열 이름(헤더)만 있는 CSV 저장
@@ -167,6 +178,32 @@ python -m pytest -q
 5. 규칙 확정 후 후보 선정에 사용하지 않은 별도 사건과 검색어의 평가 기사 준비. `split=evaluation` 지정, 각 split에 현재 전체 정답 주제와 사람이 확인한 `event_id` 포함 필요. 새 규칙 평가에서 검색어 중복 자동 차단.
 6. 동일한 모델 출력과 판정 기준값으로 추가 규칙 전후의 검토 비율, 새 자동 분류의 오답과 기존 정답 훼손 비교. 새 표현마다 별도 사건 최소 2개의 올바른 규칙 판단도 확인. 평가 보고서의 관측 검증이며 규칙 자동 활성화 또는 미래 정확도 보장 없음.
 
+사람이 확인한 후보만 별도 JSON으로 제안, `event_rule_candidates` 형식 사용. 아래는 형식 예시이며 실제 증거 또는 바로 적용할 규칙이 아님. 사건 ID는 확인된 development 기사의 `event_id`와 일치 필요.
+
+```json
+{
+  "schema_version": 1,
+  "profile_type": "event_rule_candidates",
+  "rules": [{
+    "category": "금융/투자",
+    "phrase": "사람이 확인한 구체적인 사건 표현",
+    "strength": "STRONG",
+    "evidence_event_ids": ["개발사건-1", "개발사건-2"]
+  }]
+}
+```
+
+제안 규칙의 독립 평가 통과 시에만 새 적용 파일 생성, 기존 파일 덮어쓰기 차단. 검증 실패 시 보고서만 생성하고 규칙 적용 파일 생성 중단. 모델과 입력 및 기존 규칙 구성이 바뀌면 재평가 필요.
+
+```powershell
+# 정답 확인과 독립 사건 및 검색어 분리 완료 후에만 실행
+python scripts/evaluate_news.py --dataset data/evaluation/reviewed_news.csv --rules-file data/evaluation/confirmed_candidates.json --export-rule-profile evaluation_results/confirmed_event_rules.json --output-dir evaluation_results/event_rules
+# 검증된 공통 규칙을 모든 검색어에 동일하게 적용
+news-classifier collect --keyword "원하는 검색어" --rule-profile evaluation_results/confirmed_event_rules.json
+```
+
+환경변수 `NEWS_EVENT_RULE_PROFILE`로 적용 파일 지정도 가능. 후보 감사 JSON이나 미검증 제안 JSON의 수집 명령 직접 적용 불가. 적용 파일은 신뢰하는 로컬 설정이며 서명된 인증 자료가 아님. 현재 사람 정답 확인 전이므로 새 사건 규칙의 기본 활성화 없음.
+
 ```powershell
 python scripts/collect_evaluation_news.py --output data/evaluation/new_candidates.csv
 python scripts/review_rule_candidates.py --dataset data/evaluation/new_candidates.csv --output data/evaluation/new_candidate_audit.json
@@ -190,7 +227,7 @@ python scripts/evaluate_news.py --dataset data/evaluation/reviewed_news.csv --sp
 - 모델 내부의 17개 주제 설명 구체화, 기존 주제명 유지와 일반 뉴스 7개 주제 추가
 - GPU, 전고체 배터리 같은 기술 종류와 기업명, 국가명 등 기존 일반 명사의 `context_only` 지정. 기사 내용은 유지, 해당 단어의 규칙 점수 및 근거 수 가산 제외
 - 기존 사건 구문과 단어 경계, 긴 구문 우선, MODEL/RULE/REVIEW 경로 및 판정 기준값 유지. 사람 검증 없는 새 사건 규칙 추가 없음
-- 기사 영역 우선 추출과 중복 문단 제거. 본문 보강은 선택 기능이며 접근 차단, RSS 연결 페이지 등으로 실패 가능. 본문이 없으면 제목과 유효 설명만 사용
+- 기사 영역 우선 추출과 중복 문단 제거, 본문 문단이 없으면 기사 구조화 데이터의 본문 확인. 검토 기사 본문 보강은 기본 활성화, 전체 기사 보강은 선택 기능. 접근 차단 등으로 확보 실패 시 제목과 유효 설명만 사용
 
 분류 입력 정책과 주제 설명이 바뀌면 모델 점수도 달라질 가능성. 과거 신뢰도 보정 파일의 자동 재사용 차단, 확인된 development 기사로 보정 파일 재생성 필요. 신뢰도 등급 보정과 최종 판정 기준값 변경은 별개의 작업.
 모델 점수는 후보 주제 간 상대 점수이며, 주제 확장에 따른 점수 하락과 검토 비율 증가 가능. 주제 범위 확장만으로 검토 비율 감소 보장 불가, 최종 판정 기준 조정에는 사람이 확인한 정답 자료로 별도 검증 필요.
@@ -206,13 +243,16 @@ python scripts/evaluate_news.py --dataset data/evaluation/reviewed_news.csv --sp
 
 개발용과 평가용 사건 분리 및 각 split의 현재 전체 정답 주제 확보 필요. 기존 10개 주제의 평가 자료만 있는 경우 새 주제의 사람이 확인한 정답 기사 보충 필요. 동일 사건의 대표 기사 1개 평가 권장. `--require-unseen-keywords`는 두 split의 검색어 중복도 차단하며, 새로운 분야에서의 성능을 보장하는 기능은 아님.
 `--compare-legacy`는 같은 모델 가중치와 원문으로 초기 10개 짧은 주제명, 이전 원문 입력과 무관 문맥 규칙을 재현하는 비교. 현재 17개 주제 설명과의 비교이며 확장 전 점수의 그대로 재사용 불가. 검색어별 결과, 다른 주제를 기술개발로 오분류한 건수와 비율, 검토 비율, 잘못된 규칙 보정 함께 확인. 기술개발 비중만 감소시키는 목표는 미사용.
+`--compare-short-labels`는 현재와 동일한 17개 주제 및 기사 입력으로 짧은 주제명과 사건 설명의 효과만 비교하는 선택 옵션. 평가 보고서에 두 방식의 모델 및 하이브리드 결과 추가, 기본 모델 설명과 판정 기준의 자동 변경 없음.
 기존 CSV와 포트폴리오 PPT 파일의 수정 또는 자동 재분류 없음. 새 주제는 다음 수집부터 적용, 과거 결과는 기존 CSV 기준 조회. 기존 신뢰도 보정 파일은 후보 주제와 설명 불일치로 재사용 차단, 현재 전체 주제를 확인한 development 기사로 재생성 필요.
 현재 수정은 동작 검증 단계이며, 사람 정답 자료 부족으로 실제 정확도 향상과 편향 감소 수치 미확정.
 
 ### 검토필요 감소를 위한 판정 기준 검증
 
 모든 검색어에 동일한 처리 적용, 특정 검색어 예외 또는 카테고리 분포 강제 없음. 본문이 없는 검토 기사만 정보 보강 시도, 실제 모델 입력 변경 시 최대 1회 재판단. 본문 확보 실패 시 기존 검토 유지, 추가 네트워크 요청과 처리 시간 증가 가능.
-본문 확보 실패 원인은 터미널 요약과 CSV의 재판단 JSON에 기록. Google 뉴스 중계 페이지 자체를 본문으로 사용하지 않으며, 숨겨진 언론사 URL의 별도 해독이나 차단 우회 기능 없음. 따라서 진단 개선만으로 본문 확보와 검토 감소 보장 불가.
+Google 뉴스의 기사 식별 정보를 이용한 언론사 URL 조회 후 공개 원문에서 본문 추출. 기사 식별 정보가 없는 경우 중계 페이지 재조회 최대 1회, 각 요청의 시간 제한과 리다이렉트 한도 적용. 중계 페이지 자체의 본문 사용 없음, 로컬 및 사설 주소 거부, 로그인이나 접근 차단 우회 없음. 실패 원인은 터미널 요약과 CSV의 재판단 JSON에 기록.
+원문 조회 방식은 비공식 요청 형식으로 변경 가능하며, [참고 구현](https://github.com/SSujitX/google-news-url-decoder)의 기사 URL 조회 흐름 참고. 주소 조회에 성공해도 언론사 접근 차단이나 본문 부재로 실패 가능, 실패 시 검토 유지.
+실제 저장 기사 2건의 URL 조회 확인 중 1건 본문 확보와 1건 HTTP 403 차단 확인. 본문을 확보한 1건에서 실제 모델 재판단 후 기존 규칙으로 검토필요에서 금융/투자로 변경 확인. 한 건의 동작 확인이며 사람이 확정한 정답 평가나 전체 검토 비율 개선 수치가 아님.
 
 ```powershell
 # 기존 CSV의 검토 사유, 입력 부족, 주제와 검색어별 집계 확인(원본 수정 없음)

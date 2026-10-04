@@ -12,6 +12,9 @@ from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.models import ModelPrediction
 from news_classifier.rules.default_rules import CANDIDATE_LABELS, DEFAULT_RULE_SET
 from news_classifier.rules.policy import RuleStrength, RuleTerm
+from news_classifier.rules.event_profile import load_event_rule_profile, runtime_bindings
+from news_classifier.models import CLASSIFICATION_INPUT_POLICY
+from news_classifier.classifiers.zero_shot_classifier import HYPOTHESIS_TEMPLATE
 
 
 ALPHA = "합성알파근거"
@@ -213,3 +216,86 @@ def test_without_body_profile_rejects_development_evidence_present_only_in_raw_b
     assert inference_calls == []
     assert not output.exists()
     assert dataset.read_bytes() == original
+
+
+@pytest.mark.parametrize("second_term", [False, True])
+def test_proposal_evaluation_exports_only_independently_passed_profiles(tmp_path, monkeypatch, second_term):
+    rows = synthetic_rows(second_term=second_term)
+    dataset, output = tmp_path / "fixture.csv", tmp_path / "report"
+    write_fixture(dataset, rows)
+    original = dataset.read_bytes()
+    manifest, approved = tmp_path / "proposal.json", tmp_path / "approved.json"
+    terms = [ALPHA, BETA] if second_term else [ALPHA]
+    manifest.write_text(json.dumps({"schema_version": 1, "profile_type": "event_rule_candidates",
+        "rules": [{"category": FINANCE, "phrase": term, "strength": "STRONG",
+                   "evidence_event_ids": list(DEV_EVENTS)} for term in terms]}), encoding="utf-8")
+    build_calls, _ = install_fake_pipeline(monkeypatch, rows)
+    original_builder = evaluate_news.build_pipeline
+    pipelines = []
+
+    def build(settings):
+        pipeline = original_builder(settings)
+        pipeline.postprocessor = ClassificationPostProcessor(RuleEngine(DEFAULT_RULE_SET))
+        pipelines.append(pipeline)
+        return pipeline
+
+    monkeypatch.setattr(evaluate_news, "build_pipeline", build)
+    monkeypatch.setattr("sys.argv", ["evaluate_news", "--dataset", str(dataset),
+        "--output-dir", str(output), "--rules-file", str(manifest),
+        "--export-rule-profile", str(approved)])
+    if second_term:
+        with pytest.raises(SystemExit) as error:
+            evaluate_news.main()
+        assert error.value.code == 2
+        assert not approved.exists()
+    else:
+        evaluate_news.main()
+        bindings = runtime_bindings(build_calls[0], pipelines[0].classifier,
+            CLASSIFICATION_INPUT_POLICY, HYPOTHESIS_TEMPLATE, DEFAULT_RULE_SET)
+        rules = load_event_rule_profile(approved, DEFAULT_RULE_SET, bindings)
+        assert RuleEngine(rules).rule_only_decision(ALPHA, "", "") == FINANCE
+        assert rules.decision == DEFAULT_RULE_SET.decision
+        assert json.loads(approved.read_text(encoding="utf-8"))["validation"]["passed"] is True
+    assert dataset.read_bytes() == original
+
+
+def test_rule_profile_export_never_overwrites_existing_file(tmp_path, monkeypatch):
+    approved = tmp_path / "approved.json"
+    approved.write_text("keep", encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["evaluate_news", "--dataset", "absent.csv",
+        "--rules-file", "absent.json", "--export-rule-profile", str(approved)])
+    with pytest.raises(SystemExit) as error:
+        evaluate_news.main()
+    assert error.value.code == 2
+    assert approved.read_text(encoding="utf-8") == "keep"
+
+
+def test_short_label_comparison_keeps_same_topics_inputs_and_default_rules(tmp_path, monkeypatch):
+    rows = synthetic_rows()
+    dataset, output = tmp_path / "fixture.csv", tmp_path / "report"
+    write_fixture(dataset, rows)
+    install_fake_pipeline(monkeypatch, rows)
+    original_builder = evaluate_news.build_pipeline
+    comparison_calls = []
+
+    def build(settings):
+        pipeline = original_builder(settings)
+
+        def short(texts, *, candidate_labels):
+            comparison_calls.append((texts, candidate_labels))
+            return [ModelPrediction("기술개발", .2, .01) for _ in texts]
+
+        pipeline.classifier.classify_many_legacy = short
+        return pipeline
+
+    monkeypatch.setattr(evaluate_news, "build_pipeline", build)
+    monkeypatch.setattr("sys.argv", ["evaluate_news", "--dataset", str(dataset),
+        "--output-dir", str(output), "--compare-short-labels"])
+    evaluate_news.main()
+    payload = json.loads((output / "evaluation_results.json").read_text(encoding="utf-8"))
+    assert payload["compare_short_labels"] is True
+    assert comparison_calls[0][1] == CANDIDATE_LABELS
+    assert all("기사제목:" in text for text in comparison_calls[0][0])
+    assert "짧은 주제명 모델" in payload["reports"]
+    assert "짧은 주제명 하이브리드" in payload["reports"]
+    assert payload["rule_policy"]["decision"] == evaluate_news.asdict(DEFAULT_RULE_SET.decision)

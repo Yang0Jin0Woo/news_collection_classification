@@ -130,6 +130,8 @@ class ReviewReclassification:
     initial_rule_reason: str
     enrichment_status: str = ""
     http_status: int | None = None
+    resolved_url: str = ""
+    resolution_status: str = ""
 
 
 @dataclass(frozen=True)
