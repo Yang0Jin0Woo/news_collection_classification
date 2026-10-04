@@ -24,17 +24,6 @@ from news_classifier.utils.http import HttpClient
 def build_pipeline(settings: AppSettings | None = None) -> NewsPipeline:
     settings = settings or AppSettings()
     validate_rule_configuration(DEFAULT_RULE_SET)
-    confidence_thresholds = load_confidence_thresholds(
-        settings.confidence_calibration_path,
-        expected_model_name=settings.classification_model,
-        expected_model_revision=settings.classification_model_revision,
-        expected_candidate_labels=CANDIDATE_LABELS,
-        expected_input_policy=CLASSIFICATION_INPUT_POLICY,
-        expected_hypothesis_template=HYPOTHESIS_TEMPLATE,
-    )
-    http_client = HttpClient(settings.headers, settings.request_timeout_seconds)
-    collector = GoogleNewsRssCollector(http_client)
-    scraper = ArticleScraper(http_client)
     classifier = ZeroShotNewsClassifier(
         model_name=settings.classification_model,
         model_revision=settings.classification_model_revision,
@@ -42,6 +31,18 @@ def build_pipeline(settings: AppSettings | None = None) -> NewsPipeline:
         max_sequence_length=settings.max_sequence_length,
         batch_size=settings.classification_batch_size,
     )
+    confidence_thresholds = load_confidence_thresholds(
+        settings.confidence_calibration_path,
+        expected_model_name=settings.classification_model,
+        expected_model_revision=settings.classification_model_revision,
+        expected_candidate_labels=CANDIDATE_LABELS,
+        expected_input_policy=CLASSIFICATION_INPUT_POLICY,
+        expected_hypothesis_template=HYPOTHESIS_TEMPLATE,
+        expected_candidate_hypotheses=classifier.candidate_hypotheses,
+    )
+    http_client = HttpClient(settings.headers, settings.request_timeout_seconds)
+    collector = GoogleNewsRssCollector(http_client)
+    scraper = ArticleScraper(http_client)
     rule_engine = RuleEngine(DEFAULT_RULE_SET)
     postprocessor = ClassificationPostProcessor(
         rule_engine,

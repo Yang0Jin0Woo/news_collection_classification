@@ -47,6 +47,7 @@ def load_confidence_thresholds(
     expected_candidate_labels: list[str] | None = None,
     expected_input_policy: str | None = None,
     expected_hypothesis_template: str | None = None,
+    expected_candidate_hypotheses: list[str] | None = None,
 ) -> ConfidenceThresholds:
     if not calibration_path:
         return ConfidenceThresholds()
@@ -85,6 +86,11 @@ def load_confidence_thresholds(
         and payload.get("hypothesis_template") != expected_hypothesis_template
     ):
         raise ValueError("confidence calibration hypothesis template does not match")
+    if (
+        expected_candidate_hypotheses is not None
+        and payload.get("candidate_hypotheses") != expected_candidate_hypotheses
+    ):
+        raise ValueError("confidence calibration topic descriptions do not match; recalibrate")
 
     values = payload.get("thresholds")
     if not isinstance(values, dict):

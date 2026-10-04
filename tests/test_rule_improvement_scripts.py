@@ -98,7 +98,8 @@ def test_candidate_selection_rejects_evaluation_split(tmp_path, monkeypatch):
     assert not output.exists()
 
 
-def test_evaluation_compares_same_predictions_and_preserves_model_errors(tmp_path, monkeypatch):
+@pytest.mark.parametrize("compare_legacy", [False, True])
+def test_evaluation_compares_same_predictions_and_preserves_model_errors(tmp_path, monkeypatch, compare_legacy):
     dataset = tmp_path / "synthetic.csv"
     labels = list(DEFAULT_RULE_SET.candidate_labels)
     fields = ["id", "event_id", "split", "keyword", "title", "description", "gold_label", "review_status", "reviewed_by"]
@@ -116,20 +117,33 @@ def test_evaluation_compares_same_predictions_and_preserves_model_errors(tmp_pat
         calls.append(texts)
         return [ModelPrediction(label, 0.8, 0.2) for label in labels[:-1]] + [ModelPrediction.failed()]
 
+    def classify_many_legacy(texts, *, candidate_labels):
+        calls.append(texts)
+        assert len(candidate_labels) == 10
+        return [ModelPrediction(candidate_labels[0], 0.8, 0.2) for _ in texts[:-1]] + [ModelPrediction.failed()]
+
     pipeline = SimpleNamespace(
-        classifier=SimpleNamespace(classify_many=classify_many),
+        classifier=SimpleNamespace(
+            classify_many=classify_many, candidate_hypotheses=labels,
+            classify_many_legacy=classify_many_legacy,
+        ),
         postprocessor=ClassificationPostProcessor(RuleEngine(DEFAULT_RULE_SET)),
     )
     monkeypatch.setattr(evaluate_news, "build_pipeline", lambda _: pipeline)
     output = tmp_path / "report"
-    monkeypatch.setattr("sys.argv", ["evaluate", "--dataset", str(dataset), "--output-dir", str(output)])
+    monkeypatch.setattr("sys.argv", ["evaluate", "--dataset", str(dataset), "--output-dir", str(output)] + (["--compare-legacy"] if compare_legacy else []))
     evaluate_news.main()
     payload = json.loads((output / "evaluation_results.json").read_text(encoding="utf-8"))
-    assert len(calls) == 1
+    assert len(calls) == (2 if compare_legacy else 1)
     assert payload["reports"]["하이브리드"] == payload["reports"]["추가 규칙 전 하이브리드"]
     assert payload["cases"][-1]["baseline_hybrid_label"] == "분류실패"
     assert payload["reports"]["하이브리드"]["error_count"] == 1
     assert "검토 비율" in (output / "evaluation_report.md").read_text(encoding="utf-8")
+    assert payload["technology_bias"]["하이브리드"]["technology_false_positive_count"] == 0
+    assert "unused" in payload["per_keyword"]
+    if compare_legacy:
+        assert "변경 전 하이브리드" in payload["reports"]
+        assert payload["cases"][-1]["legacy_hybrid_label"] == "분류실패"
 
 
 def test_no_results_does_not_create_empty_candidate_file(tmp_path, monkeypatch):
@@ -141,3 +155,36 @@ def test_no_results_does_not_create_empty_candidate_file(tmp_path, monkeypatch):
         collect_evaluation_news.main()
     assert exc.value.code == 1
     assert not output.exists()
+
+
+def test_queries_only_collects_new_keywords_without_defaults(tmp_path, monkeypatch):
+    monkeypatch.setattr(collect_evaluation_news, "GoogleNewsRssCollector", lambda _: FakeCollector())
+    output = tmp_path / "heldout.csv"
+    monkeypatch.setattr("sys.argv", ["collect", "--output", str(output), "--queries-only", "--query", "식품", "--query", "건설", "--target-total", "4"])
+    collect_evaluation_news.main()
+    with output.open(encoding="utf-8-sig", newline="") as file:
+        rows = list(csv.DictReader(file))
+    assert [row["keyword"] for row in rows] == ["식품", "건설", "식품", "건설"]
+    assert all(row["gold_label"] == "" for row in rows)
+    assert all("content" in row for row in rows)
+
+
+def test_queries_only_requires_explicit_keyword(tmp_path, monkeypatch):
+    monkeypatch.setattr("sys.argv", ["collect", "--output", str(tmp_path / "none.csv"), "--queries-only"])
+    with pytest.raises(SystemExit) as exc:
+        collect_evaluation_news.main()
+    assert exc.value.code == 2
+
+
+def test_legacy_rules_restore_context_scoring_without_mutating_runtime():
+    before = evaluate_news.legacy_rule_set(DEFAULT_RULE_SET)
+    assert all(not term.context_only for label in before.labels for term in label.terms)
+    assert RuleEngine(before).calculate_scores("GPU NPU")["기술개발"] == 2
+    assert RuleEngine(DEFAULT_RULE_SET).calculate_scores("GPU NPU")["기술개발"] == 0
+
+
+def test_unseen_keyword_check_requires_evaluation_split(monkeypatch):
+    monkeypatch.setattr("sys.argv", ["evaluate", "--dataset", "unused.csv", "--split", "development", "--require-unseen-keywords"])
+    with pytest.raises(SystemExit) as exc:
+        evaluate_news.main()
+    assert exc.value.code == 2

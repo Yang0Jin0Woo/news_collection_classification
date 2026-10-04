@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from enum import Enum
 import json
 
+from news_classifier.utils.text import article_description, clean_text
+
 
 DECISION_SOURCE_MODEL = "MODEL"
 DECISION_SOURCE_RULE = "RULE"
@@ -14,7 +16,7 @@ DECISION_SOURCE_ERROR = "ERROR"
 FINAL_STATUS_DECIDED = "DECIDED"
 FINAL_STATUS_REVIEW_REQUIRED = "REVIEW_REQUIRED"
 FINAL_STATUS_ERROR = "ERROR"
-CLASSIFICATION_INPUT_POLICY = "article_only_v1"
+CLASSIFICATION_INPUT_POLICY = "article_event_context_v2"
 
 
 class PipelineStatus(str, Enum):
@@ -85,11 +87,14 @@ class NewsItem:
         parts = []
         if include_keyword:
             parts.append(f"검색주제: {self.keyword}")
-        parts.append(f"기사제목: {self.title}")
-        if self.description:
-            parts.append(f"기사설명: {self.description}")
-        if self.content:
-            parts.append(f"기사본문요약: {self.content[:500]}")
+        # 전체 1200자 제한에서 본문이 긴 제목/설명에 밀려 사라지지 않도록 분배.
+        parts.append(f"기사제목: {clean_text(self.title)[:250]}")
+        description = article_description(self.title, self.description, self.source)
+        if description:
+            parts.append(f"기사설명: {description[:300]}")
+        content = clean_text(self.content)
+        if content:
+            parts.append(f"기사본문: {content[:500]}")
         return "\n".join(parts)
 
 @dataclass(frozen=True)

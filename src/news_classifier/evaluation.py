@@ -66,6 +66,25 @@ def calculate_rule_correction_metrics(
     }
 
 
+def calculate_technology_bias_metrics(
+    expected: list[str], predicted: list[str], technology_label: str = "기술개발",
+) -> dict[str, int | float]:
+    """기술개발 비중 자체 대신, 다른 주제를 기술개발로 오인한 비율 확인."""
+    if not expected or len(expected) != len(predicted):
+        raise ValueError("technology bias inputs must be non-empty and aligned")
+    non_technology = sum(gold != technology_label for gold in expected)
+    false_positives = sum(
+        gold != technology_label and prediction == technology_label
+        for gold, prediction in zip(expected, predicted, strict=True)
+    )
+    return {
+        "non_technology_support": non_technology,
+        "technology_false_positive_count": false_positives,
+        "technology_false_positive_rate": _safe_divide(false_positives, non_technology),
+        "technology_predicted_count": predicted.count(technology_label),
+    }
+
+
 def _safe_divide(numerator: int, denominator: int) -> float:
     return numerator / denominator if denominator else 0.0
 

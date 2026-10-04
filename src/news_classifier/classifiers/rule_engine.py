@@ -171,6 +171,7 @@ class RuleEngine:
             (label_policy, term)
             for label_policy in self.rule_set.direct_rule_labels
             for term in label_policy.terms
+            if not term.context_only
         ]
 
         def labeled_term_sort_key(item):

@@ -103,6 +103,7 @@ def rows_to_items(rows: list[dict[str, str]]) -> list[NewsItem]:
             source=row.get("source", ""),
             published_at=row.get("published_at", ""),
             description=row["description"],
+            content=row.get("content", ""),
         )
         for row in rows
     ]
@@ -111,3 +112,26 @@ def rows_to_items(rows: list[dict[str, str]]) -> list[NewsItem]:
 def evaluation_input(item: NewsItem) -> str:
     """검색어가 정답 힌트가 되지 않도록 기사 내용만 모델에 전달한다."""
     return item.classification_text(include_keyword=False)
+
+
+def legacy_evaluation_input(item: NewsItem) -> str:
+    """동일한 원문으로 입력 정제 변경 전후를 비교하기 위한 이전 입력 형식."""
+    parts = [f"기사제목: {item.title}"]
+    if item.description:
+        parts.append(f"기사설명: {item.description}")
+    if item.content:
+        parts.append(f"기사본문요약: {item.content[:500]}")
+    return "\n".join(parts)
+
+
+def validate_unseen_keywords(
+    development_rows: list[dict[str, str]], evaluation_rows: list[dict[str, str]],
+) -> None:
+    """새 검색어 검증을 요청한 경우 개발용 검색어의 평가 재사용 차단."""
+    development = {normalize_key(row["keyword"]) for row in development_rows}
+    evaluation = {normalize_key(row["keyword"]) for row in evaluation_rows}
+    if "" in development or "" in evaluation:
+        raise ValueError("unseen-keyword evaluation requires non-empty keywords")
+    overlap = sorted(development & evaluation)
+    if overlap:
+        raise ValueError(f"keywords appear in both development and evaluation: {overlap}")

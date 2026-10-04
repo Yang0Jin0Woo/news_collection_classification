@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 from news_classifier.models import NewsItem
 from news_classifier.utils.http import HttpClient
-from news_classifier.utils.text import clean_text, safe_truncate
+from news_classifier.utils.text import clean_text, normalize_key, safe_truncate
 
 logger = logging.getLogger(__name__)
 
@@ -30,11 +30,24 @@ class ArticleScraper:
         if response is None:
             return item
         soup = BeautifulSoup(response.text, "html.parser")
-        for tag in soup(["script", "style", "noscript"]):
+        for tag in soup(["script", "style", "noscript", "nav", "header", "footer", "aside", "form"]):
             tag.decompose()
-        paragraphs = [clean_text(p.get_text(" ")) for p in soup.find_all("p")]
-        content = " ".join(p for p in paragraphs if len(p) >= 20)
+        article = soup.find("article")
+        main = soup.find("main") or soup.find(attrs={"role": "main"})
+        root = article if article is not None else (main if main is not None else soup)
+        paragraphs = []
+        seen = {normalize_key(item.title)}
+        for paragraph in root.find_all("p"):
+            text = clean_text(paragraph.get_text(" "))
+            key = normalize_key(text)
+            if len(text) < 20 or key in seen:
+                continue
+            seen.add(key)
+            paragraphs.append(text)
+        content = " ".join(paragraphs)
         content = safe_truncate(content, self.max_chars)
+        if not content:
+            return item  # 기존에 확보한 본문은 비어 있는 페이지 때문에 삭제하지 않음.
         return replace(item, content=content)
 
     def enrich_many(self, items: list[NewsItem]) -> list[NewsItem]:

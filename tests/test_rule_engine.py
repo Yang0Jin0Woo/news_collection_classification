@@ -253,16 +253,16 @@ def test_rule_engine_classifies_lifestyle_robot_as_product():
     assert decision.rule_applied is True
 
 
-def test_rule_engine_marks_clearly_unrelated_news_as_other():
+def test_rule_engine_keeps_sports_in_general_news_taxonomy():
     decision = RuleEngine(RULES).decide(
         title="프로야구 경기 결과",
         description="주말 경기에서 연장전 끝에 승리했다.",
         content="",
-        prediction=ModelPrediction("노동/노사", 0.85, 0.30, [], []),
+        prediction=ModelPrediction("스포츠", 0.85, 0.30, [], []),
     )
 
-    assert decision.final_label == "기타/무관"
-    assert decision.rule_applied is True
+    assert decision.final_label == "스포츠"
+    assert decision.rule_applied is False
 
 
 def small_rule_set(
@@ -350,9 +350,9 @@ def test_korean_compounds_and_particles_keep_rule_recall():
     policy = engine.calculate_scores("정부에서도 AI 지원책을 발표")
     company = engine.calculate_scores("삼성전자 조직 개편")
 
-    assert technology["기술개발"] >= 2
+    assert technology["기술개발"] == 0  # 분야명은 사건 근거가 아님
     assert policy["정책/규제"] >= 2
-    assert company["기업동향"] >= 2
+    assert company["기업동향"] == 1  # 기업명 제외, 조직 변화 근거만 반영
 
 
 def test_spacing_aliases_have_the_same_score():

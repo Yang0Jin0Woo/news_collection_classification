@@ -1,3 +1,7 @@
+from news_classifier.classifiers.topic_descriptions import (
+    GENERAL_NEWS_LABELS,
+    LEGACY_CANDIDATE_LABELS,
+)
 from news_classifier.rules.policy import (
     LabelRulePolicy,
     RuleDecisionPolicy,
@@ -10,18 +14,9 @@ from news_classifier.rules.policy import (
 
 
 _OTHER_LABEL = "기타/무관"
-_CANDIDATE_LABELS = (
-    "기술개발",
-    "제품/서비스",
-    "기업동향",
-    "생산/공급망",
-    "정책/규제",
-    "금융/투자",
-    "시장/산업",
-    "노동/노사",
-    "국제/통상",
-    _OTHER_LABEL,
-)
+_CANDIDATE_LABELS = LEGACY_CANDIDATE_LABELS[:-1] + GENERAL_NEWS_LABELS + (_OTHER_LABEL,)
+# 새 일반 뉴스 주제는 모델 후보로 추가. 사람이 확인한 근거 없는 직접 규칙은 미추가.
+_MODEL_ONLY_LABELS = frozenset(GENERAL_NEWS_LABELS + (_OTHER_LABEL,))
 
 _LEGACY_KEYWORDS_BY_LABEL = {
     "금융/투자": [
@@ -137,7 +132,7 @@ _DOMAIN_TERMS = (
     "ess",
 )
 
-_UNRELATED_SIGNAL_GROUPS = (
+LEGACY_UNRELATED_SIGNAL_GROUPS = (
     ("프로야구", "야구"),
     ("축구", "농구", "배구"),
     ("경기 결과", "연장전"),
@@ -148,6 +143,8 @@ _UNRELATED_SIGNAL_GROUPS = (
     ("여행", "축제", "맛집"),
     ("요리", "레시피"),
 )
+# 스포츠/문화/생활도 정상 뉴스 주제이므로 기존 산업 전용 기타 강제 보정 비활성화.
+_UNRELATED_SIGNAL_GROUPS: tuple[tuple[str, ...], ...] = ()
 
 # 기존 규칙을 임의로 늘리지 않고, 의미가 구체적인 기존 구문만 강한 근거로 분리한다.
 # 앞으로 추가하는 규칙은 development 데이터의 confirmed event_id를 근거로 남겨야 한다.
@@ -236,6 +233,44 @@ _TIE_PRIORITY = {
     "기술개발": 90,
 }
 
+# 분야/기관/제품 종류는 기사에 유지하되 사건을 나타내는 점수 근거에서는 제외.
+# 새 사건 규칙 추가가 아니라 기존 일반 명사의 역할 구분이며 실제 효과는 별도 평가 필요.
+_CONTEXT_ONLY_KEYWORDS = {
+    "기술개발": frozenset({
+        "ai반도체", "npu", "gpu", "아키텍처", "알고리즘", "모델", "플랫폼",
+        "데이터", "전고체", "전고체 배터리", "lfp", "ncm", "나트륨이온",
+        "나트륨 이온", "리튬황", "배터리 수명", "에너지밀도", "생성형 ai",
+        "llm", "대규모언어모델", "파운데이션 모델", "멀티모달", "ai 에이전트",
+        "온디바이스 ai", "딥러닝", "oled", "qd-oled", "마이크로led", "microled",
+        "유기발광", "봉지", "픽셀", "휴머노이드", "협동로봇", "자율주행 로봇",
+        "로봇팔", "제어기", "slam", "원전", "smr", "ess", "재생에너지",
+        "태양광", "풍력", "수소", "전력저장", "스마트그리드", "차세대",
+    }),
+    "제품/서비스": frozenset({
+        "프로", "사용자", "앱", "API", "패키지", "배터리팩", "배터리 팩",
+        "챗봇", "코파일럿", "saaS", "tv 패널", "모니터", "웨어러블",
+        "스마트폰 패널", "홈로봇", "메카 로봇", "정찰 로봇", "정찰",
+        "빨래", "마사지", "살림꾼", "os", "운영체제", "충전기",
+    }),
+    "기업동향": frozenset({
+        "대표", "임원", "사장단", "삼성", "sk하이닉스", "tsmc", "인텔",
+        "lg에너지솔루션", "삼성sdi", "sk온", "catl", "파나소닉", "openai",
+        "오픈ai", "구글", "마이크로소프트", "네이버", "lg디스플레이",
+        "삼성디스플레이", "boe", "현대차", "두산로보틱스", "레인보우로보틱스",
+        "lg전자", "코스모로보틱스", "한국전력", "한전", "두산에너빌리티",
+        "현대차·기아", "현대차그룹", "기아",
+    }),
+    "생산/공급망": frozenset({
+        "소부장", "배터리셀", "배터리 셀", "양극재", "음극재", "전해액",
+        "분리막", "리튬", "니켈", "코발트", "흑연", "전구체", "광물", "소재",
+        "패널", "유리기판", "감속기", "센서", "액추에이터", "로봇 부품",
+        "변압기", "전력망", "송전망", "배전망", "송전선", "케이블",
+    }),
+    "시장/산업": frozenset({"메모리", "d램", "dram", "낸드", "nand"}),
+    "정책/규제": frozenset({"산업부", "과기정통부", "환경부", "금감원", "공정위", "국회"}),
+    "국제/통상": frozenset({"미국", "중국", "일본", "대만", "eu", "희토류", "핵심광물"}),
+}
+
 _TECHNOLOGY_BIAS_OVERRIDE_LABELS = frozenset(
     set(_LEGACY_KEYWORDS_BY_LABEL) - {"기술개발"}
 )
@@ -245,10 +280,14 @@ _DEVELOPMENT_RULE_TERMS: tuple[tuple[str, RuleTerm], ...] = ()
 
 
 def _build_default_rule_set() -> RuleSet:
+    for label, phrases in _CONTEXT_ONLY_KEYWORDS.items():
+        known = {normalize_rule_text(value) for value in _LEGACY_KEYWORDS_BY_LABEL[label]}
+        if {normalize_rule_text(value) for value in phrases} - known:
+            raise ValueError(f"unknown context-only terms: {label}")
     unknown_development_labels = sorted({
         label
         for label, _ in _DEVELOPMENT_RULE_TERMS
-        if label not in _CANDIDATE_LABELS or label == _OTHER_LABEL
+        if label not in _CANDIDATE_LABELS or label in _MODEL_ONLY_LABELS
     })
     if unknown_development_labels:
         raise ValueError(
@@ -281,7 +320,7 @@ def _build_default_rule_set() -> RuleSet:
 
     labels: list[LabelRulePolicy] = []
     for label in _CANDIDATE_LABELS:
-        if label == _OTHER_LABEL:
+        if label in _MODEL_ONLY_LABELS:
             labels.append(LabelRulePolicy(
                 label=label,
                 terms=(),
@@ -293,6 +332,7 @@ def _build_default_rule_set() -> RuleSet:
         legacy_terms = tuple(
             RuleTerm(
                 phrase=keyword,
+                context_only=keyword in _CONTEXT_ONLY_KEYWORDS.get(label, ()),
                 strength=(
                     RuleStrength.STRONG
                     if normalize_rule_text(keyword) in normalized_strong
@@ -317,7 +357,7 @@ def _build_default_rule_set() -> RuleSet:
         ))
 
     return RuleSet(
-        version="rules-v2-weighted-longest",
+        version="rules-v4-general-news",
         matcher_version="nfkc-token-boundary-longest-v1",
         labels=tuple(labels),
         domain_terms=_DOMAIN_TERMS,

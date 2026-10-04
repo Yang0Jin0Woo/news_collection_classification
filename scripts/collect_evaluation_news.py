@@ -10,6 +10,8 @@ from collections import deque
 from news_classifier.collectors.base import CollectionError
 
 from news_classifier.collectors.google_rss import GoogleNewsRssCollector
+from news_classifier.collectors.article_scraper import ArticleScraper
+from news_classifier.models import NewsItem
 from news_classifier.config import AppSettings
 from news_classifier.evaluation_dataset import event_id_from_title
 from news_classifier.utils.http import HttpClient
@@ -33,11 +35,25 @@ EVALUATION_QUERIES = [
     "노사 임금 교섭",
     "IT 취업 채용",
     "수출 통상 협상",
-]
-NEGATIVE_CONTROL_QUERIES = [
+    "자동차",
+    "의료 제약",
+    "식품",
+    "게임",
+    "유통 물류",
+    "건설",
+    "농업",
+    "관광",
+    "교육 대학 입시",
+    "취업 채용 직업 훈련",
+    "사회 사건 사고 재난",
+    "정치 정당 선거",
+    "문화 공연 전시",
     "프로야구 경기",
+    "축구 농구 대회",
     "연예 영화",
-    "날씨 여행 축제",
+    "건강 질병 치료",
+    "생활 여행 요리",
+    "날씨 기후 환경",
 ]
 
 FIELDNAMES = [
@@ -47,6 +63,7 @@ FIELDNAMES = [
     "keyword",
     "title",
     "description",
+    "content",
     "source",
     "published_at",
     "link",
@@ -61,9 +78,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="실제 뉴스 수동 평가 후보를 수집합니다.")
     parser.add_argument("--output", default="data/evaluation/real_news_candidates.csv")
     parser.add_argument("--target-total", type=int, default=180)
-    parser.add_argument("--negative-total", type=int, default=20)
     parser.add_argument("--per-query", type=int, default=40)
     parser.add_argument("--query", action="append", help="추가 검색어, 반복 지정 가능")
+    parser.add_argument("--queries-only", action="store_true", help="지정한 --query만 수집, 새 검색어 평가 자료용")
+    parser.add_argument("--enrich-content", action="store_true", help="선택적 기사 본문 보강 시도")
     parser.add_argument("--overwrite", action="store_true", help="기존 후보 파일 덮어쓰기 허용")
     return parser
 
@@ -105,6 +123,7 @@ def collect_candidates(collector, queries, target_count, per_query, seen_events)
                     "keyword": query,
                     "title": title,
                     "description": item.description,
+                    "content": item.content,
                     "source": item.source,
                     "published_at": item.published_at,
                     "link": item.link,
@@ -122,8 +141,10 @@ def collect_candidates(collector, queries, target_count, per_query, seen_events)
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
-    if args.target_total < 1 or args.negative_total < 0 or args.per_query < 1:
-        parser.error("target-total 및 per-query는 양수, negative-total은 0 이상 필요")
+    if args.target_total < 1 or args.per_query < 1:
+        parser.error("target-total 및 per-query는 양수 필요")
+    if args.queries_only and not args.query:
+        parser.error("--queries-only에는 --query 지정 필요")
     output_path = Path(args.output)
     if output_path.exists() and not args.overwrite:
         parser.error("기존 후보 파일 보존: 새 --output 경로 또는 --overwrite 지정 필요")
@@ -136,19 +157,23 @@ def main() -> None:
     rows: list[dict[str, str]] = []
     seen_events: set[str] = set()
 
-    negative_target = min(args.negative_total, args.target_total)
-    if negative_target:
-        rows.extend(collect_candidates(
-            collector, NEGATIVE_CONTROL_QUERIES, negative_target, args.per_query, seen_events
-        ))
-    if len(rows) < args.target_total:
-        queries = list(dict.fromkeys(EVALUATION_QUERIES + (args.query or [])))
-        rows.extend(collect_candidates(
-            collector, queries, args.target_total - len(rows), args.per_query, seen_events
-        ))
+    queries = list(dict.fromkeys(
+        (args.query or []) if args.queries_only else EVALUATION_QUERIES + (args.query or [])
+    ))
+    rows.extend(collect_candidates(
+        collector, queries, args.target_total, args.per_query, seen_events
+    ))
 
     if not rows:
         parser.exit(1, "수집된 후보 없음: 파일 저장 생략\n")
+
+    if args.enrich_content:
+        scraper = ArticleScraper(HttpClient(settings.headers, settings.request_timeout_seconds))
+        for row in rows:
+            row["content"] = scraper.enrich(NewsItem(
+                keyword=row["keyword"], title=row["title"], link=row["link"],
+                source=row["source"], description=row["description"],
+            )).content
 
     with output_path.open("w", newline="", encoding="utf-8-sig") as file:
         writer = csv.DictWriter(file, fieldnames=FIELDNAMES)

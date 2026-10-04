@@ -94,6 +94,7 @@ def main() -> None:
             "revision": settings.classification_model_revision,
         },
         "candidate_labels": CANDIDATE_LABELS,
+        "candidate_hypotheses": pipeline.classifier.candidate_hypotheses,
         "hypothesis_template": HYPOTHESIS_TEMPLATE,
         "input_policy": {
             "name": CLASSIFICATION_INPUT_POLICY,

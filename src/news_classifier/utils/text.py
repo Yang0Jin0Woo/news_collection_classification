@@ -1,5 +1,6 @@
 import html
 import re
+import unicodedata
 from bs4 import BeautifulSoup
 
 _BRACKET_PATTERN = re.compile(r"\[[^\]]+\]")
@@ -61,3 +62,25 @@ def safe_truncate(text: str, limit: int) -> str:
     if len(text) <= limit:
         return text
     return text[:limit].rstrip() + "..."
+
+
+def article_description(title: str, description: str, source: str = "") -> str:
+    """언론사명과 제목만 반복하는 RSS 설명 제외. 원본 필드는 변경하지 않음."""
+    description = clean_text(description)
+    source = clean_text(source)
+    if source:
+        if normalize_key(description) == normalize_key(source):
+            return ""
+        description = re.sub(
+            rf"\s+(?:[-|–—]\s*)?{re.escape(source)}\s*$",
+            "", description, flags=re.IGNORECASE,
+        ).strip()
+
+    def comparable(value: str) -> str:
+        return "".join(_WORD_PATTERN.findall(
+            unicodedata.normalize("NFKC", value).casefold()
+        ))
+
+    if not comparable(description) or comparable(description) == comparable(title):
+        return ""
+    return description

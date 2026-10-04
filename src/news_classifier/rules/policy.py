@@ -21,6 +21,7 @@ class RuleTerm:
     strength: RuleStrength = RuleStrength.WEAK
     origin: str = "legacy"
     evidence_event_ids: tuple[str, ...] = ()
+    context_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -86,6 +87,7 @@ def rule_set_fingerprint(rule_set: RuleSet) -> str:
                     "phrase": normalize_rule_text(term.phrase),
                     "strength": int(term.strength),
                     "origin": term.origin,
+                    "context_only": term.context_only,
                     "evidence_event_ids": sorted(
                         event_id.strip().casefold()
                         for event_id in term.evidence_event_ids
@@ -223,6 +225,10 @@ def validate_rule_set(rule_set: RuleSet) -> None:
 
             if not isinstance(term.strength, RuleStrength):
                 raise ValueError("rule strength must be WEAK or STRONG")
+            if not isinstance(term.context_only, bool):
+                raise ValueError("context_only must be boolean")
+            if term.context_only and term.origin == "development":
+                raise ValueError("development evidence rules must contribute to scoring")
             if term.origin not in {"legacy", "development"}:
                 raise ValueError(f"unsupported rule origin: {term.origin}")
             if term.origin == "development" and not term.evidence_event_ids:

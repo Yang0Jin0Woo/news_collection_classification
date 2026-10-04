@@ -80,3 +80,16 @@ def test_calibration_profile_validates_runtime_metadata(tmp_path):
             path,
             expected_model_revision="different-revision",
         )
+
+
+def test_calibration_rejects_missing_or_changed_topic_descriptions(tmp_path):
+    path = tmp_path / "calibration.json"
+    payload = {"schema_version": 1, "thresholds": ConfidenceThresholds().to_dict()}
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(ValueError, match="topic descriptions"):
+        load_confidence_thresholds(path, expected_candidate_hypotheses=["event description"])
+    payload["candidate_hypotheses"] = ["event description"]
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    assert load_confidence_thresholds(path, expected_candidate_hypotheses=["event description"]) == ConfidenceThresholds()
+    with pytest.raises(ValueError, match="topic descriptions"):
+        load_confidence_thresholds(path, expected_candidate_hypotheses=["changed description"])

@@ -6,6 +6,7 @@ from news_classifier.classifiers.confidence import (
 )
 from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.models import ClassifiedNews, ModelPrediction, NewsItem, RuleDecision
+from news_classifier.utils.text import article_description
 
 
 class ClassificationPostProcessor:
@@ -13,9 +14,11 @@ class ClassificationPostProcessor:
         self,
         rule_engine: RuleEngine,
         confidence_thresholds: ConfidenceThresholds | None = None,
+        clean_context: bool = True,
     ):
         self.rule_engine = rule_engine
         self.confidence_thresholds = confidence_thresholds or ConfidenceThresholds()
+        self.clean_context = clean_context
 
     def process(self, item: NewsItem, prediction: ModelPrediction) -> ClassifiedNews:
         if prediction.label == "분류실패":
@@ -29,7 +32,10 @@ class ClassificationPostProcessor:
         else:
             decision = self.rule_engine.decide(
                 title=item.title,
-                description=item.description,
+                description=(
+                    article_description(item.title, item.description, item.source)
+                    if self.clean_context else item.description
+                ),
                 content=item.content,
                 prediction=prediction,
             )
