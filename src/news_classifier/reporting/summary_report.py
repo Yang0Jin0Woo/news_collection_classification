@@ -13,16 +13,18 @@ class SummaryReport:
     rule_applied_count: int
     review_count: int
     error_count: int
+    collected_count: int = 0
 
     def to_markdown(self) -> str:
         lines = ["# 뉴스 분류 요약", ""]
-        lines.append(f"- 전체 기사 수: {self.total_count}")
+        lines.append(f"- 수집 기사 수: {self.collected_count or self.total_count}")
+        lines.append(f"- 대표 기사 수(중복 묶음 기준): {self.total_count}")
         lines.append(f"- 낮은 모델 신뢰도 기사 수: {self.low_confidence_count}")
         lines.append(f"- 규칙 보정 적용 기사 수: {self.rule_applied_count}")
         lines.append(f"- 검토필요 기사 수: {self.review_count}")
         lines.append(f"- 분류 오류 기사 수: {self.error_count}")
         lines.append("")
-        lines.append("## 카테고리별 기사 수")
+        lines.append("## 카테고리별 대표 기사 수")
         for category, count in self.category_counts.items():
             lines.append(f"- {category}: {count}")
         return "\n".join(lines)
@@ -32,6 +34,7 @@ def build_summary(rows: list[ClassifiedNews]) -> SummaryReport:
     counter = Counter(row.rule_decision.final_label for row in rows)
     return SummaryReport(
         total_count=len(rows),
+        collected_count=sum(row.item.group_article_count for row in rows),
         category_counts=dict(counter),
         low_confidence_count=sum(
             1 for row in rows if row.model_confidence_level == "낮음"

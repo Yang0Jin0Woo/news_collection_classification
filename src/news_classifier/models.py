@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+import json
 
 
 DECISION_SOURCE_MODEL = "MODEL"
@@ -57,6 +58,15 @@ class PipelineResult:
 
 
 @dataclass(frozen=True)
+class NewsReference:
+    """대표 기사와 함께 묶인 원문 정보. 분류 입력에는 사용하지 않음."""
+    title: str
+    source: str
+    published_at: str
+    link: str
+
+
+@dataclass(frozen=True)
 class NewsItem:
     keyword: str
     title: str
@@ -65,6 +75,11 @@ class NewsItem:
     published_at: str = ""
     description: str = ""
     content: str = ""
+    related_articles: tuple[NewsReference, ...] = ()
+
+    @property
+    def group_article_count(self) -> int:
+        return 1 + len(self.related_articles)
 
     def classification_text(self, include_keyword: bool = False) -> str:
         parts = []
@@ -163,6 +178,15 @@ class ClassifiedNews:
             "top3_labels": ", ".join(self.model_prediction.top3_labels),
             "top3_scores": ", ".join(str(round(x, 4)) for x in self.model_prediction.top3_scores),
             "created_at": self.created_at,
+            "group_article_count": self.item.group_article_count,
+            "related_articles": json.dumps(
+                [
+                    {"title": item.title, "source": item.source,
+                     "published_at": item.published_at, "link": item.link}
+                    for item in self.item.related_articles
+                ],
+                ensure_ascii=False,
+            ),
         }
 
 
@@ -191,4 +215,6 @@ CLASSIFIED_NEWS_COLUMNS = [
     "top3_labels",
     "top3_scores",
     "created_at",
+    "group_article_count",
+    "related_articles",
 ]

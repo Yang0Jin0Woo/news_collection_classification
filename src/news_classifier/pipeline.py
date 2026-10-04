@@ -116,11 +116,11 @@ class NewsPipeline:
         logger.info("fetched=%s", collected_count)
         print(f"수집 완료: {collected_count}건")
 
-        # 2. 중복 정보 제거
+        # 2. 완전 중복과 확실한 동일 사건 묶기, 대표 기사만 후속 분류
         news_list = self.deduplicator.deduplicate(news_list)
         deduplicated_count = len(news_list)
         logger.info("deduplicated=%s", deduplicated_count)
-        print(f"중복 제거 완료: {deduplicated_count}건")
+        print(f"중복 묶기 완료: 수집 {collected_count}건 → 대표 기사 {deduplicated_count}건")
 
         if not news_list:
             print("검색 결과 없음")
@@ -236,9 +236,10 @@ class NewsPipeline:
         for idx, classified in enumerate(results, start=1):
             item = classified.item
             source = f" - {item.source}" if item.source else ""
+            group = f" [동일 사건 {item.group_article_count}건]" if item.related_articles else ""
             print(
                 f"{idx}. [{classified.rule_decision.final_label}] "
-                f"{item.title}{source}"
+                f"{item.title}{source}{group}"
             )
         print()
 

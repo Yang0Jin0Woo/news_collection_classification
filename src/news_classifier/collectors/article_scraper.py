@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import replace
 from bs4 import BeautifulSoup
 
 from news_classifier.models import NewsItem
@@ -34,15 +35,7 @@ class ArticleScraper:
         paragraphs = [clean_text(p.get_text(" ")) for p in soup.find_all("p")]
         content = " ".join(p for p in paragraphs if len(p) >= 20)
         content = safe_truncate(content, self.max_chars)
-        return NewsItem(
-            keyword=item.keyword,
-            title=item.title,
-            link=item.link,
-            source=item.source,
-            published_at=item.published_at,
-            description=item.description,
-            content=content,
-        )
+        return replace(item, content=content)
 
     def enrich_many(self, items: list[NewsItem]) -> list[NewsItem]:
         return [self.enrich(item) for item in items]

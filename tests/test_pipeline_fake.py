@@ -7,6 +7,7 @@ from news_classifier.models import ModelPrediction, NewsItem
 from news_classifier.models import PipelineStatus
 from news_classifier.pipeline import NewsPipeline
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
+from news_classifier.reporting.summary_report import build_summary
 
 
 class FakeCollector(NewsCollector):
@@ -83,3 +84,31 @@ def test_pipeline_uses_batch_classifier_and_prints_progress(capsys):
     assert "분류 완료: 3건" in output
     assert "최종 분류 기사" in output
     assert "1. [제품/서비스] AI 신제품 출시 - A" in output
+
+
+def test_pipeline_classifies_only_representatives_and_reports_original_count(capsys):
+    class GroupCollector(NewsCollector):
+        def fetch(self, keyword, limit):
+            title = "충남도립대 컴퓨터공학과, IoT·그린바이오 융합인재 키운다"
+            return [
+                NewsItem(keyword=keyword, title=title, source=source,
+                         link=f"https://example.com/{source}", published_at="2026-10-04T10:00:00+09:00")
+                for source in ["A", "B", "C"]
+            ]
+    classifier = FakeBatchClassifier()
+    result = NewsPipeline(
+        collector=GroupCollector(), classifier=classifier,
+        postprocessor=ClassificationPostProcessor(RuleEngine(DEFAULT_RULE_SET)),
+        deduplicator=TitleSourceDeduplicator(),
+    ).run("컴퓨터공학")
+    assert len(result.results) == 1
+    assert classifier.batch_lengths == [1]
+    assert result.statistics.collected_count == 3
+    assert result.statistics.deduplicated_count == 1
+    assert result.results[0].item.group_article_count == 3
+    report = build_summary(result.results)
+    assert report.total_count == 1
+    assert report.collected_count == 3
+    assert sum(report.category_counts.values()) == 1
+    assert "수집 기사 수: 3" in report.to_markdown()
+    assert "[동일 사건 3건]" in capsys.readouterr().out

@@ -33,6 +33,8 @@ CREATE TABLE IF NOT EXISTS classified_news (
     top3_labels TEXT,
     top3_scores TEXT,
     created_at TEXT,
+    group_article_count INTEGER NOT NULL DEFAULT 1,
+    related_articles TEXT NOT NULL DEFAULT '[]',
     unique_key TEXT UNIQUE
 );
 """
@@ -43,6 +45,8 @@ REQUIRED_RESULT_COLUMNS = {
     "decision_source": "TEXT",
     "review_required": "INTEGER",
     "final_decision_status": "TEXT",
+    "group_article_count": "INTEGER NOT NULL DEFAULT 1",
+    "related_articles": "TEXT NOT NULL DEFAULT '[]'",
 }
 
 
@@ -81,7 +85,7 @@ class SqliteNewsStore:
                         final_category, decision_source, review_required,
                         final_decision_status, rule_applied, rule_reason,
                         rule_best_label, rule_match_count, top3_labels, top3_scores,
-                        created_at, unique_key
+                        created_at, group_article_count, related_articles, unique_key
                     ) VALUES (
                         :keyword, :title, :source, :published_at, :link, :description, :content,
                         :classification_text, :model_category, :model_category_score,
@@ -89,7 +93,7 @@ class SqliteNewsStore:
                         :final_category, :decision_source, :review_required,
                         :final_decision_status, :rule_applied, :rule_reason,
                         :rule_best_label, :rule_match_count, :top3_labels, :top3_scores,
-                        :created_at, :unique_key
+                        :created_at, :group_article_count, :related_articles, :unique_key
                     )
                     """,
                     data,

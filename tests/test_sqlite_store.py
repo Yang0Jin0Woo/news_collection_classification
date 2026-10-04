@@ -1,8 +1,10 @@
 import sqlite3
+import json
+from dataclasses import replace
 
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
 from news_classifier.classifiers.rule_engine import RuleEngine
-from news_classifier.models import ModelPrediction, NewsItem
+from news_classifier.models import ModelPrediction, NewsItem, NewsReference
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 from news_classifier.storage.sqlite_store import SqliteNewsStore
 
@@ -96,3 +98,27 @@ def test_sqlite_store_migrates_existing_table(tmp_path):
         "final_decision_status",
     } <= columns
     assert row == (0.85, "RULE", 0, "DECIDED")
+
+
+def test_sqlite_preserves_original_articles_in_group(tmp_path):
+    result = rule_result()
+    result = replace(result, item=replace(result.item, related_articles=(
+        NewsReference("관련 원문 제목", "B", "2026-10-04T10:00:00+09:00", "https://example.com/other"),
+    )))
+    store = SqliteNewsStore(str(tmp_path / "group.db"))
+    store.save([result])
+    with store.connect() as conn:
+        count, raw = conn.execute("SELECT group_article_count, related_articles FROM classified_news").fetchone()
+    assert count == 2
+    assert json.loads(raw)[0]["link"] == "https://example.com/other"
+
+
+def test_group_columns_migrate_without_altering_existing_row(tmp_path):
+    path = tmp_path / "old.db"
+    with sqlite3.connect(path) as conn:
+        conn.executescript(LEGACY_SCHEMA)
+        conn.execute("INSERT INTO classified_news(keyword, title, source, link) VALUES ('AI', 'original', 'A', 'original-link')")
+    store = SqliteNewsStore(str(path))
+    with store.connect() as conn:
+        row = conn.execute("SELECT title, link, group_article_count, related_articles FROM classified_news").fetchone()
+    assert row == ("original", "original-link", 1, "[]")
