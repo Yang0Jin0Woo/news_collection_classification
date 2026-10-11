@@ -4,7 +4,13 @@ import sqlite3
 from pathlib import Path
 from typing import Iterable
 
-from news_classifier.models import ClassifiedNews
+from news_classifier.models import CLASSIFIED_NEWS_COLUMNS, ClassifiedNews
+
+_INSERT_COLUMNS = (*CLASSIFIED_NEWS_COLUMNS, "unique_key")
+_INSERT_SQL = (
+    f"INSERT OR REPLACE INTO classified_news ({', '.join(_INSERT_COLUMNS)}) "
+    f"VALUES ({', '.join(f':{column}' for column in _INSERT_COLUMNS)})"
+)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS classified_news (
@@ -78,27 +84,4 @@ class SqliteNewsStore:
                 data = row.to_row()
                 unique_key = f"{data['keyword']}|{data['title']}|{data['source']}"
                 data["unique_key"] = unique_key
-                conn.execute(
-                    """
-                    INSERT OR REPLACE INTO classified_news (
-                        keyword, title, source, published_at, link, description, content,
-                        classification_text, model_category, model_category_score,
-                        model_confidence, model_confidence_level, score_margin,
-                        final_category, decision_source, review_required,
-                        final_decision_status, rule_applied, rule_reason,
-                        rule_best_label, rule_match_count, top3_labels, top3_scores,
-                        created_at, group_article_count, related_articles,
-                        review_reclassification, unique_key
-                    ) VALUES (
-                        :keyword, :title, :source, :published_at, :link, :description, :content,
-                        :classification_text, :model_category, :model_category_score,
-                        :model_confidence, :model_confidence_level, :score_margin,
-                        :final_category, :decision_source, :review_required,
-                        :final_decision_status, :rule_applied, :rule_reason,
-                        :rule_best_label, :rule_match_count, :top3_labels, :top3_scores,
-                        :created_at, :group_article_count, :related_articles,
-                        :review_reclassification, :unique_key
-                    )
-                    """,
-                    data,
-                )
+                conn.execute(_INSERT_SQL, data)

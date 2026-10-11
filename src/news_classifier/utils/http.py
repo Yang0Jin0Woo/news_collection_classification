@@ -20,6 +20,18 @@ class HttpFetchResult:
     http_status: int | None = None
 
 
+def _http_failure(error: Exception, response: Optional[requests.Response]) -> HttpFetchResult:
+    """Map request failures consistently without returning an error page."""
+    if isinstance(error, requests.Timeout):
+        return HttpFetchResult(None, "TIMEOUT")
+    status_code = getattr(response, "status_code", None)
+    if status_code is not None and status_code >= 400:
+        status = "BLOCKED_HTTP" if status_code in {401, 403, 429, 451} else "HTTP_ERROR"
+    else:
+        status = "REQUEST_FAILED"
+    return HttpFetchResult(None, status, status_code)
+
+
 @dataclass(frozen=True)
 class HttpClient:
     headers: dict[str, str]
@@ -39,17 +51,9 @@ class HttpClient:
             )
             response.raise_for_status()
             return HttpFetchResult(response, "SUCCESS", response.status_code)
-        except requests.Timeout as exc:
-            logger.warning("request failed: %s | %s", url, exc)
-            return HttpFetchResult(None, "TIMEOUT")
         except Exception as exc:
             logger.warning("request failed: %s | %s", url, exc)
-            status_code = getattr(response, "status_code", None)
-            if status_code is not None and status_code >= 400:
-                status = "BLOCKED_HTTP" if status_code in {401, 403, 429, 451} else "HTTP_ERROR"
-            else:
-                status = "REQUEST_FAILED"
-            return HttpFetchResult(None, status, status_code)
+            return _http_failure(exc, response)
 
     def get_public_with_diagnostics(self, url: str, max_redirects: int = 4) -> HttpFetchResult:
         """New article/resolver requests validate the destination at every hop."""
@@ -71,12 +75,8 @@ class HttpClient:
                 if not 200 <= response.status_code < 300:
                     return HttpFetchResult(None, "HTTP_ERROR", response.status_code)
                 return HttpFetchResult(response, "SUCCESS", response.status_code)
-            except requests.Timeout:
-                return HttpFetchResult(None, "TIMEOUT")
-            except Exception:
-                code = getattr(response, "status_code", None)
-                status = "BLOCKED_HTTP" if code in {401, 403, 429, 451} else "HTTP_ERROR" if code and code >= 400 else "REQUEST_FAILED"
-                return HttpFetchResult(None, status, code)
+            except Exception as exc:
+                return _http_failure(exc, response)
         return HttpFetchResult(None, "REDIRECT_LIMIT")
 
     def post_google_news_lookup(self, data: dict[str, str]) -> HttpFetchResult:
@@ -91,9 +91,5 @@ class HttpClient:
             if not 200 <= response.status_code < 300:
                 return HttpFetchResult(None, "HTTP_ERROR", response.status_code)
             return HttpFetchResult(response, "SUCCESS", response.status_code)
-        except requests.Timeout:
-            return HttpFetchResult(None, "TIMEOUT")
-        except Exception:
-            code = getattr(response, "status_code", None)
-            status = "BLOCKED_HTTP" if code in {401, 403, 429, 451} else "HTTP_ERROR" if code and code >= 400 else "REQUEST_FAILED"
-            return HttpFetchResult(None, status, code)
+        except Exception as exc:
+            return _http_failure(exc, response)

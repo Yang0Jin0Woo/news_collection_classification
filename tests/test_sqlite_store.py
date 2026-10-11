@@ -2,9 +2,13 @@ import sqlite3
 import json
 from dataclasses import replace
 
+import pytest
+
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
 from news_classifier.classifiers.rule_engine import RuleEngine
-from news_classifier.models import ModelPrediction, NewsItem, NewsReference
+from news_classifier.models import (
+    CLASSIFIED_NEWS_COLUMNS, ModelPrediction, NewsItem, NewsReference, ReviewReclassification,
+)
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 from news_classifier.storage.sqlite_store import SqliteNewsStore
 
@@ -122,3 +126,63 @@ def test_group_columns_migrate_without_altering_existing_row(tmp_path):
     with store.connect() as conn:
         row = conn.execute("SELECT title, link, group_article_count, related_articles FROM classified_news").fetchone()
     assert row == ("original", "original-link", 1, "[]")
+
+
+@pytest.mark.parametrize("legacy", [False, True])
+@pytest.mark.parametrize("final_label", ["금융/투자", "검토필요"])
+def test_sqlite_saves_all_common_columns_in_new_and_legacy_tables(tmp_path, legacy, final_label):
+    path = tmp_path / "all_columns.db"
+    if legacy:
+        with sqlite3.connect(path) as conn:
+            conn.executescript(LEGACY_SCHEMA)
+    result = rule_result()
+    result = replace(
+        result,
+        item=replace(
+            result.item, source="원문 매체", published_at="2026-10-04T10:00:00+09:00",
+            content="기사 본문", related_articles=(
+                NewsReference("관련 제목", "B", "2026-10-04", "https://example.com/other"),
+            ),
+        ),
+        model_prediction=ModelPrediction(
+            "기술개발", 0.851234, 0.801234,
+            ["기술개발", "금융/투자", "기업동향"], [0.851234, 0.05, 0.02],
+        ),
+        rule_decision=replace(result.rule_decision, final_label=final_label),
+        review_reclassification=ReviewReclassification(
+            status="RECLASSIFIED", initial_model_category="기술개발",
+            initial_model_score=0.3, initial_score_margin=0.01,
+            initial_final_category="검토필요", initial_rule_reason="근거 없음",
+            enrichment_status="BODY_EXTRACTED", http_status=200,
+            resolved_url="https://example.com/news",
+        ),
+    )
+    expected = result.to_row()
+    assert list(expected) == CLASSIFIED_NEWS_COLUMNS
+    store = SqliteNewsStore(str(path))
+    store.save(iter([result]))
+    with store.connect() as conn:
+        columns = [row[1] for row in conn.execute("PRAGMA table_info(classified_news)")]
+        stored = conn.execute(
+            f"SELECT {', '.join(CLASSIFIED_NEWS_COLUMNS)} FROM classified_news"
+        ).fetchone()
+    if legacy:
+        assert set(CLASSIFIED_NEWS_COLUMNS) <= set(columns)
+    else:
+        assert columns == ["id", *CLASSIFIED_NEWS_COLUMNS, "unique_key"]
+    assert stored == tuple(expected[column] for column in CLASSIFIED_NEWS_COLUMNS)
+
+
+def test_sqlite_keeps_replace_identity_and_generator_input(tmp_path):
+    result = rule_result()
+    store = SqliteNewsStore(str(tmp_path / "replace.db"))
+    store.save(iter([result]))
+    updated = replace(result, item=replace(result.item, link="https://example.com/updated"))
+    store.save(iter([updated]))
+    with store.connect() as conn:
+        rows = conn.execute("SELECT title, link, unique_key FROM classified_news").fetchall()
+    expected = updated.to_row()
+    assert rows == [(
+        expected["title"], expected["link"],
+        f"{expected['keyword']}|{expected['title']}|{expected['source']}",
+    )]
