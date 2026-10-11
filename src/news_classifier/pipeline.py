@@ -3,9 +3,10 @@ from __future__ import annotations
 import logging
 from collections import Counter
 from dataclasses import dataclass, replace
-from typing import TypeVar
+from typing import Literal, TypeVar
 
 from news_classifier.classifiers.base import NewsClassifier
+from news_classifier.classifiers.input_text import has_changed_article_input
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
 from news_classifier.collectors.base import (
     CollectionError,
@@ -16,6 +17,7 @@ from news_classifier.collectors.article_scraper import ArticleScraper
 from news_classifier.dedup.title_deduplicator import TitleSourceDeduplicator
 from news_classifier.models import (
     ClassifiedNews,
+    ModelPrediction,
     NewsItem,
     PipelineError,
     PipelineResult,
@@ -53,6 +55,23 @@ def _statistics(
     )
 
 
+def _failure_result(
+    status: PipelineStatus,
+    error: PipelineError,
+    limit: int,
+    collected_count: int = 0,
+    deduplicated_count: int = 0,
+    results: list[ClassifiedNews] | None = None,
+) -> PipelineResult:
+    partial_results = results.copy() if results is not None else []
+    return PipelineResult(
+        status=status,
+        results=partial_results,
+        errors=[error],
+        statistics=_statistics(limit, collected_count, deduplicated_count, partial_results),
+    )
+
+
 @dataclass
 class NewsPipeline:
     collector: NewsCollector
@@ -61,6 +80,42 @@ class NewsPipeline:
     deduplicator: TitleSourceDeduplicator
     article_scraper: ArticleScraper | None = None
     review_enrichment_enabled: bool = True
+
+    def _classify_batch(
+        self, items: list[NewsItem],
+        stage: Literal["CLASSIFICATION", "RECLASSIFICATION"],
+    ) -> list[ModelPrediction] | PipelineError:
+        is_retry = stage == "RECLASSIFICATION"
+        try:
+            predictions = self.classifier.classify_many([
+                item.classification_text() for item in items
+            ])
+        except Exception as exc:
+            logger.exception(
+                "review reclassification failed" if is_retry else "model classification failed"
+            )
+            return PipelineError(stage, "MODEL_INFERENCE_FAILURE", str(exc))
+
+        if len(predictions) != len(items):
+            prefix = "재판단 입력" if is_retry else "분류 입력"
+            message = (
+                f"{prefix}과 모델 출력 개수가 다릅니다: "
+                f"input={len(items)}, output={len(predictions)}"
+            )
+            if not is_retry:
+                logger.error(message)
+            return PipelineError(stage, "PREDICTION_COUNT_MISMATCH", message)
+
+        failed_count = sum(prediction.label == "분류실패" for prediction in predictions)
+        if failed_count:
+            message = (
+                "모델이 본문 보강 후 재판단 결과를 생성하지 못했습니다."
+                if is_retry else f"모델이 {failed_count}건의 분류 결과를 생성하지 못했습니다."
+            )
+            if not is_retry:
+                logger.error(message)
+            return PipelineError(stage, "MODEL_PREDICTION_FAILURE", message)
+        return predictions
 
     def _reclassify_reviews(
         self, results: list[ClassifiedNews], *, already_enriched: bool,
@@ -122,11 +177,9 @@ class NewsPipeline:
                         enrichment_status = "BODY_EXTRACTED" if clean_text(enriched.content) else "NO_CONTENT"
                     item = replace(row.item, content=enriched.content)
                     max_length = getattr(self.classifier, "max_sequence_length", 1200)
-                    before_input = clean_text(row.item.classification_text())[:max_length]
-                    after_input = clean_text(item.classification_text())[:max_length]
                     if not clean_text(item.content):
                         status = enrichment_status or "NO_CONTENT"
-                    elif after_input == before_input:
+                    elif not has_changed_article_input(row.item, item, max_length):
                         status = "UNCHANGED_INPUT"
                     else:
                         retry_items.append((index, item, row, enrichment_status, http_status, resolved_url, resolution_status, extraction_diagnostics))
@@ -167,23 +220,11 @@ class NewsPipeline:
         print(f"검토 기사 본문 보강 후 재판단: {len(retry_items)}건")
         batch_size = max(1, getattr(self.classifier, "batch_size", 1))
         for batch in _chunks(retry_items, batch_size):
-            try:
-                predictions = self.classifier.classify_many([
-                    item.classification_text() for _, item, _, _, _, _, _, _ in batch
-                ])
-            except Exception as exc:
-                logger.exception("review reclassification failed")
-                return PipelineError("RECLASSIFICATION", "MODEL_INFERENCE_FAILURE", str(exc))
-            if len(predictions) != len(batch):
-                return PipelineError(
-                    "RECLASSIFICATION", "PREDICTION_COUNT_MISMATCH",
-                    f"재판단 입력과 모델 출력 개수가 다릅니다: input={len(batch)}, output={len(predictions)}",
-                )
-            if any(prediction.label == "분류실패" for prediction in predictions):
-                return PipelineError(
-                    "RECLASSIFICATION", "MODEL_PREDICTION_FAILURE",
-                    "모델이 본문 보강 후 재판단 결과를 생성하지 못했습니다.",
-                )
+            predictions = self._classify_batch(
+                [item for _, item, _, _, _, _, _, _ in batch], "RECLASSIFICATION",
+            )
+            if isinstance(predictions, PipelineError):
+                return predictions
             for (index, item, initial, enrichment_status, http_status, resolved_url, resolution_status, extraction_diagnostics), prediction in zip(batch, predictions, strict=True):
                 revised = self.postprocessor.process(item, prediction)
                 results[index] = replace(
@@ -212,42 +253,24 @@ class NewsPipeline:
             collected_news = self.collector.fetch(keyword=keyword, limit=limit)
         except NetworkCollectionError as exc:
             logger.error("network collection failed: %s", exc)
-            return PipelineResult(
-                status=PipelineStatus.NETWORK_ERROR,
-                errors=[
-                    PipelineError(
-                        stage="COLLECTION",
-                        code="NETWORK_FAILURE",
-                        message=str(exc),
-                    )
-                ],
-                statistics=PipelineStatistics(requested_limit=limit),
+            return _failure_result(
+                PipelineStatus.NETWORK_ERROR,
+                PipelineError("COLLECTION", "NETWORK_FAILURE", str(exc)),
+                limit,
             )
         except CollectionError as exc:
             logger.error("news collection failed: %s", exc)
-            return PipelineResult(
-                status=PipelineStatus.COLLECTION_ERROR,
-                errors=[
-                    PipelineError(
-                        stage="COLLECTION",
-                        code="INVALID_FEED",
-                        message=str(exc),
-                    )
-                ],
-                statistics=PipelineStatistics(requested_limit=limit),
+            return _failure_result(
+                PipelineStatus.COLLECTION_ERROR,
+                PipelineError("COLLECTION", "INVALID_FEED", str(exc)),
+                limit,
             )
         except Exception as exc:
             logger.exception("unexpected news collection failure")
-            return PipelineResult(
-                status=PipelineStatus.COLLECTION_ERROR,
-                errors=[
-                    PipelineError(
-                        stage="COLLECTION",
-                        code="UNEXPECTED_COLLECTION_FAILURE",
-                        message=str(exc),
-                    )
-                ],
-                statistics=PipelineStatistics(requested_limit=limit),
+            return _failure_result(
+                PipelineStatus.COLLECTION_ERROR,
+                PipelineError("COLLECTION", "UNEXPECTED_COLLECTION_FAILURE", str(exc)),
+                limit,
             )
 
         news_list = [
@@ -310,76 +333,11 @@ class NewsPipeline:
             logger.info("classifying batch %s/%s size=%s", batch_idx, len(batches), len(batch))
 
             # 모델 기반 1차 분류
-            try:
-                predictions = self.classifier.classify_many(
-                    [item.classification_text() for item in batch]
-                )
-            except Exception as exc:
-                logger.exception("model classification failed")
-                return PipelineResult(
-                    status=PipelineStatus.MODEL_ERROR,
-                    results=results.copy(),
-                    errors=[
-                        PipelineError(
-                            stage="CLASSIFICATION",
-                            code="MODEL_INFERENCE_FAILURE",
-                            message=str(exc),
-                        )
-                    ],
-                    statistics=_statistics(
-                        limit,
-                        collected_count,
-                        deduplicated_count,
-                        results,
-                    ),
-                )
-
-            if len(predictions) != len(batch):
-                message = (
-                    "분류 입력과 모델 출력 개수가 다릅니다: "
-                    f"input={len(batch)}, output={len(predictions)}"
-                )
-                logger.error(message)
-                return PipelineResult(
-                    status=PipelineStatus.MODEL_ERROR,
-                    results=results.copy(),
-                    errors=[
-                        PipelineError(
-                            stage="CLASSIFICATION",
-                            code="PREDICTION_COUNT_MISMATCH",
-                            message=message,
-                        )
-                    ],
-                    statistics=_statistics(
-                        limit,
-                        collected_count,
-                        deduplicated_count,
-                        results,
-                    ),
-                )
-
-            failed_count = sum(
-                1 for prediction in predictions if prediction.label == "분류실패"
-            )
-            if failed_count:
-                message = f"모델이 {failed_count}건의 분류 결과를 생성하지 못했습니다."
-                logger.error(message)
-                return PipelineResult(
-                    status=PipelineStatus.MODEL_ERROR,
-                    results=results.copy(),
-                    errors=[
-                        PipelineError(
-                            stage="CLASSIFICATION",
-                            code="MODEL_PREDICTION_FAILURE",
-                            message=message,
-                        )
-                    ],
-                    statistics=_statistics(
-                        limit,
-                        collected_count,
-                        deduplicated_count,
-                        results,
-                    ),
+            predictions = self._classify_batch(batch, "CLASSIFICATION")
+            if isinstance(predictions, PipelineError):
+                return _failure_result(
+                    PipelineStatus.MODEL_ERROR, predictions,
+                    limit, collected_count, deduplicated_count, results,
                 )
 
             for item, prediction in zip(batch, predictions, strict=True):
@@ -392,10 +350,9 @@ class NewsPipeline:
             enrichment_outcomes=enrichment_outcomes,
         )
         if retry_error is not None:
-            return PipelineResult(
-                status=PipelineStatus.MODEL_ERROR, results=results.copy(),
-                errors=[retry_error],
-                statistics=_statistics(limit, collected_count, deduplicated_count, results),
+            return _failure_result(
+                PipelineStatus.MODEL_ERROR, retry_error,
+                limit, collected_count, deduplicated_count, results,
             )
 
         print(f"분류 완료: {len(results)}건")

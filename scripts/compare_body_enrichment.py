@@ -13,11 +13,13 @@ import hashlib
 import json
 from pathlib import Path
 
+from news_classifier.classifiers.input_text import has_changed_article_input
 from news_classifier.config import AppSettings
 from news_classifier.models import NewsItem
 from news_classifier.rules.event_candidates import CANDIDATE_PHRASES, audit_candidate
 from news_classifier.rules.policy import rule_set_fingerprint
 from news_classifier.service import build_pipeline
+from news_classifier.utils.text import clean_text
 
 
 def compare_rows(rows, pipeline):
@@ -32,12 +34,14 @@ def compare_rows(rows, pipeline):
     after = list(before)
     attempts, retries = {}, []
     for index, result in enumerate(before):
-        if not result.review_required or result.item.content.strip():
+        if not result.review_required or clean_text(result.item.content):
             continue
         outcome = pipeline.article_scraper.enrich_with_diagnostics(result.item)
         attempts[index] = outcome
         item = replace(result.item, content=outcome.item.content)
-        if item.content.strip() and item.classification_text() != result.item.classification_text():
+        if clean_text(item.content) and has_changed_article_input(
+            result.item, item, getattr(pipeline.classifier, "max_sequence_length", 1200),
+        ):
             retries.append((index, item))
     if retries:
         predictions = pipeline.classifier.classify_many([item.classification_text() for _, item in retries])

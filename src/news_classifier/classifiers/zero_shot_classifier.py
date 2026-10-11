@@ -7,9 +7,9 @@ import torch
 from transformers import pipeline
 
 from news_classifier.classifiers.base import NewsClassifier
+from news_classifier.classifiers.input_text import prepare_model_input
 from news_classifier.classifiers.topic_descriptions import TOPIC_DESCRIPTIONS
 from news_classifier.models import ModelPrediction
-from news_classifier.utils.text import clean_text
 
 logger = logging.getLogger(__name__)
 HYPOTHESIS_TEMPLATE = "이 뉴스의 핵심 주제는 {}입니다."
@@ -112,7 +112,7 @@ class ZeroShotNewsClassifier(NewsClassifier):
     def _classify_many(
         self, texts: list[str], hypotheses: list[str], label_mapping: Mapping[str, str],
     ) -> list[ModelPrediction]:
-        cleaned_texts = [clean_text(text)[: self.max_sequence_length] for text in texts]
+        cleaned_texts = [prepare_model_input(text, self.max_sequence_length) for text in texts]
         predictions = [ModelPrediction.failed() for _ in cleaned_texts]
         valid_items = [(idx, text) for idx, text in enumerate(cleaned_texts) if text]
 

@@ -142,6 +142,53 @@ def test_retry_model_failure_remains_pipeline_failure(failure, code):
     assert not result.succeeded
     assert result.errors[0].stage == "RECLASSIFICATION"
     assert result.errors[0].code == code
+    assert result.statistics.requested_limit == 10
+    assert result.statistics.collected_count == 1
+    assert result.statistics.deduplicated_count == 1
+    assert result.statistics.classified_count == 1
+    assert result.statistics.review_required_count == 1
+    assert result.results[0].review_reclassification.status == "PENDING"
+
+
+@pytest.mark.parametrize("failure,code", [
+    ("exception", "MODEL_INFERENCE_FAILURE"),
+    ("count", "PREDICTION_COUNT_MISMATCH"),
+    ("failed", "MODEL_PREDICTION_FAILURE"),
+])
+def test_later_retry_failure_preserves_completed_retry_and_statistics(failure, code):
+    class TwoItems(Collector):
+        def fetch(self, keyword, limit):
+            return [
+                NewsItem(keyword, "첫 지역 소식", "https://example.com/first"),
+                NewsItem(keyword, "다른 지역 소식", "https://example.com/second"),
+            ]
+
+    class LateFailure(Classifier):
+        batch_size = 1
+
+        def classify_many(self, texts):
+            if len(self.calls) < 2:
+                self.calls.append(texts)
+                return [self.initial for _ in texts]
+            if len(self.calls) == 3:
+                self.failure = failure
+            return super().classify_many(texts)
+
+    classifier = LateFailure()
+    result = make_pipeline(collector=TwoItems(), classifier=classifier, scraper=Scraper()).run("공통")
+
+    assert result.status == PipelineStatus.MODEL_ERROR
+    assert result.errors[0].stage == "RECLASSIFICATION"
+    assert result.errors[0].code == code
+    assert len(classifier.calls) == 4
+    assert result.statistics.collected_count == 2
+    assert result.statistics.deduplicated_count == 2
+    assert result.statistics.classified_count == 2
+    assert result.statistics.review_required_count == 1
+    assert result.results[0].review_reclassification.status == "RECLASSIFIED"
+    assert not result.results[0].review_required
+    assert result.results[1].review_reclassification.status == "PENDING"
+    assert result.results[1].review_required
 
 
 @pytest.mark.parametrize("options,status", [
