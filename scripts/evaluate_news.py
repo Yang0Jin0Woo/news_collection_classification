@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 from news_classifier.config import AppSettings
-from news_classifier.classifiers.rule_engine import RuleEngine
+from news_classifier.classifiers.rule_engine import RuleEngine, RuleScoringSession
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
 from news_classifier.classifiers.prediction_validation import validate_model_predictions
 from news_classifier.evaluation import (
@@ -67,11 +67,13 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def rule_only_label(rule_engine, item: NewsItem) -> str:
+def rule_only_label(rule_engine, item: NewsItem, *, scoring: RuleScoringSession | None = None) -> str:
+    score_options = {} if scoring is None else {"scoring": scoring}
     return rule_engine.rule_only_decision(
         item.title,
         article_description(item.title, item.description, item.source),
         item.content,
+        **score_options,
     )
 
 
@@ -183,15 +185,18 @@ def main() -> None:
             for item, prediction in zip(development_items, development_predictions, strict=True)
         ])
     expected = [row["gold_label"] for row in rows]
+    # Explicit evaluation-run scope: baseline/legacy engines and changed body
+    # inputs never share a ranking with the current exact article input.
+    current_scoring = RuleScoringSession(rule_engine)
     rule_rankings = [
-        rule_engine.rank_rules(
+        current_scoring.rank_rules(
             item.title, article_description(item.title, item.description, item.source), item.content,
         )
         for item in items
     ]
-    rule_only_labels = [rule_only_label(rule_engine, item) for item in items]
+    rule_only_labels = [rule_only_label(rule_engine, item, scoring=current_scoring) for item in items]
     hybrid_results = [
-        pipeline.postprocessor.process(item, prediction)
+        pipeline.postprocessor.process(item, prediction, scoring=current_scoring)
         for item, prediction in zip(items, predictions, strict=True)
     ]
     baseline_engine = RuleEngine(without_development_rules(runtime_rule_set))
@@ -252,7 +257,7 @@ def main() -> None:
         )
         predicted_by_method["짧은 주제명 모델"] = [prediction.label for prediction in short_predictions]
         predicted_by_method["짧은 주제명 하이브리드"] = [
-            pipeline.postprocessor.process(item, prediction).rule_decision.final_label
+            pipeline.postprocessor.process(item, prediction, scoring=current_scoring).rule_decision.final_label
             for item, prediction in zip(items, short_predictions, strict=True)
         ]
     reports = {
@@ -291,7 +296,7 @@ def main() -> None:
     )
     if has_development_rules and args.split == "evaluation":
         rule_review_validation["per_rule_holdout"] = audit_rule_holdout(
-            runtime_rule_set, rows, hybrid_results,
+            runtime_rule_set, rows, hybrid_results, scoring=current_scoring,
         )
         if not rule_review_validation["per_rule_holdout"]["passed"]:
             rule_review_validation["failures"].append("each new expression requires correct held-out independent rule cases")
@@ -369,6 +374,7 @@ def main() -> None:
                 "rule_evidence_not_semantic_judgment": rule_evidence_records(
                     {**row, "title": item.title, "description": item.description,
                      "source": item.source, "content": item.content}, rule_engine,
+                    scoring=current_scoring,
                 ),
                 "hybrid_rule_applied": hybrid_results[idx].rule_decision.rule_applied,
                 "hybrid_reason": hybrid_results[idx].rule_decision.rule_reason,

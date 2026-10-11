@@ -55,6 +55,54 @@ def test_link_list_is_not_accepted_as_a_body():
     assert not result.content
 
 
+@pytest.mark.parametrize("tag, attributes, method", [
+    ("div", ' class="article-body"', "BODY_CONTAINER_BLOCKS"),
+    ("article", "", "ARTICLE_BLOCKS"),
+])
+@pytest.mark.parametrize("length, accepted", [(39, False), (40, True)])
+def test_body_candidates_preserve_minimum_length_boundary(tag, attributes, method, length, accepted):
+    content = "x" * length
+    result = extract_article_text(f"<{tag}{attributes}>{content}</{tag}>")
+    assert bool(result.content) is accepted
+    if accepted:
+        assert result.content == content
+        assert result.method == method
+        assert result.paragraph_count == result.candidate_count == 1
+    else:
+        assert result.reason == "no_usable_body"
+
+
+@pytest.mark.parametrize("tag, attributes, method", [
+    ("div", ' class="article-body"', "BODY_CONTAINER_BLOCKS"),
+    ("article", "", "ARTICLE_BLOCKS"),
+])
+@pytest.mark.parametrize("link_length, accepted", [(34, True), (35, False), (36, False)])
+def test_body_candidates_preserve_strict_link_ratio_boundary(tag, attributes, method, link_length, accepted):
+    linked, unlinked = "a" * link_length, "b" * (99 - link_length)
+    content = f"{linked} {unlinked}"
+    assert len(content) == 100
+    html = f'<{tag}{attributes}><a href="/other">{linked}</a>{unlinked}</{tag}>'
+    result = extract_article_text(html)
+    assert bool(result.content) is accepted
+    if accepted:
+        assert result.content == content
+        assert result.method == method
+    else:
+        assert result.reason == "no_usable_body"
+
+
+@pytest.mark.parametrize("tag, attributes, reason", [
+    ("div", ' class="article-body"', "multiple_body_candidates"),
+    ("article", "", "multiple_article_candidates"),
+])
+def test_valid_independent_body_candidates_keep_ambiguity_diagnostics(tag, attributes, reason):
+    html = f"<{tag}{attributes}>{'a' * 40}</{tag}><{tag}{attributes}>{'b' * 40}</{tag}>"
+    result = extract_article_text(html)
+    assert not result.content
+    assert result.reason == reason
+    assert result.candidate_count == 2
+
+
 def arc_html(**changes):
     story = {"type": "story", "website_url": "/news/123", "headlines": {"basic": TITLE},
              "content_restrictions": {"content_code": "0"},

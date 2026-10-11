@@ -12,49 +12,52 @@ _INSERT_SQL = (
     f"VALUES ({', '.join(f':{column}' for column in _INSERT_COLUMNS)})"
 )
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS classified_news (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    keyword TEXT NOT NULL,
-    title TEXT NOT NULL,
-    source TEXT,
-    published_at TEXT,
-    link TEXT,
-    description TEXT,
-    content TEXT,
-    classification_text TEXT,
-    model_category TEXT,
-    model_category_score REAL,
-    model_confidence REAL,
-    model_confidence_level TEXT,
-    score_margin REAL,
-    final_category TEXT,
-    decision_source TEXT,
-    review_required INTEGER,
-    final_decision_status TEXT,
-    rule_applied TEXT,
-    rule_reason TEXT,
-    rule_best_label TEXT,
-    rule_match_count INTEGER,
-    top3_labels TEXT,
-    top3_scores TEXT,
-    created_at TEXT,
-    group_article_count INTEGER NOT NULL DEFAULT 1,
-    related_articles TEXT NOT NULL DEFAULT '[]',
-    review_reclassification TEXT NOT NULL DEFAULT '{}',
-    unique_key TEXT UNIQUE
-);
-"""
-
-REQUIRED_RESULT_COLUMNS = {
+_COLUMN_DEFINITIONS = {
+    "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+    "keyword": "TEXT NOT NULL",
+    "title": "TEXT NOT NULL",
+    "source": "TEXT",
+    "published_at": "TEXT",
+    "link": "TEXT",
+    "description": "TEXT",
+    "content": "TEXT",
+    "classification_text": "TEXT",
+    "model_category": "TEXT",
+    "model_category_score": "REAL",
     "model_confidence": "REAL",
     "model_confidence_level": "TEXT",
+    "score_margin": "REAL",
+    "final_category": "TEXT",
     "decision_source": "TEXT",
     "review_required": "INTEGER",
     "final_decision_status": "TEXT",
+    "rule_applied": "TEXT",
+    "rule_reason": "TEXT",
+    "rule_best_label": "TEXT",
+    "rule_match_count": "INTEGER",
+    "top3_labels": "TEXT",
+    "top3_scores": "TEXT",
+    "created_at": "TEXT",
     "group_article_count": "INTEGER NOT NULL DEFAULT 1",
     "related_articles": "TEXT NOT NULL DEFAULT '[]'",
     "review_reclassification": "TEXT NOT NULL DEFAULT '{}'",
+    "unique_key": "TEXT UNIQUE",
+}
+
+SCHEMA = (
+    "CREATE TABLE IF NOT EXISTS classified_news (\n    "
+    + ",\n    ".join(f"{column} {definition}" for column, definition in _COLUMN_DEFINITIONS.items())
+    + "\n);\n"
+)
+
+# Keep the existing migration scope and ordering; other legacy columns are untouched.
+REQUIRED_RESULT_COLUMNS = {
+    column: _COLUMN_DEFINITIONS[column]
+    for column in (
+        "model_confidence", "model_confidence_level", "decision_source",
+        "review_required", "final_decision_status", "group_article_count",
+        "related_articles", "review_reclassification",
+    )
 }
 
 

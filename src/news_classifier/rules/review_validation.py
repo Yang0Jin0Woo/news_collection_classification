@@ -3,17 +3,26 @@ from __future__ import annotations
 
 from collections import Counter
 
-from news_classifier.classifiers.rule_engine import RuleEngine
+from news_classifier.classifiers.rule_engine import RuleEngine, RuleScoringSession
 from news_classifier.evaluation_dataset import rows_with_article_context
 from news_classifier.rules.policy import rule_term_matches_row
 
 
-def audit_rule_holdout(rule_set, rows, classified_results) -> dict:
+def audit_rule_holdout(
+    rule_set, rows, classified_results, *, scoring: RuleScoringSession | None = None,
+) -> dict:
     """Each proposed expression needs its own held-out successful rule cases."""
     if len(rows) != len(classified_results):
         raise ValueError("rule holdout rows and results must align")
     actual_rows = rows_with_article_context(rows, [result.item for result in classified_results])
-    engine = RuleEngine(rule_set)
+    if scoring is None:
+        engine = RuleEngine(rule_set)
+        scoring = RuleScoringSession(engine)
+    else:
+        engine = scoring.engine
+        scoring.require_engine(engine)
+        if engine.rule_set is not rule_set:
+            raise ValueError("rule holdout scoring session belongs to a different rule set")
     terms = []
     for policy in rule_set.labels:
         for term in policy.terms:
@@ -21,7 +30,7 @@ def audit_rule_holdout(rule_set, rows, classified_results) -> dict:
                 continue
             correct_events, wrong_cases, other_topic_matches = set(), [], 0
             for row, result in zip(actual_rows, classified_results, strict=True):
-                if not rule_term_matches_row(engine, policy.label, term, row):
+                if not rule_term_matches_row(engine, policy.label, term, row, scoring=scoring):
                     continue
                 gold = row["gold_label"]
                 if gold != policy.label:

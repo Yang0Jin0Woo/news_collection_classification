@@ -10,7 +10,7 @@ from news_classifier.models import (
     CLASSIFIED_NEWS_COLUMNS, ModelPrediction, NewsItem, NewsReference, ReviewReclassification,
 )
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
-from news_classifier.storage.sqlite_store import SqliteNewsStore
+from news_classifier.storage.sqlite_store import REQUIRED_RESULT_COLUMNS, SqliteNewsStore
 
 
 LEGACY_SCHEMA = """
@@ -186,3 +186,63 @@ def test_sqlite_keeps_replace_identity_and_generator_input(tmp_path):
         expected["title"], expected["link"],
         f"{expected['keyword']}|{expected['title']}|{expected['source']}",
     )]
+
+
+def test_sqlite_fresh_schema_preserves_types_defaults_and_constraints(tmp_path):
+    store = SqliteNewsStore(str(tmp_path / "schema.db"))
+    with store.connect() as conn:
+        columns = conn.execute("PRAGMA table_info(classified_news)").fetchall()
+        schema = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'classified_news'"
+        ).fetchone()[0]
+        conn.execute("INSERT INTO classified_news(keyword, title, unique_key) VALUES ('AI', 'one', 'key')")
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute("INSERT INTO classified_news(keyword, title, unique_key) VALUES ('AI', 'two', 'key')")
+
+    expected_types = {column: "TEXT" for column in CLASSIFIED_NEWS_COLUMNS}
+    expected_types.update({column: "REAL" for column in (
+        "model_category_score", "model_confidence", "score_margin",
+    )})
+    expected_types.update({column: "INTEGER" for column in (
+        "id", "review_required", "rule_match_count", "group_article_count",
+    )})
+    expected_types["unique_key"] = "TEXT"
+    assert {row[1]: row[2] for row in columns} == expected_types
+    assert {row[1] for row in columns if row[3]} == {
+        "keyword", "title", "group_article_count", "related_articles", "review_reclassification",
+    }
+    assert {row[1]: row[4] for row in columns if row[4] is not None} == {
+        "group_article_count": "1", "related_articles": "'[]'", "review_reclassification": "'{}'",
+    }
+    assert {row[1] for row in columns if row[5]} == {"id"}
+    assert "id INTEGER PRIMARY KEY AUTOINCREMENT" in schema
+
+
+def test_sqlite_migration_reuses_schema_definitions_without_expanding_scope(tmp_path):
+    expected_required = {
+        "model_confidence": "REAL",
+        "model_confidence_level": "TEXT",
+        "decision_source": "TEXT",
+        "review_required": "INTEGER",
+        "final_decision_status": "TEXT",
+        "group_article_count": "INTEGER NOT NULL DEFAULT 1",
+        "related_articles": "TEXT NOT NULL DEFAULT '[]'",
+        "review_reclassification": "TEXT NOT NULL DEFAULT '{}'",
+    }
+    assert REQUIRED_RESULT_COLUMNS == expected_required
+    assert list(REQUIRED_RESULT_COLUMNS) == list(expected_required)
+    path = tmp_path / "legacy_schema.db"
+    with sqlite3.connect(path) as conn:
+        conn.executescript(LEGACY_SCHEMA)
+        original_columns = conn.execute("PRAGMA table_info(classified_news)").fetchall()
+    legacy = SqliteNewsStore(str(path))
+    legacy.init_schema()  # Repeated initialization must not change the migrated schema.
+    fresh = SqliteNewsStore(str(tmp_path / "fresh_schema.db"))
+    with legacy.connect() as conn:
+        migrated_columns = conn.execute("PRAGMA table_info(classified_news)").fetchall()
+    with fresh.connect() as conn:
+        fresh_columns = {row[1]: row[2:] for row in conn.execute("PRAGMA table_info(classified_news)")}
+    assert migrated_columns[:len(original_columns)] == original_columns
+    assert [row[1] for row in migrated_columns[len(original_columns):]] == list(expected_required)
+    for row in migrated_columns[len(original_columns):]:
+        assert row[2:] == fresh_columns[row[1]]

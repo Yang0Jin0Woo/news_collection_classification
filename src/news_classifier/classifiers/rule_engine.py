@@ -50,6 +50,43 @@ class RuleRanking:
         raise KeyError(label)
 
 
+class RuleScoringSession:
+    """One-run ranking reuse for one engine and the exact article input only."""
+
+    def __init__(self, engine: RuleEngine):
+        self._engine = engine
+        self._rule_set = engine.rule_set
+        self._rankings: dict[tuple[str, str, str], RuleRanking] = {}
+
+    @property
+    def engine(self) -> RuleEngine:
+        return self._engine
+
+    def require_engine(self, engine: RuleEngine) -> None:
+        if engine is not self._engine:
+            raise ValueError("rule scoring session belongs to a different engine")
+        if engine.rule_set is not self._rule_set:
+            raise ValueError("rule scoring session rule set changed")
+
+    def rank_rules(
+        self, title: str, description: str = "", content: str = "",
+    ) -> RuleRanking:
+        self.require_engine(self._engine)
+        key = (title, description, content)
+        if key not in self._rankings:
+            self._rankings[key] = self._engine.rank_rules(*key)
+        return self._rankings[key]
+
+    def _rank_normalized_input(
+        self, engine: RuleEngine, title: str, description: str, content: str, text: str,
+    ) -> RuleRanking:
+        self.require_engine(engine)
+        key = (title, description, content)
+        if key not in self._rankings:
+            self._rankings[key] = engine._rank_normalized_text(text)
+        return self._rankings[key]
+
+
 def _uses_ascii_boundaries(normalized_phrase: str) -> bool:
     return not bool(_KOREAN_CHARACTER.search(normalized_phrase))
 
@@ -339,13 +376,15 @@ class RuleEngine:
         title: str,
         description: str = "",
         content: str = "",
+        *,
+        scoring: RuleScoringSession | None = None,
     ) -> str:
         text = normalize_rule_text(f"{title} {description} {content}")
         unrelated_count = self._unrelated_signal_count(text)
         if unrelated_count >= 2:
             return self.rule_set.other_label
 
-        ranking = self._rank_normalized_text(text)
+        ranking = self._ranking_for_input(title, description, content, text, scoring)
         if self._development_conflict_labels(ranking):
             return "검토필요"
         decision = self.rule_set.decision
@@ -406,6 +445,8 @@ class RuleEngine:
         description: str,
         content: str,
         prediction: ModelPrediction,
+        *,
+        scoring: RuleScoringSession | None = None,
     ) -> RuleDecision:
         text = normalize_rule_text(f"{title} {description} {content}")
         unrelated_count = self._unrelated_signal_count(text)
@@ -421,7 +462,7 @@ class RuleEngine:
                 rule_match_count=unrelated_count,
             )
 
-        ranking = self._rank_normalized_text(text)
+        ranking = self._ranking_for_input(title, description, content, text, scoring)
         conflict_labels = self._development_conflict_labels(ranking)
         decision = self.rule_set.decision
         first_policy = self._label_policies[ranking.first.label]
@@ -509,3 +550,11 @@ class RuleEngine:
             rule_reason="",
             ranking=ranking,
         )
+
+    def _ranking_for_input(
+        self, title: str, description: str, content: str, text: str,
+        scoring: RuleScoringSession | None,
+    ) -> RuleRanking:
+        if scoring is None:
+            return self._rank_normalized_text(text)
+        return scoring._rank_normalized_input(self, title, description, content, text)

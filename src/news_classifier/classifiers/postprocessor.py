@@ -6,7 +6,7 @@ from news_classifier.classifiers.confidence import (
     ConfidenceThresholds,
     confidence_level,
 )
-from news_classifier.classifiers.rule_engine import RuleEngine
+from news_classifier.classifiers.rule_engine import RuleEngine, RuleScoringSession
 from news_classifier.models import ClassifiedNews, ModelPrediction, NewsItem, RuleDecision
 from news_classifier.utils.text import article_description, clean_text
 
@@ -30,7 +30,10 @@ class ClassificationPostProcessor:
         self.baseline_rule_engine = baseline_rule_engine
         self.decision_input_mode = decision_input_mode
 
-    def process(self, item: NewsItem, prediction: ModelPrediction) -> ClassifiedNews:
+    def process(
+        self, item: NewsItem, prediction: ModelPrediction, *,
+        scoring: RuleScoringSession | None = None,
+    ) -> ClassifiedNews:
         if prediction.label == "분류실패":
             decision = RuleDecision(
                 final_label="분류실패",
@@ -50,11 +53,15 @@ class ClassificationPostProcessor:
                 actual_mode = "with_body" if clean_text(item.content) else "without_body"
                 if actual_mode != self.decision_input_mode:
                     engine = self.baseline_rule_engine
+            # Input-bound fallback may select another engine. Never reuse a
+            # current/profile ranking for that baseline decision.
+            score_options = {"scoring": scoring} if scoring is not None and scoring.engine is engine else {}
             decision = engine.decide(
                 title=item.title,
                 description=description,
                 content=item.content,
                 prediction=prediction,
+                **score_options,
             )
             if (
                 self.decision_input_mode is not None

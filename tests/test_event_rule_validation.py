@@ -140,3 +140,26 @@ def test_holdout_keeps_alignment_error_before_preparing_context(monkeypatch):
     with pytest.raises(ValueError) as exc:
         audit_rule_holdout(proposed_rules(), holdout_rows(), [])
     assert str(exc.value) == "rule holdout rows and results must align"
+
+
+def test_holdout_reuses_scores_across_terms_without_merging_event_metadata(monkeypatch):
+    rules = proposed_rules()
+    rules = replace(rules, labels=tuple(
+        replace(policy, terms=policy.terms + (RuleTerm(
+            "synthetic bond event", strength=RuleStrength.STRONG, origin="development",
+            evidence_event_ids=("development-a", "development-b"),
+        ),)) if policy.label == "금융/투자" else policy for policy in rules.labels
+    ))
+    results = holdout_results(rules)
+    calls = []
+    score = RuleEngine._score_labels
+
+    def record(engine, text):
+        calls.append(text)
+        return score(engine, text)
+
+    monkeypatch.setattr(RuleEngine, "_score_labels", record)
+    report = audit_rule_holdout(rules, holdout_rows(), results)
+    assert len(calls) == 1
+    assert report["terms"][0]["correct_rule_independent_events"] == 2
+    assert report["terms"][1]["correct_rule_independent_events"] == 0

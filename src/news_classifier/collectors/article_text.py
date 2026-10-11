@@ -76,6 +76,14 @@ def _text_blocks(root, title, *, paragraphs_only=False):
     return " ".join(blocks), len(blocks)
 
 
+def _body_candidate(node, title):
+    content, count = _text_blocks(node, title)
+    links = sum(len(a.get_text(" ")) for a in node.find_all("a"))
+    if len(content) < 40 or links / len(content) >= .35:
+        return None
+    return content, count
+
+
 def _same_article_url(value, page_url):
     if not isinstance(value, str) or not value or not page_url:
         return False
@@ -174,10 +182,9 @@ def extract_article_text(html, *, title="", page_url=""):
     _remove_noise(soup)
     scoped = []
     for node in soup.select(BODY_SELECTOR):
-        content, count = _text_blocks(node, title)
-        links = sum(len(a.get_text(" ")) for a in node.find_all("a"))
-        if len(content) >= 40 and links / max(1, len(content)) < .35:
-            scoped.append((node, content, count))
+        candidate = _body_candidate(node, title)
+        if candidate is not None:
+            scoped.append((node, *candidate))
     # Choose the inner body, not its wrapper with recommendations/author metadata.
     inner = [entry for entry in scoped if not any(
         entry[0] is not other[0] and any(parent is entry[0] for parent in other[0].parents)
@@ -199,10 +206,9 @@ def extract_article_text(html, *, title="", page_url=""):
         return BodyExtraction(reason="restricted_story_data")
     articles = []
     for node in soup.find_all("article"):
-        content, count = _text_blocks(node, title)
-        links = sum(len(a.get_text(" ")) for a in node.find_all("a"))
-        if len(content) >= 40 and links / len(content) < .35:
-            articles.append((content, count))
+        candidate = _body_candidate(node, title)
+        if candidate is not None:
+            articles.append(candidate)
     unique_articles = list(dict.fromkeys(articles))
     if len(unique_articles) == 1:
         content, count = unique_articles[0]

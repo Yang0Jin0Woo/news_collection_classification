@@ -405,6 +405,26 @@ def _validated_evidence(values: dict) -> DecisionEvidence:
     return evidence
 
 
+def _validate_grouped_evidence(
+    groups, overall_evidence, target, *, group_name, sum_fields, expected_totals=None,
+):
+    """Share evidence checks while preserving each grouping's total requirements."""
+    for name, overall in overall_evidence:
+        parts = []
+        for key, group in groups.items():
+            if not isinstance(group, dict):
+                raise ValueError(f"invalid decision calibration per-{group_name} evidence")
+            part = _validated_evidence(group.get(name))
+            if expected_totals is not None and part.total != expected_totals[key]:
+                raise ValueError(f"inconsistent decision calibration per-{group_name} totals")
+            if name == "newly_decided" and part.support and part.accuracy < target:
+                raise ValueError(f"decision calibration new per-{group_name} accuracy is below target")
+            parts.append(part)
+        for key in sum_fields:
+            if sum(getattr(part, key) for part in parts) != getattr(overall, key):
+                raise ValueError(f"inconsistent decision calibration per-{group_name} evidence")
+
+
 def _validate_split_metadata(metadata, split, candidate_labels, minimum_support, target, input_mode):
     if not isinstance(metadata, dict) or metadata.get("split") != split or metadata.get("confirmed") is not True:
         raise ValueError("decision calibration requires confirmed development and evaluation evidence")
@@ -448,37 +468,21 @@ def _validate_split_metadata(metadata, split, candidate_labels, minimum_support,
     per_label = evidence.get("per_label")
     if not isinstance(per_label, dict) or set(per_label) != set(candidate_labels):
         raise ValueError("decision calibration per-label evidence is missing")
-    for name, overall in (("baseline", baseline), ("selected", selected), ("newly_decided", newly)):
-        parts = []
-        for label in candidate_labels:
-            if not isinstance(per_label[label], dict):
-                raise ValueError("invalid decision calibration per-label evidence")
-            part = _validated_evidence(per_label[label].get(name))
-            if part.total != label_support[label]:
-                raise ValueError("inconsistent decision calibration per-label totals")
-            if name == "newly_decided" and part.support and part.accuracy < target:
-                raise ValueError("decision calibration new per-label accuracy is below target")
-            parts.append(part)
-        for key in ("total", "support", "correct", "independent_support", "independent_correct"):
-            if sum(getattr(part, key) for part in parts) != getattr(overall, key):
-                raise ValueError("inconsistent decision calibration per-label evidence")
+    overall_evidence = (("baseline", baseline), ("selected", selected), ("newly_decided", newly))
+    _validate_grouped_evidence(
+        {label: per_label[label] for label in candidate_labels}, overall_evidence, target,
+        group_name="label", expected_totals=label_support,
+        sum_fields=("total", "support", "correct", "independent_support", "independent_correct"),
+    )
     per_keyword = evidence.get("per_keyword")
     if (not isinstance(per_keyword, dict) or len(per_keyword) != metadata["keyword_count"]
             or any(not isinstance(key, str) or not key.strip() for key in per_keyword)):
         raise ValueError("decision calibration per-keyword evidence is missing")
-    for name, overall in (("baseline", baseline), ("selected", selected), ("newly_decided", newly)):
-        parts = []
-        for group in per_keyword.values():
-            if not isinstance(group, dict):
-                raise ValueError("invalid decision calibration per-keyword evidence")
-            part = _validated_evidence(group.get(name))
-            if name == "newly_decided" and part.support and part.accuracy < target:
-                raise ValueError("decision calibration new per-keyword accuracy is below target")
-            parts.append(part)
-        # One manually identified event can legitimately appear under two queries.
-        for key in ("total", "support", "correct"):
-            if sum(getattr(part, key) for part in parts) != getattr(overall, key):
-                raise ValueError("inconsistent decision calibration per-keyword evidence")
+    # One manually identified event can legitimately appear under two queries.
+    _validate_grouped_evidence(
+        per_keyword, overall_evidence, target, group_name="keyword",
+        sum_fields=("total", "support", "correct"),
+    )
 
 
 def load_decision_profile(

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 from news_classifier.classifiers.zero_shot_classifier import HYPOTHESIS_TEMPLATE
@@ -24,6 +23,7 @@ from news_classifier.rules.policy import (
     validate_development_rule_evidence,
 )
 from news_classifier.service import build_pipeline
+from news_classifier.utils.json_profiles import replace_json_profile
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -121,12 +121,7 @@ def main() -> None:
             f"calibration output already exists; use --force: {output_path}"
         )
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    temporary_path = output_path.with_suffix(output_path.suffix + ".tmp")
-    temporary_path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False),
-        encoding="utf-8",
-    )
-    temporary_path.replace(output_path)
+    replace_json_profile(output_path, payload)
     print(f"신뢰도 보정 파일 저장: {output_path}")
 
 

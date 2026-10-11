@@ -310,9 +310,16 @@ def validate_development_rule_evidence(
 ) -> None:
     # Import at validation time to keep the matcher dependent on the policy,
     # rather than creating a module-level circular import.
-    from news_classifier.classifiers.rule_engine import RuleEngine
+    from news_classifier.classifiers.rule_engine import RuleEngine, RuleScoringSession
 
     rule_engine = RuleEngine(rule_set)
+    _validate_development_rule_evidence(
+        rule_set, rows, rule_engine, RuleScoringSession(rule_engine),
+    )
+
+
+def _validate_development_rule_evidence(rule_set, rows, rule_engine, scoring) -> None:
+    """Keep validation order while sharing one article ranking across expressions."""
     evidence_rows: dict[str, list[Mapping[str, str]]] = {}
     for row in rows:
         event_id = (row.get("event_id") or "").strip().casefold()
@@ -352,7 +359,9 @@ def validate_development_rule_evidence(
                         f"{raw_event_id}"
                     )
                 if not any(
-                    rule_term_matches_row(rule_engine, label_policy.label, term, row)
+                    rule_term_matches_row(
+                        rule_engine, label_policy.label, term, row, scoring=scoring,
+                    )
                     for row in matches
                 ):
                     raise ValueError(
@@ -366,6 +375,8 @@ def rule_term_matches_row(
     label: str,
     term: RuleTerm,
     row: Mapping[str, str],
+    *,
+    scoring=None,
 ) -> bool:
     """기사의 실제 점수 근거 확인. 검색어 및 출처만의 일치는 제외한다."""
     from news_classifier.utils.text import article_description
@@ -376,7 +387,10 @@ def rule_term_matches_row(
         row.get("description") or "",
         row.get("source") or "",
     )
-    ranking = rule_engine.rank_rules(title, description, row.get("content") or "")
+    if scoring is not None:
+        scoring.require_engine(rule_engine)
+    rank = rule_engine.rank_rules if scoring is None else scoring.rank_rules
+    ranking = rank(title, description, row.get("content") or "")
     normalized_phrase = normalize_rule_text(term.phrase)
     return any(
         normalize_rule_text(phrase) == normalized_phrase
@@ -391,10 +405,11 @@ def validate_development_rule_errors(
 ) -> None:
     if len(rows) != len(baseline_labels):
         raise ValueError("rule evidence rows and baseline labels must align")
-    validate_development_rule_evidence(rule_set, rows)
-    from news_classifier.classifiers.rule_engine import RuleEngine
+    from news_classifier.classifiers.rule_engine import RuleEngine, RuleScoringSession
 
     rule_engine = RuleEngine(rule_set)
+    scoring = RuleScoringSession(rule_engine)
+    _validate_development_rule_evidence(rule_set, rows, rule_engine, scoring)
     valid_baseline_labels = set(rule_set.candidate_labels) | {"검토필요"}
 
     for label_policy in rule_set.labels:
@@ -407,7 +422,9 @@ def validate_development_rule_errors(
                     (row.get("event_id") or "").strip().casefold() == event_id
                     and predicted_label in valid_baseline_labels
                     and predicted_label != (row.get("gold_label") or "").strip()
-                    and rule_term_matches_row(rule_engine, label_policy.label, term, row)
+                    and rule_term_matches_row(
+                        rule_engine, label_policy.label, term, row, scoring=scoring,
+                    )
                     for row, predicted_label in zip(rows, baseline_labels, strict=True)
                 )
                 if not has_supporting_error:

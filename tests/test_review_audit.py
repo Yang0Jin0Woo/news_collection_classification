@@ -83,6 +83,32 @@ def test_invalid_scores_are_unknown(value, tmp_path):
     assert summary["model_margin"]["mean"] is None
 
 
+def test_summary_parses_each_score_and_margin_once_and_reuses_review_values(monkeypatch):
+    rows = [
+        {"title": "review", "model_category_score": "0.3", "score_margin": "0.01",
+         "final_category": "검토필요"},
+        {"title": "invalid", "model_category_score": "nan", "score_margin": "invalid",
+         "final_category": "검토필요"},
+        {"title": "automatic", "model_category_score": "0.8", "score_margin": "0.2",
+         "final_category": "스포츠"},
+    ]
+    fields = list(rows[0])
+    calls = []
+    original = audit._number
+
+    def record(row, field):
+        calls.append((row["title"], field))
+        return original(row, field)
+
+    monkeypatch.setattr(audit, "_number", record)
+    summary = audit.summarize_rows(rows, fields, 0.5, 0.05)
+    assert len(calls) == len(set(calls)) == 2 * len(rows)
+    assert summary["model_score"]["valid_count"] == 2
+    assert summary["review_model_score"]["valid_count"] == 1
+    assert summary["review_model_margin"]["missing_or_invalid_count"] == 1
+    assert summary["review_low_score_and_margin_count"] == 1
+
+
 def test_model_errors_are_distinct_from_no_rule_evidence(tmp_path):
     path = write_csv(tmp_path / "errors.csv", [{"title": "error", "final_category": "분류실패", "rule_reason": "모델 분류 실패"}])
     summary = audit.audit_csv(path, 0.5, 0.05)["summary"]

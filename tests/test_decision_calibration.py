@@ -333,6 +333,74 @@ def test_profile_rejects_missing_unvalidated_or_inconsistent_evidence(tmp_path, 
     assert load(None) == DEFAULT_RULE_SET.decision
 
 
+def test_profile_accepts_same_confirmed_events_under_multiple_keywords(tmp_path):
+    def repeated_query_samples(split):
+        rows, _, predictions, labels = samples(split)
+        rows = [{**row, "event_id": f"{split}-event-{index % 34}",
+                 "keyword": f"{split}-query-{index // 34}"}
+                for index, row in enumerate(rows)]
+        predictions = [replace(prediction, score=0.45, margin=0.02) for prediction in predictions]
+        return rows, rows_to_items(rows), predictions, labels
+
+    development_rows, items, predictions, labels = repeated_query_samples("development")
+    result = calibrate(development_rows, items, predictions, labels)
+    evaluation_rows, items, predictions, labels = repeated_query_samples("evaluation")
+    evaluation = evaluate_decision_policy(
+        items, predictions, labels, DEFAULT_RULE_SET, result.policy,
+        event_ids=[row["event_id"] for row in evaluation_rows],
+    )
+    assert evaluation.selected.independent_support == 34
+    assert sum(group["selected"]["independent_support"]
+               for group in evaluation.per_keyword.values()) == 68
+    dataset = tmp_path / "repeated-query-events.csv"
+    with dataset.open("w", encoding="utf-8-sig", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=list(development_rows[0]))
+        writer.writeheader()
+        writer.writerows(development_rows + evaluation_rows)
+    payload = create_decision_profile(
+        result, evaluation, dataset_path=dataset, model_name="model", model_revision="revision",
+        candidate_hypotheses=list(DEFAULT_RULE_SET.candidate_labels),
+        hypothesis_template="template {}", input_policy="article", max_sequence_length=1200,
+        base_rule_set=DEFAULT_RULE_SET, development_rows=development_rows,
+        evaluation_rows=evaluation_rows,
+    )
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    assert load(path) == result.policy
+
+
+@pytest.mark.parametrize("group_name", ["label", "keyword"])
+@pytest.mark.parametrize("problem", ["invalid_group", "new_accuracy", "sum"])
+def test_grouped_evidence_retains_group_specific_failure_messages(group_name, problem):
+    evidence = decision_calibration._evidence(["스포츠"], ["스포츠"], ["event"], ["스포츠"])
+    group = {"newly_decided": evidence.to_dict()}
+    overall = evidence
+    message = f"invalid decision calibration per-{group_name} evidence"
+    if problem == "invalid_group":
+        group = []
+    elif problem == "new_accuracy":
+        wrong = decision_calibration._evidence(["스포츠"], ["사회"], ["event"], ["스포츠"])
+        group = {"newly_decided": wrong.to_dict()}
+        message = f"decision calibration new per-{group_name} accuracy is below target"
+    else:
+        overall = replace(evidence, total=2)
+        message = f"inconsistent decision calibration per-{group_name} evidence"
+    with pytest.raises(ValueError, match=message):
+        decision_calibration._validate_grouped_evidence(
+            {"group": group}, (("newly_decided", overall),), 0.85,
+            group_name=group_name, sum_fields=("total", "support", "correct"),
+        )
+
+
+def test_label_grouped_evidence_preserves_expected_total_requirement():
+    evidence = decision_calibration._evidence(["스포츠"], ["스포츠"], ["event"], ["스포츠"])
+    with pytest.raises(ValueError, match="inconsistent decision calibration per-label totals"):
+        decision_calibration._validate_grouped_evidence(
+            {"스포츠": {"baseline": evidence.to_dict()}}, (("baseline", evidence),), 0.85,
+            group_name="label", sum_fields=("total",), expected_totals={"스포츠": 2},
+        )
+
+
 @pytest.mark.parametrize("dataset_mode,input_mode", [
     ("without_body", "without_body"), ("with_body", "with_body"), ("with_body", "without_body"),
 ])

@@ -1,10 +1,11 @@
 """검색어와 무관한 사건 표현 후보. 정답이나 활성화된 규칙이 아님."""
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 import hashlib
 
-from news_classifier.classifiers.rule_engine import RuleEngine, _has_phrase, _phrase_spans
+from news_classifier.classifiers.rule_engine import RuleEngine, RuleScoringSession, _phrase_spans
 from news_classifier.rules.policy import RuleSet, normalize_rule_text, rule_set_fingerprint
 from news_classifier.utils.text import article_description, clean_text, strip_source_suffix
 
@@ -123,10 +124,17 @@ def article_fields(row: Mapping[str, str]) -> dict[str, str]:
 
 def phrase_evidence(phrase: str, fields: Mapping[str, str]) -> list[dict]:
     """구간은 NFKC/공백 정리/casefold된 필드 기준. 원본 구간이라고 오인하지 않도록 명시."""
+    normalized_fields = {field: normalize_rule_text(text) for field, text in fields.items()}
+    return _phrase_evidence(phrase, normalized_fields, _phrase_spans)
+
+
+def _phrase_evidence(
+    phrase: str, normalized_fields: Mapping[str, str],
+    spans: Callable[[str, str], tuple[tuple[int, int], ...]],
+) -> list[dict]:
     evidence = []
-    for field, text in fields.items():
-        normalized = normalize_rule_text(text)
-        for start, end in _phrase_spans(normalized, phrase):
+    for field, normalized in normalized_fields.items():
+        for start, end in spans(normalized, phrase):
             evidence.append({
                 "field": field,
                 "start": start,
@@ -140,14 +148,22 @@ def phrase_evidence(phrase: str, fields: Mapping[str, str]) -> list[dict]:
 
 def context_warnings(fields: Mapping[str, str], evidence: Sequence[Mapping]) -> list[dict]:
     """근거와 가까운 문맥 표현은 사람 확인용 경고일 뿐 정답/규칙 차단 판정이 아님."""
+    normalized_fields = {field: normalize_rule_text(text) for field, text in fields.items()}
+    return _context_warnings(normalized_fields, evidence, _phrase_spans)
+
+
+def _context_warnings(
+    normalized_fields: Mapping[str, str], evidence: Sequence[Mapping],
+    spans: Callable[[str, str], tuple[tuple[int, int], ...]],
+) -> list[dict]:
     warnings = []
     seen = set()
     for item in evidence:
         field = item["field"]
-        text = normalize_rule_text(fields[field])
+        text = normalized_fields[field]
         for kind, phrases in CONTEXT_WARNING_PHRASES.items():
             for phrase in phrases:
-                for start, end in _phrase_spans(text, phrase):
+                for start, end in spans(text, phrase):
                     if end < item["start"] - 120 or start > item["end"] + 120:
                         continue
                     key = (field, kind, start, end)
@@ -163,12 +179,18 @@ def context_warnings(fields: Mapping[str, str], evidence: Sequence[Mapping]) -> 
     return warnings
 
 
-def rule_evidence_records(row: Mapping[str, str], rule_engine: RuleEngine) -> dict:
+def rule_evidence_records(
+    row: Mapping[str, str], rule_engine: RuleEngine, *,
+    scoring: RuleScoringSession | None = None,
+) -> dict:
     """실제 점수에 반영된 표현의 위치만 설명. 배경/주요 사건 판단 및 규칙 변경 없음."""
     fields = article_fields(row)
     # Runtime postprocessing retains the supplied title; evidence uses that same text.
     fields["title"] = clean_text(str(row.get("title", "") or ""))
-    ranking = rule_engine.rank_rules(fields["title"], fields["description"], fields["content"])
+    if scoring is not None:
+        scoring.require_engine(rule_engine)
+    rank = rule_engine.rank_rules if scoring is None else scoring.rank_rules
+    ranking = rank(fields["title"], fields["description"], fields["content"])
     terms = []
     for score in ranking.ranked:
         for phrase in score.matched_terms:
@@ -195,6 +217,49 @@ def rule_evidence_records(row: Mapping[str, str], rule_engine: RuleEngine) -> di
     }
 
 
+@dataclass(frozen=True)
+class _CandidateArticle:
+    row: Mapping[str, str]
+    fields: Mapping[str, str]
+    normalized_fields: Mapping[str, str]
+    article_id: str
+    id_basis: str
+
+
+class _CandidateAuditContext:
+    """One audit batch only; runtime title evidence is prepared separately."""
+
+    def __init__(self, catalog: Mapping[str, Sequence[str]]):
+        self.catalog = {label: tuple(phrases) for label, phrases in catalog.items()}
+        self._articles: dict[int, _CandidateArticle] = {}
+        self._normalized_phrases: dict[str, str] = {}
+        self._spans: dict[tuple[str, str], tuple[tuple[int, int], ...]] = {}
+
+    def normalized_phrase(self, phrase: str) -> str:
+        if phrase not in self._normalized_phrases:
+            self._normalized_phrases[phrase] = normalize_rule_text(phrase)
+        return self._normalized_phrases[phrase]
+
+    def spans(self, text: str, phrase: str) -> tuple[tuple[int, int], ...]:
+        # _phrase_spans normalizes exactly once; HTML entity decoding is not idempotent.
+        key = (text, phrase)
+        if key not in self._spans:
+            self._spans[key] = _phrase_spans(text, phrase)
+        return self._spans[key]
+
+    def article(self, row: Mapping[str, str]) -> _CandidateArticle:
+        key = id(row)
+        if key not in self._articles:
+            fields = article_fields(row)
+            article_id, id_basis = article_review_id(row)
+            self._articles[key] = _CandidateArticle(
+                row, fields,
+                {field: normalize_rule_text(text) for field, text in fields.items()},
+                article_id, id_basis,
+            )
+        return self._articles[key]
+
+
 def audit_candidate(
     phrase: str,
     label: str,
@@ -204,10 +269,28 @@ def audit_candidate(
     candidate_phrases: Mapping[str, Sequence[str]] | None = None,
 ) -> dict:
     """출현/중복/충돌 감사. 규칙 활성화나 정답 라벨 생성은 수행하지 않음."""
+    catalog = candidate_phrases if candidate_phrases is not None else CANDIDATE_PHRASES
+    return _audit_candidate(phrase, label, rows, rule_set, _CandidateAuditContext(catalog))
+
+
+def audit_candidates(
+    candidates: Sequence[tuple[str, str]], rows: Sequence[Mapping[str, str]],
+    rule_set: RuleSet, *, candidate_phrases: Mapping[str, Sequence[str]] | None = None,
+) -> list[dict]:
+    """Audit (category, phrase) pairs with preparation scoped to this batch."""
+    catalog = candidate_phrases if candidate_phrases is not None else CANDIDATE_PHRASES
+    context = _CandidateAuditContext(catalog)
+    return [_audit_candidate(phrase, label, rows, rule_set, context) for label, phrase in candidates]
+
+
+def _audit_candidate(
+    phrase: str, label: str, rows: Sequence[Mapping[str, str]],
+    rule_set: RuleSet, context: _CandidateAuditContext,
+) -> dict:
     _development_rows_only(rows)
     if label not in rule_set.candidate_labels or label == rule_set.other_label:
         raise ValueError("candidate must use an existing non-other category")
-    normalized = normalize_rule_text(phrase)
+    normalized = context.normalized_phrase(phrase)
     if not normalized:
         raise ValueError("candidate phrase must not be empty")
     alias = normalized.replace(" ", "")
@@ -216,12 +299,12 @@ def audit_candidate(
     term_audit = []
     for policy in rule_set.labels:
         for term in policy.terms:
-            term_text = normalize_rule_text(term.phrase)
+            term_text = context.normalized_phrase(term.phrase)
             relation = None
             if term_text.replace(" ", "") == alias:
                 existing.append({"category": policy.label, "phrase": term.phrase})
                 relation = "spacing_alias"
-            elif _has_phrase(normalized, term_text) or _has_phrase(term_text, normalized):
+            elif context.spans(normalized, term_text) or context.spans(term_text, normalized):
                 overlaps.append({"category": policy.label, "phrase": term.phrase})
                 relation = "phrase_overlap"
             if relation:
@@ -233,25 +316,26 @@ def audit_candidate(
                     "cross_category": policy.label != label,
                 })
 
-    catalog = candidate_phrases if candidate_phrases is not None else CANDIDATE_PHRASES
+    catalog = context.catalog
     candidate_conflicts = []
     for other_label, phrases in catalog.items():
         if other_label == label:
             continue
         for other_phrase in phrases:
-            other_normalized = normalize_rule_text(other_phrase)
+            other_normalized = context.normalized_phrase(other_phrase)
             if (
                 other_normalized.replace(" ", "") == alias
-                or _has_phrase(normalized, other_normalized)
-                or _has_phrase(other_normalized, normalized)
+                or context.spans(normalized, other_normalized)
+                or context.spans(other_normalized, normalized)
             ):
                 candidate_conflicts.append({"category": other_label, "phrase": other_phrase})
 
     matches = []
     matched_rows = []
     for row in rows:
-        fields = article_fields(row)
-        evidence = phrase_evidence(phrase, fields)
+        article = context.article(row)
+        fields = article.fields
+        evidence = _phrase_evidence(phrase, article.normalized_fields, context.spans)
         if not evidence:
             continue
         matched_rows.append(row)
@@ -259,17 +343,20 @@ def audit_candidate(
         for other_label, phrases in catalog.items():
             if other_label == label:
                 continue
-            present = [other_phrase for other_phrase in phrases if phrase_evidence(other_phrase, fields)]
+            present = [
+                other_phrase for other_phrase in phrases
+                if any(context.spans(text, other_phrase) for text in article.normalized_fields.values())
+            ]
             if present:
                 other_mentions.append({"category": other_label, "phrases": present})
         matches.append({
-            "id": article_review_id(row)[0], "article_id_basis": article_review_id(row)[1],
+            "id": article.article_id, "article_id_basis": article.id_basis,
             "event_id": row.get("event_id", ""),
             "title": row.get("title", ""), "link": row.get("link", ""),
             "keyword": row.get("keyword", ""), "source": row.get("source", ""),
             "content_available": bool(fields["content"]),
             "match_evidence": evidence,
-            "context_warnings": context_warnings(fields, evidence),
+            "context_warnings": _context_warnings(article.normalized_fields, evidence, context.spans),
             "other_candidate_topic_mentions": other_mentions,
             "topic_mentions_are_gold_labels": False,
             "association_status": "phrase_present_in_title_description_or_body_not_verified_subject",

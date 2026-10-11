@@ -181,6 +181,26 @@ def test_pre_rule_hybrid_review_is_a_valid_baseline_problem(monkeypatch):
     validate_development_rule_errors(rules, rows, ["검토필요", "검토필요"])
 
 
+def test_evidence_and_baseline_error_checks_score_each_exact_article_once(monkeypatch):
+    rules = activate_general_rule(monkeypatch, "교육/취업")
+    rules = replace(rules, labels=tuple(
+        replace(policy, terms=policy.terms + (synthetic_term("두번째 합성 근거"),))
+        if policy.label == "교육/취업" else policy for policy in rules.labels
+    ))
+    rows = [confirmed_support(event, title=f"합성 검증 구문 두번째 합성 근거 {index}")
+            for index, event in enumerate(("synthetic-1", "synthetic-2"))]
+    calls = []
+    score = RuleEngine._score_labels
+
+    def record(engine, text):
+        calls.append(text)
+        return score(engine, text)
+
+    monkeypatch.setattr(RuleEngine, "_score_labels", record)
+    validate_development_rule_errors(rules, rows, ["검토필요", "검토필요"])
+    assert len(calls) == 2
+
+
 @pytest.mark.parametrize("baseline_label", ["", "분류실패", "알 수 없는 출력"])
 def test_failed_or_unknown_baseline_is_not_classification_error_evidence(monkeypatch, baseline_label):
     rules = activate_general_rule(monkeypatch, "교육/취업")

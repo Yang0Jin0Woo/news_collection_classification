@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import replace
-import json
 from pathlib import Path
 
 from news_classifier.classifiers.zero_shot_classifier import HYPOTHESIS_TEMPLATE
@@ -24,6 +23,7 @@ from news_classifier.rules.policy import (
 )
 from news_classifier.utils.text import article_description
 from news_classifier.service import build_pipeline
+from news_classifier.utils.json_profiles import replace_json_profile
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -119,12 +119,8 @@ def main() -> None:
     except (OSError, ValueError, RuntimeError) as exc:
         parser.error(f"최종 판정 보정 중단, 기본 기준 유지: {exc}")
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    temporary_path = output_path.with_suffix(output_path.suffix + ".tmp")
     try:
-        # Exclusive temp creation avoids replacing an unrelated unfinished file.
-        with temporary_path.open("x", encoding="utf-8") as file:
-            json.dump(payload, file, ensure_ascii=False, indent=2, allow_nan=False)
-        temporary_path.replace(output_path)
+        replace_json_profile(output_path, payload, exclusive_temporary=True)
     except OSError as exc:
         parser.error(f"보정 프로필 저장 실패: {exc}")
     print(f"최종 판정 보정 파일 저장: {output_path}")

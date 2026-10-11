@@ -8,7 +8,7 @@ import pytest
 
 from scripts import evaluate_news
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
-from news_classifier.classifiers.rule_engine import RuleEngine
+from news_classifier.classifiers.rule_engine import RuleEngine, RuleScoringSession
 from news_classifier.models import ModelPrediction
 from news_classifier.rules.default_rules import CANDIDATE_LABELS, DEFAULT_RULE_SET
 from news_classifier.rules.policy import RuleStrength, RuleTerm
@@ -132,6 +132,42 @@ def test_evaluation_report_reuses_the_exact_settings_used_for_model_loading(tmp_
     assert build_calls[0] is calls[0]
     assert payload["model"] == build_calls[0].classification_model == "fixture-model"
     assert payload["model_revision"] == build_calls[0].classification_model_revision == "fixture-revision"
+
+
+def test_evaluation_reuses_current_scores_with_identical_uncached_reports(tmp_path, monkeypatch):
+    rows = synthetic_rows()
+    dataset = tmp_path / "fixture.csv"
+    write_fixture(dataset, rows)
+    install_fake_pipeline(monkeypatch, rows)
+    pipeline = evaluate_news.build_pipeline(evaluate_news.AppSettings())
+    current_engine = pipeline.postprocessor.rule_engine
+    calls = []
+    score = current_engine._score_labels
+
+    def record(text):
+        calls.append(text)
+        return score(text)
+
+    monkeypatch.setattr(current_engine, "_score_labels", record)
+    cached_output, uncached_output = tmp_path / "cached", tmp_path / "uncached"
+    run_evaluation(monkeypatch, dataset, cached_output)
+    expected_count = sum(row["split"] == "evaluation" for row in rows)
+    assert len(calls) == expected_count
+    calls.clear()
+
+    class UncachedSession(RuleScoringSession):
+        def rank_rules(self, title, description="", content=""):
+            return self.engine.rank_rules(title, description, content)
+
+        def _rank_normalized_input(self, engine, title, description, content, text):
+            self.require_engine(engine)
+            return engine._rank_normalized_text(text)
+
+    monkeypatch.setattr(evaluate_news, "RuleScoringSession", UncachedSession)
+    run_evaluation(monkeypatch, dataset, uncached_output)
+    assert len(calls) > expected_count
+    for filename in ("evaluation_results.json", "evaluation_report.md"):
+        assert (cached_output / filename).read_bytes() == (uncached_output / filename).read_bytes()
 
 
 @pytest.mark.parametrize("split", ["development", "evaluation"])

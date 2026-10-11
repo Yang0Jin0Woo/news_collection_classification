@@ -71,8 +71,7 @@ def _review_reason(row: dict[str, str]) -> str:
     return "other_recorded_reason" if reason else "reason_not_recorded"
 
 
-def _metric(rows, field, threshold):
-    values = [_number(row, field) for row in rows]
+def _metric(values, field, threshold):
     valid = [value for value in values if value is not None]
     return {
         "status": "supported" if field else "unsupported",
@@ -196,6 +195,10 @@ def summarize_rows(rows, fields, score_threshold, margin_threshold):
         None,
     )
     margin_field = "score_margin" if "score_margin" in fields else None
+    scores = [_number(row, score_field) for row in rows]
+    margins = [_number(row, margin_field) for row in rows]
+    review_scores = [score for score, state in zip(scores, states) if state is True]
+    review_margins = [margin for margin, state in zip(margins, states) if state is True]
     content_supported = "content" in fields
     return {
         "representative_article_count": len(rows),
@@ -206,16 +209,14 @@ def summarize_rows(rows, fields, score_threshold, margin_threshold):
         "review_category_count": sum(_value(row, "final_category") == REVIEW_LABEL for row in rows),
         "error_category_count": sum(_value(row, "final_category") == ERROR_LABEL for row in rows),
         "review_reasons": dict(sorted(Counter(_review_reason(row) for row in reviewed).items())),
-        "model_score": _metric(rows, score_field, score_threshold),
-        "model_margin": _metric(rows, margin_field, margin_threshold),
-        "review_model_score": _metric(reviewed, score_field, score_threshold),
-        "review_model_margin": _metric(reviewed, margin_field, margin_threshold),
+        "model_score": _metric(scores, score_field, score_threshold),
+        "model_margin": _metric(margins, margin_field, margin_threshold),
+        "review_model_score": _metric(review_scores, score_field, score_threshold),
+        "review_model_margin": _metric(review_margins, margin_field, margin_threshold),
         "review_low_score_and_margin_count": sum(
-            _number(row, score_field) is not None
-            and _number(row, margin_field) is not None
-            and _number(row, score_field) < score_threshold
-            and _number(row, margin_field) < margin_threshold
-            for row in reviewed
+            score is not None and margin is not None
+            and score < score_threshold and margin < margin_threshold
+            for score, margin in zip(review_scores, review_margins)
         ) if score_field and margin_field else None,
         "review_reclassification": _reclassification(rows, fields),
         "body": {

@@ -13,6 +13,7 @@ from news_classifier.rules.event_candidates import (
     HUMAN_REVIEW_CHECKLIST,
     article_review_records,
     audit_candidate as _audit_candidate,
+    audit_candidates,
 )
 from news_classifier.rules.policy import normalize_rule_text
 from news_classifier.utils.json_reports import write_new_json
@@ -72,10 +73,7 @@ def main():
         if phrase not in catalog.setdefault(label, []):
             catalog[label].append(phrase)
     try:
-        candidates = [
-            audit_candidate(phrase, label, rows, candidate_phrases=catalog)
-            for label, phrase in selected
-        ]
+        candidates = audit_candidates(selected, rows, DEFAULT_RULE_SET, candidate_phrases=catalog)
     except ValueError as exc:
         parser.error(str(exc))
     payload = {
