@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 from news_classifier.classifiers.input_text import has_changed_article_input
+from news_classifier.classifiers.prediction_validation import validate_model_predictions
 from news_classifier.config import AppSettings
 from news_classifier.evaluation_dataset import dataset_sha256, read_csv_dataset, rows_to_items
 from news_classifier.rules.event_candidates import CANDIDATE_PHRASES, audit_candidate
@@ -23,8 +24,11 @@ from news_classifier.utils.text import clean_text
 def compare_rows(rows, pipeline):
     items = rows_to_items(rows)
     predictions = pipeline.classifier.classify_many([item.classification_text() for item in items])
-    if len(predictions) != len(items) or any(p.label == "분류실패" for p in predictions):
-        raise ValueError("baseline replay model failed; no comparison report generated")
+    validate_model_predictions(
+        predictions, len(items),
+        count_error="baseline replay model failed; no comparison report generated",
+        failure_error="baseline replay model failed; no comparison report generated",
+    )
     before = [pipeline.postprocessor.process(item, prediction)
               for item, prediction in zip(items, predictions, strict=True)]
     after = list(before)
@@ -41,8 +45,11 @@ def compare_rows(rows, pipeline):
             retries.append((index, item))
     if retries:
         predictions = pipeline.classifier.classify_many([item.classification_text() for _, item in retries])
-        if len(predictions) != len(retries) or any(p.label == "분류실패" for p in predictions):
-            raise ValueError("body replay model failed; no comparison report generated")
+        validate_model_predictions(
+            predictions, len(retries),
+            count_error="body replay model failed; no comparison report generated",
+            failure_error="body replay model failed; no comparison report generated",
+        )
         for (index, item), prediction in zip(retries, predictions, strict=True):
             after[index] = pipeline.postprocessor.process(item, prediction)
     retry_indices = {index for index, _ in retries}

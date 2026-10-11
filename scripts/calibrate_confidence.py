@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from news_classifier.classifiers.zero_shot_classifier import HYPOTHESIS_TEMPLATE
+from news_classifier.classifiers.prediction_validation import validate_model_predictions
 from news_classifier.confidence_calibration import (
     CalibrationSample,
     calibrate_confidence,
@@ -59,10 +60,12 @@ def main() -> None:
     predictions = pipeline.classifier.classify_many(
         [evaluation_input(item) for item in items]
     )
-    if len(predictions) != len(items):
-        raise RuntimeError("model prediction count does not match calibration cases")
-    if any(prediction.label == "분류실패" for prediction in predictions):
-        raise RuntimeError("model failed while generating calibration predictions")
+    validate_model_predictions(
+        predictions, len(items),
+        count_error="model prediction count does not match calibration cases",
+        failure_error="model failed while generating calibration predictions",
+        exception_type=RuntimeError,
+    )
     validate_development_rule_errors(
         pipeline.postprocessor.rule_engine.rule_set,
         rows,

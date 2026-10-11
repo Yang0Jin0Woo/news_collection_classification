@@ -10,6 +10,7 @@ from news_classifier.evaluation_dataset import rows_with_article_context
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 from news_classifier.rules.policy import RuleStrength, RuleTerm
 from news_classifier.rules.review_validation import audit_rule_holdout, evaluate_review_reduction
+from news_classifier.rules import review_validation
 
 
 def comparison(**changes):
@@ -104,3 +105,38 @@ def test_evidence_context_rows_preserve_source_and_only_use_actual_inputs():
     assert context[0]["gold_label"] == source[0]["gold_label"]
     with pytest.raises(ValueError, match="align"):
         rows_with_article_context(source, [])
+
+
+def test_holdout_prepares_actual_article_context_once_for_all_terms(monkeypatch):
+    rules = proposed_rules()
+    rules = replace(rules, labels=tuple(
+        replace(policy, terms=policy.terms + (RuleTerm(
+            "synthetic bond event", strength=RuleStrength.STRONG, origin="development",
+            evidence_event_ids=("development-a", "development-b"),
+        ),)) if policy.label == "금융/투자" else policy for policy in rules.labels
+    ))
+    rows = [{**row, "title": "stored title", "content": "stored unused body"} for row in holdout_rows()]
+    original = [dict(row) for row in rows]
+    results = holdout_results(rules)
+    calls = []
+
+    def prepare(source, items):
+        calls.append((source, items))
+        return rows_with_article_context(source, items)
+
+    monkeypatch.setattr(review_validation, "rows_with_article_context", prepare)
+    report = audit_rule_holdout(rules, rows, results)
+    assert len(calls) == 1
+    assert calls[0][1] == [result.item for result in results]
+    assert len(report["terms"]) == 2
+    assert report["terms"][0]["correct_rule_independent_events"] == 2
+    assert report["terms"][1]["correct_rule_independent_events"] == 0
+    assert rows == original
+
+
+def test_holdout_keeps_alignment_error_before_preparing_context(monkeypatch):
+    monkeypatch.setattr(review_validation, "rows_with_article_context",
+                        lambda *args: pytest.fail("unaligned context must not be prepared"))
+    with pytest.raises(ValueError) as exc:
+        audit_rule_holdout(proposed_rules(), holdout_rows(), [])
+    assert str(exc.value) == "rule holdout rows and results must align"

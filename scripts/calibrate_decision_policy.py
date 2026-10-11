@@ -7,6 +7,7 @@ from pathlib import Path
 
 from news_classifier.classifiers.zero_shot_classifier import HYPOTHESIS_TEMPLATE
 from news_classifier.classifiers.rule_engine import RuleEngine
+from news_classifier.classifiers.prediction_validation import validate_model_predictions
 from news_classifier.config import AppSettings
 from news_classifier.decision_calibration import (
     calibrate_decision_policy, create_decision_profile, evaluate_decision_policy,
@@ -71,8 +72,10 @@ def main() -> None:
         development_predictions = pipeline.classifier.classify_many([
             evaluation_input(item) for item in development_items
         ])
-        if len(development_predictions) != len(development_items):
-            raise ValueError("model prediction count does not match development cases")
+        validate_model_predictions(
+            development_predictions, len(development_items),
+            count_error="model prediction count does not match development cases",
+        )
         baseline_engine = RuleEngine(without_development_rules(rule_set))
         validate_development_rule_errors(rule_set, development_evidence_rows, [
             baseline_engine.decide(

@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
+from news_classifier.classifiers.prediction_validation import validate_model_predictions
 from news_classifier.classifiers.rule_engine import EVENT_ANCHOR_POLICY, RuleEngine
 from news_classifier.config import AppSettings
 from news_classifier.evaluation import calculate_metrics
@@ -51,8 +52,11 @@ def compare_cases(rows, pipeline):
         for row in rows
     ])
     predictions = pipeline.classifier.classify_many([item.classification_text() for item in items])
-    if len(predictions) != len(items) or any(pred.label == "분류실패" for pred in predictions):
-        raise ValueError("모델 실행 실패: 정확도 또는 전후 비교 생성 중단")
+    validate_model_predictions(
+        predictions, len(items),
+        count_error="모델 실행 실패: 정확도 또는 전후 비교 생성 중단",
+        failure_error="모델 실행 실패: 정확도 또는 전후 비교 생성 중단",
+    )
     rules = pipeline.postprocessor.rule_engine.rule_set
     before_processor = ClassificationPostProcessor(RuleEngine(rules))
     candidate_engine = RuleEngine(rules, experimental_event_anchors=True)

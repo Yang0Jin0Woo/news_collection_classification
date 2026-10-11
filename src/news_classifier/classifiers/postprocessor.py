@@ -40,6 +40,10 @@ class ClassificationPostProcessor:
                 rule_match_count=0,
             )
         else:
+            description = (
+                article_description(item.title, item.description, item.source)
+                if self.clean_context else item.description
+            )
             engine = self.rule_engine
             # 본문으로 검증한 완화 기준을 제목만 있는 기사에 적용하지 않음(역방향도 동일).
             if self.decision_input_mode is not None:
@@ -48,10 +52,7 @@ class ClassificationPostProcessor:
                     engine = self.baseline_rule_engine
             decision = engine.decide(
                 title=item.title,
-                description=(
-                    article_description(item.title, item.description, item.source)
-                    if self.clean_context else item.description
-                ),
+                description=description,
                 content=item.content,
                 prediction=prediction,
             )
@@ -63,10 +64,7 @@ class ClassificationPostProcessor:
             ):
                 baseline = self.baseline_rule_engine.decide(
                     title=item.title,
-                    description=(
-                        article_description(item.title, item.description, item.source)
-                        if self.clean_context else item.description
-                    ),
+                    description=description,
                     content=item.content,
                     prediction=prediction,
                 )

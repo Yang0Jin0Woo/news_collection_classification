@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections import Counter
 
 from news_classifier.classifiers.rule_engine import RuleEngine
+from news_classifier.evaluation_dataset import rows_with_article_context
 from news_classifier.rules.policy import rule_term_matches_row
 
 
@@ -11,6 +12,7 @@ def audit_rule_holdout(rule_set, rows, classified_results) -> dict:
     """Each proposed expression needs its own held-out successful rule cases."""
     if len(rows) != len(classified_results):
         raise ValueError("rule holdout rows and results must align")
+    actual_rows = rows_with_article_context(rows, [result.item for result in classified_results])
     engine = RuleEngine(rule_set)
     terms = []
     for policy in rule_set.labels:
@@ -18,11 +20,8 @@ def audit_rule_holdout(rule_set, rows, classified_results) -> dict:
             if term.origin != "development":
                 continue
             correct_events, wrong_cases, other_topic_matches = set(), [], 0
-            for row, result in zip(rows, classified_results, strict=True):
-                actual = {**row, "title": result.item.title,
-                          "description": result.item.description, "source": result.item.source,
-                          "content": result.item.content}
-                if not rule_term_matches_row(engine, policy.label, term, actual):
+            for row, result in zip(actual_rows, classified_results, strict=True):
+                if not rule_term_matches_row(engine, policy.label, term, row):
                     continue
                 gold = row["gold_label"]
                 if gold != policy.label:

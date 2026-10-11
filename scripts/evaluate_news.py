@@ -8,6 +8,7 @@ from pathlib import Path
 from news_classifier.config import AppSettings
 from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
+from news_classifier.classifiers.prediction_validation import validate_model_predictions
 from news_classifier.evaluation import (
     calculate_metrics,
     calculate_rule_correction_metrics,
@@ -166,14 +167,20 @@ def main() -> None:
     predictions = pipeline.classifier.classify_many(
         [evaluation_input(item) for item in items]
     )
-    if len(predictions) != len(items):
-        raise RuntimeError("model prediction count does not match evaluation cases")
+    validate_model_predictions(
+        predictions, len(items),
+        count_error="model prediction count does not match evaluation cases",
+        exception_type=RuntimeError,
+    )
     if has_development_rules and args.split == "evaluation":
         development_predictions = pipeline.classifier.classify_many(
             [evaluation_input(item) for item in development_items]
         )
-        if len(development_predictions) != len(development_items):
-            raise RuntimeError("model prediction count does not match development rule evidence")
+        validate_model_predictions(
+            development_predictions, len(development_items),
+            count_error="model prediction count does not match development rule evidence",
+            exception_type=RuntimeError,
+        )
         development_baseline = ClassificationPostProcessor(RuleEngine(baseline_rule_set(runtime_rule_set)))
         validate_development_rule_errors(runtime_rule_set, development_evidence_rows, [
             development_baseline.process(item, prediction).rule_decision.final_label
@@ -219,8 +226,11 @@ def main() -> None:
             [legacy_evaluation_input(item) for item in items],
             candidate_labels=LEGACY_CANDIDATE_LABELS,
         )
-        if len(legacy_predictions) != len(items):
-            raise RuntimeError("legacy model prediction count does not match evaluation cases")
+        validate_model_predictions(
+            legacy_predictions, len(items),
+            count_error="legacy model prediction count does not match evaluation cases",
+            exception_type=RuntimeError,
+        )
         legacy_processor = ClassificationPostProcessor(
             RuleEngine(legacy_rule_set(runtime_rule_set)), clean_context=False,
         )
@@ -239,8 +249,11 @@ def main() -> None:
         short_predictions = pipeline.classifier.classify_many_legacy(
             [evaluation_input(item) for item in items], candidate_labels=CANDIDATE_LABELS,
         )
-        if len(short_predictions) != len(items):
-            raise RuntimeError("short-label prediction count does not match evaluation cases")
+        validate_model_predictions(
+            short_predictions, len(items),
+            count_error="short-label prediction count does not match evaluation cases",
+            exception_type=RuntimeError,
+        )
         predicted_by_method["짧은 주제명 모델"] = [prediction.label for prediction in short_predictions]
         predicted_by_method["짧은 주제명 하이브리드"] = [
             pipeline.postprocessor.process(item, prediction).rule_decision.final_label
