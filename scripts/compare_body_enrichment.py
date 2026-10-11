@@ -7,15 +7,13 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
-import csv
 from dataclasses import replace
-import hashlib
 import json
 from pathlib import Path
 
 from news_classifier.classifiers.input_text import has_changed_article_input
 from news_classifier.config import AppSettings
-from news_classifier.models import NewsItem
+from news_classifier.evaluation_dataset import dataset_sha256, read_csv_dataset, rows_to_items
 from news_classifier.rules.event_candidates import CANDIDATE_PHRASES, audit_candidate
 from news_classifier.rules.policy import rule_set_fingerprint
 from news_classifier.service import build_pipeline
@@ -23,9 +21,7 @@ from news_classifier.utils.text import clean_text
 
 
 def compare_rows(rows, pipeline):
-    items = [NewsItem(**{key: row.get(key, "") or "" for key in
-                        ("keyword", "title", "link", "source", "published_at", "description", "content")})
-             for row in rows]
+    items = rows_to_items(rows)
     predictions = pipeline.classifier.classify_many([item.classification_text() for item in items])
     if len(predictions) != len(items) or any(p.label == "분류실패" for p in predictions):
         raise ValueError("baseline replay model failed; no comparison report generated")
@@ -104,18 +100,19 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.output.exists() or args.output.resolve() == args.input.resolve():
         parser.error("기존 파일 보존: 새 출력 경로 필요")
-    source_hash = hashlib.sha256(args.input.read_bytes()).hexdigest()
-    with args.input.open(encoding="utf-8-sig", newline="") as file:
-        reader = csv.DictReader(file)
-        if not reader.fieldnames or not {"title", "link", "final_category"} <= set(reader.fieldnames):
-            parser.error("수집 결과 CSV에 title, link, final_category 필요")
-        rows = list(reader)
-    if not 1 <= len(rows) <= 100 or any(None in row or any(v is None for v in row.values()) for row in rows):
+    source_hash = dataset_sha256(args.input)
+    try:
+        columns, rows = read_csv_dataset(args.input)
+    except ValueError as exc:
+        parser.error(str(exc))
+    if not {"title", "link", "final_category"} <= set(columns):
+        parser.error("수집 결과 CSV에 title, link, final_category 필요")
+    if not 1 <= len(rows) <= 100:
         parser.error("정상 형식의 대표 기사 1~100건 필요")
     settings = AppSettings()
     pipeline = build_pipeline(settings)
     comparison = compare_rows(rows, pipeline)
-    if hashlib.sha256(args.input.read_bytes()).hexdigest() != source_hash:
+    if dataset_sha256(args.input) != source_hash:
         parser.error("비교 도중 원본 CSV 변경 감지: 보고서 생성 중단")
     payload = {"schema_version": 1, "mode": "stored_article_body_replay_not_accuracy_evaluation",
                "source_csv": str(args.input.resolve()), "source_sha256": source_hash,

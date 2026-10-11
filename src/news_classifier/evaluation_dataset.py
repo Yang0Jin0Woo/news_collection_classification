@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+from collections.abc import Mapping
 from pathlib import Path
 
 from news_classifier.models import NewsItem
@@ -31,6 +32,19 @@ def dataset_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def read_csv_dataset(path: Path) -> tuple[list[str], list[dict[str, str]]]:
+    """Read source rows unchanged; leave required columns and review policy to each tool."""
+    with path.open("r", newline="", encoding="utf-8-sig") as file:
+        reader = csv.DictReader(file)
+        columns = reader.fieldnames or []
+        if len(columns) != len(set(columns)):
+            raise ValueError(f"duplicate CSV column names: {path}")
+        rows = list(reader)
+    if any(None in row or any(value is None for value in row.values()) for row in rows):
+        raise ValueError(f"malformed CSV row: {path}")
+    return columns, rows
+
+
 def load_reviewed_cases(
     path: Path,
     split: str,
@@ -38,20 +52,16 @@ def load_reviewed_cases(
     *,
     require_explicit_event_ids: bool = False,
 ) -> list[dict[str, str]]:
-    with path.open("r", newline="", encoding="utf-8-sig") as file:
-        reader = csv.DictReader(file)
-        missing_columns = REQUIRED_COLUMNS - set(reader.fieldnames or [])
-        if missing_columns:
-            raise ValueError(f"missing dataset columns: {sorted(missing_columns)}")
-        if require_explicit_event_ids and "event_id" not in (reader.fieldnames or []):
-            raise ValueError("explicit event_id column is required for decision calibration")
-        all_rows = list(reader)
+    columns, all_rows = read_csv_dataset(path)
+    missing_columns = REQUIRED_COLUMNS - set(columns)
+    if missing_columns:
+        raise ValueError(f"missing dataset columns: {sorted(missing_columns)}")
+    if require_explicit_event_ids and "event_id" not in columns:
+        raise ValueError("explicit event_id column is required for decision calibration")
 
     ids: set[str] = set()
     event_splits: dict[str, set[str]] = {}
     for row in all_rows:
-        if any(row.get(field) is None for field in REQUIRED_COLUMNS):
-            raise ValueError("dataset contains a malformed row with missing values")
         case_id = row["id"].strip()
         if not case_id or case_id in ids:
             raise ValueError(f"duplicate or empty case id: {case_id}")
@@ -105,19 +115,16 @@ def load_reviewed_cases(
     return rows
 
 
+def row_to_item(row: Mapping[str, str | None]) -> NewsItem:
+    """Use only article fields, never gold labels, stored predictions or review metadata."""
+    return NewsItem(**{
+        key: row.get(key) or ""
+        for key in ("keyword", "title", "link", "source", "published_at", "description", "content")
+    })
+
+
 def rows_to_items(rows: list[dict[str, str]]) -> list[NewsItem]:
-    return [
-        NewsItem(
-            keyword=row["keyword"],
-            title=row["title"],
-            link=row.get("link", ""),
-            source=row.get("source", ""),
-            published_at=row.get("published_at", ""),
-            description=row["description"],
-            content=row.get("content", ""),
-        )
-        for row in rows
-    ]
+    return [row_to_item(row) for row in rows]
 
 
 def rows_with_article_context(

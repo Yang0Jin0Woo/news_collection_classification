@@ -126,3 +126,36 @@ def test_replay_and_runtime_share_effective_input_retry_condition(
     assert report["after_category_counts"] == {result.results[0].rule_decision.final_label: 1}
     if limit == 10:
         assert result.results[0].review_reclassification.status == "UNCHANGED_INPUT"
+
+
+@pytest.mark.parametrize("raw", [
+    "title,link,final_category,title\nnews,url,검토필요,other\n",
+    "title,link,final_category\nnews,url\n",
+    "title,link,final_category\nnews,url,검토필요,extra\n",
+])
+def test_replay_rejects_bad_csv_before_model_loading(tmp_path, monkeypatch, raw):
+    source, output = tmp_path / "source.csv", tmp_path / "report.json"
+    source.write_text(raw, encoding="utf-8-sig")
+    original = source.read_bytes()
+    monkeypatch.setattr(replay, "build_pipeline", lambda _: pytest.fail("invalid input must not load the model"))
+    with pytest.raises(SystemExit) as exc:
+        replay.main(["--input", str(source), "--output", str(output)])
+    assert exc.value.code == 2
+    assert source.read_bytes() == original
+    assert not output.exists()
+
+
+def test_replay_aborts_report_when_source_changes_during_comparison(tmp_path, monkeypatch):
+    source, output = tmp_path / "source.csv", tmp_path / "report.json"
+    source.write_text("title,link,final_category\nnews,url,검토필요\n", encoding="utf-8-sig")
+    monkeypatch.setattr(replay, "build_pipeline", lambda _: fake_pipeline()[0])
+
+    def change_source(rows, pipeline):
+        source.write_text("changed by another task", encoding="utf-8")
+        return {}
+
+    monkeypatch.setattr(replay, "compare_rows", change_source)
+    with pytest.raises(SystemExit) as exc:
+        replay.main(["--input", str(source), "--output", str(output)])
+    assert exc.value.code == 2
+    assert not output.exists()

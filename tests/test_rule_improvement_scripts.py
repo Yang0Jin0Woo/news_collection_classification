@@ -98,6 +98,24 @@ def test_candidate_selection_rejects_evaluation_split(tmp_path, monkeypatch):
     assert not output.exists()
 
 
+@pytest.mark.parametrize("raw", [
+    "id,title,title\n1,first,second\n",
+    "id,title\n1\n",
+    "id,title\n1,first,extra\n",
+])
+def test_candidate_script_rejects_malformed_common_input(tmp_path, monkeypatch, raw):
+    dataset, output = tmp_path / "cases.csv", tmp_path / "candidates.json"
+    dataset.write_text(raw, encoding="utf-8-sig")
+    original = dataset.read_bytes()
+    monkeypatch.setattr("sys.argv", ["review", "--dataset", str(dataset), "--output", str(output)])
+    monkeypatch.setattr(review_rule_candidates, "audit_candidate", lambda *a, **k: pytest.fail("invalid input must not be audited"))
+    with pytest.raises(SystemExit) as exc:
+        review_rule_candidates.main()
+    assert exc.value.code == 2
+    assert dataset.read_bytes() == original
+    assert not output.exists()
+
+
 @pytest.mark.parametrize("compare_legacy", [False, True])
 def test_evaluation_compares_same_predictions_and_preserves_model_errors(tmp_path, monkeypatch, compare_legacy):
     dataset = tmp_path / "synthetic.csv"

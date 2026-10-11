@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from dataclasses import replace
-import hashlib
 import json
 from pathlib import Path
 
@@ -12,7 +11,7 @@ from news_classifier.classifiers.postprocessor import ClassificationPostProcesso
 from news_classifier.classifiers.rule_engine import EVENT_ANCHOR_POLICY, RuleEngine
 from news_classifier.config import AppSettings
 from news_classifier.evaluation import calculate_metrics
-from news_classifier.models import NewsItem
+from news_classifier.evaluation_dataset import dataset_sha256, rows_to_items
 from news_classifier.rules.default_rules import CANDIDATE_LABELS
 from news_classifier.rules.event_candidates import rule_evidence_records
 from news_classifier.rules.policy import rule_set_fingerprint
@@ -46,11 +45,11 @@ def load_cases(path):
 
 
 def compare_cases(rows, pipeline):
-    items = [NewsItem(
-        keyword=row.get("keyword", ""), title=row["title"], link=row.get("link", ""),
-        source=row.get("source", ""), description=row.get("description", ""),
-        content=safe_truncate(row["content"], 1500),
-    ) for row in rows]
+    # Keep this comparison's existing body limit and omission of publication dates.
+    items = rows_to_items([
+        {**row, "published_at": "", "content": safe_truncate(row["content"], 1500)}
+        for row in rows
+    ])
     predictions = pipeline.classifier.classify_many([item.classification_text() for item in items])
     if len(predictions) != len(items) or any(pred.label == "분류실패" for pred in predictions):
         raise ValueError("모델 실행 실패: 정확도 또는 전후 비교 생성 중단")
@@ -99,12 +98,12 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.output.exists() or args.output.resolve() == args.dataset.resolve():
         parser.error("원본과 기존 결과 보존: 새 JSON 출력 경로 필요")
-    source_hash = hashlib.sha256(args.dataset.read_bytes()).hexdigest()
+    source_hash = dataset_sha256(args.dataset)
     rows = load_cases(args.dataset)
     settings = replace(AppSettings(), event_rule_profile_path="", decision_calibration_path="")
     pipeline = build_pipeline(settings)
     result = compare_cases(rows, pipeline)
-    if hashlib.sha256(args.dataset.read_bytes()).hexdigest() != source_hash:
+    if dataset_sha256(args.dataset) != source_hash:
         parser.error("비교 중 원본 변경: 보고서 생성 중단")
     payload = {
         "schema_version": 1, "profile_type": "rule_context_comparison_report_not_runtime_profile",

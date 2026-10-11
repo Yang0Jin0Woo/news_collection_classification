@@ -8,12 +8,12 @@ from __future__ import annotations
 import argparse
 from collections import Counter, defaultdict
 import csv
-import hashlib
 import json
 import math
 from pathlib import Path
 
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
+from news_classifier.evaluation_dataset import dataset_sha256, read_csv_dataset
 
 
 UNKNOWN = "(unknown)"
@@ -288,16 +288,9 @@ def gold_coverage(rows):
 
 def audit_csv(path: Path, score_threshold: float, margin_threshold: float):
     path = Path(path)
-    with path.open(encoding="utf-8-sig", newline="") as file:
-        reader = csv.DictReader(file)
-        fields = reader.fieldnames or []
-        if not fields or "title" not in fields:
-            raise ValueError(f"CSV must contain a title column: {path}")
-        if len(fields) != len(set(fields)):
-            raise ValueError(f"duplicate CSV column names: {path}")
-        rows = list(reader)
-    if any(None in row or any(value is None for value in row.values()) for row in rows):
-        raise ValueError(f"malformed CSV row: {path}")
+    fields, rows = read_csv_dataset(path)
+    if "title" not in fields:
+        raise ValueError(f"CSV must contain a title column: {path}")
     groups = {}
     for field, output_key in (("keyword", "by_keyword"), ("model_category", "by_predicted_category")):
         grouped = defaultdict(list)
@@ -309,7 +302,7 @@ def audit_csv(path: Path, score_threshold: float, margin_threshold: float):
         }
     return {
         "input": str(path.resolve()),
-        "input_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "input_sha256": dataset_sha256(path),
         "columns": fields,
         "summary": summarize_rows(rows, fields, score_threshold, margin_threshold),
         **groups,

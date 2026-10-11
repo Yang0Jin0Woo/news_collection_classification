@@ -8,7 +8,8 @@ import pytest
 from scripts import compare_rule_context
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
 from news_classifier.classifiers.rule_engine import RuleEngine
-from news_classifier.models import ModelPrediction
+from news_classifier.models import ModelPrediction, NewsItem
+from news_classifier.utils.text import safe_truncate
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 
 
@@ -91,3 +92,26 @@ def test_duplicate_ids_rejected(tmp_path):
     write_dataset(p, rows() * 2)
     with pytest.raises(ValueError):
         compare_rule_context.load_cases(p)
+
+
+def test_context_comparison_keeps_its_existing_body_limit_and_article_inputs():
+    source = rows()
+    source[0].update(keyword="검색어 힌트", description="기사 설명", source="매체",
+                     published_at="2026-10-11", content="본문 문장. " * 400)
+    original = deepcopy(source)
+    calls = []
+    pipeline = fake_pipeline()
+
+    def classify(texts):
+        calls.append(texts)
+        return [ModelPrediction("교육/취업", .9, .2)]
+
+    pipeline.classifier.classify_many = classify
+    compare_rule_context.compare_cases(source, pipeline)
+    expected = NewsItem(
+        keyword=source[0]["keyword"], title=source[0]["title"], link="", source="매체",
+        description="기사 설명", content=safe_truncate(source[0]["content"], 1500),
+    )
+    assert calls == [[expected.classification_text()]]
+    assert "검색어 힌트" not in calls[0][0]
+    assert source == original

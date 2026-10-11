@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 from pathlib import Path
 
 from news_classifier.classifiers.rule_engine import RuleEngine
-from news_classifier.evaluation_dataset import dataset_sha256
+from news_classifier.evaluation_dataset import dataset_sha256, read_csv_dataset
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 from news_classifier.rules.event_candidates import (
     CANDIDATE_PHRASES,
@@ -57,8 +56,10 @@ def main():
     output = Path(args.output)
     if output.exists():
         parser.error("기존 결과 보존: 새 --output 경로 지정 필요")
-    with dataset.open(encoding="utf-8-sig", newline="") as file:
-        rows = list(csv.DictReader(file))
+    try:
+        _, rows = read_csv_dataset(dataset)
+    except ValueError as exc:
+        parser.error(str(exc))
     if not rows:
         parser.error("기사 후보가 없는 데이터")
     selected = args.candidate or [
