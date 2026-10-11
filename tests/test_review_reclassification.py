@@ -408,3 +408,54 @@ def test_resolved_google_source_flows_through_review_retry_and_saved_audit(block
         assert audit["status"] == "RECLASSIFIED"
         assert audit["extraction_diagnostics"]["method"] == "ARTICLE_BLOCKS"
         assert audit["extraction_diagnostics"]["reason"] == "body_found"
+
+
+@pytest.mark.parametrize("full_enrichment", [False, True])
+@pytest.mark.parametrize("body_found", [False, True])
+@pytest.mark.parametrize("minimal_diagnostics", [False, True])
+def test_full_and_review_enrichment_share_diagnostics_without_refetching(
+    full_enrichment, body_found, minimal_diagnostics,
+):
+    class DiagnosticScraper:
+        def __init__(self):
+            self.calls = []
+
+        def enrich_with_diagnostics(self, item):
+            self.calls.append(item)
+            enriched = replace(item, keyword="wrong", title="wrong", link="https://wrong.example/",
+                               content="지역의 생활 소식에 관한 상세 본문 정보 제공." if body_found else "")
+            status, http_status = ("BODY_EXTRACTED", 200) if body_found else ("BLOCKED_HTTP", 403)
+            if minimal_diagnostics:
+                return SimpleNamespace(item=enriched, status=status, http_status=http_status)
+            return ArticleEnrichmentResult(
+                enriched, status, http_status, "https://publisher.example/article",
+                "HTTP_SOURCE_REDIRECT", {"method": "ARTICLE_BLOCKS", "paragraph_count": 1},
+            )
+
+        def enrich_many_with_diagnostics(self, items):
+            return [self.enrich_with_diagnostics(item) for item in items]
+
+    scraper, classifier = DiagnosticScraper(), Classifier()
+    result = make_pipeline(classifier=classifier, scraper=scraper).run(
+        "original query", enrich_content=full_enrichment,
+    )
+    row = result.results[0]
+    audit = json.loads(row.to_row()["review_reclassification"])
+    assert result.status == PipelineStatus.SUCCESS
+    assert len(scraper.calls) == 1
+    assert len(classifier.calls) == (2 if body_found and not full_enrichment else 1)
+    assert row.item.keyword == "original query"
+    assert row.item.title == "지역의 새 소식"
+    assert row.item.link == "https://example.com/article"
+    assert audit["status"] == (
+        "ALREADY_ENRICHED" if full_enrichment else "RECLASSIFIED" if body_found else "BLOCKED_HTTP"
+    )
+    assert audit["enrichment_status"] == ("BODY_EXTRACTED" if body_found else "BLOCKED_HTTP")
+    assert audit["http_status"] == (200 if body_found else 403)
+    assert audit["resolved_url"] == ("" if minimal_diagnostics else "https://publisher.example/article")
+    assert audit["resolution_status"] == ("" if minimal_diagnostics else "HTTP_SOURCE_REDIRECT")
+    assert audit["extraction_diagnostics"] == (
+        {} if minimal_diagnostics else {"method": "ARTICLE_BLOCKS", "paragraph_count": 1}
+    )
+    assert audit["initial_model_score"] == .3
+    assert audit["initial_final_category"] == "검토필요"

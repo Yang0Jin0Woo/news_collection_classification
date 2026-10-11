@@ -1,5 +1,5 @@
 import csv
-from dataclasses import replace
+from dataclasses import asdict, replace
 import json
 from types import SimpleNamespace
 
@@ -14,6 +14,8 @@ from news_classifier.decision_calibration import (
 from news_classifier.evaluation_dataset import rows_to_items
 from news_classifier.models import ModelPrediction
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
+from news_classifier.rules.policy import rule_set_fingerprint
+from news_classifier import decision_calibration
 from scripts import calibrate_decision_policy as script
 
 
@@ -264,6 +266,8 @@ def test_profile_roundtrip_preserves_body_stage_and_rejects_mismatched_cases(tmp
 
 
 @pytest.mark.parametrize("binding,value", [
+    ("expected_model_name", "changed"), ("expected_hypothesis_template", "changed {}"),
+    ("expected_candidate_labels", list(reversed(DEFAULT_RULE_SET.candidate_labels))),
     ("expected_model_revision", "changed"), ("expected_candidate_hypotheses", ["changed"]),
     ("expected_max_sequence_length", 500), ("expected_input_policy", "old-input"),
     ("base_rule_set", replace(DEFAULT_RULE_SET, version="new-rule-version")),
@@ -275,6 +279,39 @@ def test_profile_fails_closed_when_runtime_metadata_changes(tmp_path, binding, v
     assert load(path).ambiguity_margin == 0.02
     with pytest.raises(ValueError, match="does not match runtime"):
         load(path, **{binding: value})
+
+
+@pytest.mark.parametrize("mode", ["without_body", "with_body"])
+def test_profile_creation_and_loading_share_unchanged_binding_schema(tmp_path, monkeypatch, mode):
+    calls = []
+    build_bindings = decision_calibration._decision_profile_bindings
+
+    def record(**kwargs):
+        binding = build_bindings(**kwargs)
+        calls.append(binding)
+        return binding
+
+    monkeypatch.setattr(decision_calibration, "_decision_profile_bindings", record)
+    _, payload = profile(tmp_path, mode)
+    expected = {
+        "model": {"name": "model", "revision": "revision"},
+        "candidate_labels": list(DEFAULT_RULE_SET.candidate_labels),
+        "candidate_hypotheses": list(DEFAULT_RULE_SET.candidate_labels),
+        "hypothesis_template": "template {}",
+        "input_policy": {"name": "article", "include_keyword": False,
+                         "max_sequence_length": 1200, "input_mode": mode},
+        "rule_policy": {"fingerprint_sha256": rule_set_fingerprint(DEFAULT_RULE_SET),
+                        "baseline_decision": asdict(DEFAULT_RULE_SET.decision)},
+    }
+    assert {key: payload[key] for key in expected} == expected
+    assert payload["schema_version"] == 2
+    assert payload["profile_type"] == "final_decision_policy"
+    path = tmp_path / "binding-profile.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    original = path.read_bytes()
+    assert load(path, loader=load_decision_profile).input_mode == mode
+    assert calls == [expected, expected]
+    assert path.read_bytes() == original
 
 
 @pytest.mark.parametrize("mutation", [

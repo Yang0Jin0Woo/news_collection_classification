@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections import Counter
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Literal, TypeVar
 
 from news_classifier.classifiers.base import NewsClassifier
@@ -13,7 +13,7 @@ from news_classifier.collectors.base import (
     NetworkCollectionError,
     NewsCollector,
 )
-from news_classifier.collectors.article_scraper import ArticleScraper
+from news_classifier.collectors.article_scraper import ArticleEnrichmentResult, ArticleScraper
 from news_classifier.dedup.title_deduplicator import TitleSourceDeduplicator
 from news_classifier.models import (
     ClassifiedNews,
@@ -35,6 +35,32 @@ _ChunkItem = TypeVar("_ChunkItem")
 
 def _chunks(items: list[_ChunkItem], size: int) -> list[list[_ChunkItem]]:
     return [items[idx : idx + size] for idx in range(0, len(items), size)]
+
+
+@dataclass(frozen=True)
+class _EnrichmentDetails:
+    status: str = ""
+    http_status: int | None = None
+    resolved_url: str = ""
+    resolution_status: str = ""
+    extraction_diagnostics: dict = field(default_factory=dict)
+
+    @classmethod
+    def from_outcome(cls, outcome: ArticleEnrichmentResult) -> _EnrichmentDetails:
+        return cls(
+            status=outcome.status, http_status=outcome.http_status,
+            resolved_url=getattr(outcome, "resolved_url", ""),
+            resolution_status=getattr(outcome, "resolution_status", ""),
+            extraction_diagnostics=getattr(outcome, "extraction_diagnostics", {}),
+        )
+
+
+@dataclass(frozen=True)
+class _ReviewRetry:
+    index: int
+    item: NewsItem
+    initial: ClassifiedNews
+    enrichment: _EnrichmentDetails
 
 
 def _statistics(
@@ -119,16 +145,13 @@ class NewsPipeline:
 
     def _reclassify_reviews(
         self, results: list[ClassifiedNews], *, already_enriched: bool,
-        enrichment_outcomes: dict[int, tuple[str, int | None, str, str, dict]] | None = None,
+        enrichment_outcomes: dict[int, _EnrichmentDetails] | None = None,
     ) -> PipelineError | None:
         """검색어 분기 없이 검토 기사만 본문 보강. 입력이 달라질 때 최대 1회 재판단."""
-        retry_items = []
+        retry_items: list[_ReviewRetry] = []
 
         def metadata(
-            row: ClassifiedNews, status: str, enrichment_status: str,
-            http_status: int | None,
-            resolved_url: str = "", resolution_status: str = "",
-            extraction_diagnostics: dict | None = None,
+            row: ClassifiedNews, status: str, enrichment: _EnrichmentDetails,
         ) -> ReviewReclassification:
             return ReviewReclassification(
                 status=status,
@@ -137,24 +160,22 @@ class NewsPipeline:
                 initial_score_margin=row.model_prediction.margin,
                 initial_final_category=row.rule_decision.final_label,
                 initial_rule_reason=row.rule_decision.rule_reason,
-                enrichment_status=enrichment_status,
-                http_status=http_status,
-                resolved_url=resolved_url,
-                resolution_status=resolution_status,
-                extraction_diagnostics=extraction_diagnostics or {},
+                enrichment_status=enrichment.status or status,
+                http_status=enrichment.http_status,
+                resolved_url=enrichment.resolved_url,
+                resolution_status=enrichment.resolution_status,
+                extraction_diagnostics=enrichment.extraction_diagnostics or {},
             )
 
         for index, row in enumerate(results):
             if row.rule_decision.final_label != "검토필요":
                 continue
-            enrichment_status, http_status = "", None
-            resolved_url, resolution_status = "", ""
-            extraction_diagnostics = {}
+            enrichment = _EnrichmentDetails()
             if not self.review_enrichment_enabled:
                 status = "DISABLED"
             elif already_enriched:
                 status = "ALREADY_ENRICHED"
-                enrichment_status, http_status, resolved_url, resolution_status, extraction_diagnostics = (enrichment_outcomes or {}).get(index, (status, None, "", "", {}))
+                enrichment = (enrichment_outcomes or {}).get(index, _EnrichmentDetails(status=status))
             elif clean_text(row.item.content):
                 status = "CONTENT_PRESENT"
             elif self.article_scraper is None:
@@ -168,27 +189,26 @@ class NewsPipeline:
                     if callable(enrich):
                         outcome = enrich(row.item)
                         enriched = outcome.item
-                        enrichment_status, http_status = outcome.status, outcome.http_status
-                        resolved_url = getattr(outcome, "resolved_url", "")
-                        resolution_status = getattr(outcome, "resolution_status", "")
-                        extraction_diagnostics = getattr(outcome, "extraction_diagnostics", {})
+                        enrichment = _EnrichmentDetails.from_outcome(outcome)
                     else:
                         enriched = self.article_scraper.enrich(row.item)
-                        enrichment_status = "BODY_EXTRACTED" if clean_text(enriched.content) else "NO_CONTENT"
+                        enrichment = _EnrichmentDetails(
+                            status="BODY_EXTRACTED" if clean_text(enriched.content) else "NO_CONTENT",
+                        )
                     item = replace(row.item, content=enriched.content)
                     max_length = getattr(self.classifier, "max_sequence_length", 1200)
                     if not clean_text(item.content):
-                        status = enrichment_status or "NO_CONTENT"
+                        status = enrichment.status or "NO_CONTENT"
                     elif not has_changed_article_input(row.item, item, max_length):
                         status = "UNCHANGED_INPUT"
                     else:
-                        retry_items.append((index, item, row, enrichment_status, http_status, resolved_url, resolution_status, extraction_diagnostics))
+                        retry_items.append(_ReviewRetry(index, item, row, enrichment))
                         status = "PENDING"
                 except Exception as exc:
                     logger.warning("review content enrichment failed: %s", exc)
                     status = "FETCH_FAILED"
             results[index] = replace(row, review_reclassification=metadata(
-                row, status, enrichment_status or status, http_status, resolved_url, resolution_status, extraction_diagnostics,
+                row, status, enrichment,
             ))
 
         outcomes = Counter(
@@ -221,19 +241,18 @@ class NewsPipeline:
         batch_size = max(1, getattr(self.classifier, "batch_size", 1))
         for batch in _chunks(retry_items, batch_size):
             predictions = self._classify_batch(
-                [item for _, item, _, _, _, _, _, _ in batch], "RECLASSIFICATION",
+                [retry.item for retry in batch], "RECLASSIFICATION",
             )
             if isinstance(predictions, PipelineError):
                 return predictions
-            for (index, item, initial, enrichment_status, http_status, resolved_url, resolution_status, extraction_diagnostics), prediction in zip(batch, predictions, strict=True):
-                revised = self.postprocessor.process(item, prediction)
-                results[index] = replace(
-                    revised, created_at=initial.created_at,
-                    review_reclassification=metadata(initial, "RECLASSIFIED", enrichment_status, http_status,
-                                                     resolved_url, resolution_status, extraction_diagnostics),
+            for retry, prediction in zip(batch, predictions, strict=True):
+                revised = self.postprocessor.process(retry.item, prediction)
+                results[retry.index] = replace(
+                    revised, created_at=retry.initial.created_at,
+                    review_reclassification=metadata(retry.initial, "RECLASSIFIED", retry.enrichment),
                 )
         resolved_count = sum(
-            not results[index].review_required for index, _, _, _, _, _, _, _ in retry_items
+            not results[retry.index].review_required for retry in retry_items
         )
         print(f"재판단 완료: {len(retry_items)}건, 검토 해소: {resolved_count}건")
         return None
@@ -300,7 +319,7 @@ class NewsPipeline:
             )
 
         # 3. 기사 페이지 본문을 추가 수집해 분류 입력 데이터 보강
-        enrichment_outcomes: dict[int, tuple[str, int | None, str, str, dict]] = {}
+        enrichment_outcomes: dict[int, _EnrichmentDetails] = {}
         if enrich_content and self.article_scraper is not None:
             print("기사 본문 보강 중...")
             enrich_many = getattr(self.article_scraper, "enrich_many_with_diagnostics", None)
@@ -311,8 +330,7 @@ class NewsPipeline:
                     for original, outcome in zip(news_list, outcomes, strict=True)
                 ]
                 enrichment_outcomes = {
-                    index: (outcome.status, outcome.http_status, getattr(outcome, "resolved_url", ""),
-                            getattr(outcome, "resolution_status", ""), getattr(outcome, "extraction_diagnostics", {}))
+                    index: _EnrichmentDetails.from_outcome(outcome)
                     for index, outcome in enumerate(outcomes)
                 }
             else:

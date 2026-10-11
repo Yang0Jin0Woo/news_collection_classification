@@ -296,6 +296,24 @@ def calibrate_decision_policy(
     )
 
 
+def _decision_profile_bindings(
+    *, model_name: str, model_revision: str, candidate_labels: list[str],
+    candidate_hypotheses: list[str], hypothesis_template: str, input_policy: str,
+    max_sequence_length: int, base_rule_set: RuleSet, input_mode: str,
+) -> dict:
+    """Build the same runtime bindings for profile creation and loading."""
+    return {
+        "model": {"name": model_name, "revision": model_revision},
+        "candidate_labels": candidate_labels,
+        "candidate_hypotheses": candidate_hypotheses,
+        "hypothesis_template": hypothesis_template,
+        "input_policy": {"name": input_policy, "include_keyword": False,
+                         "max_sequence_length": max_sequence_length, "input_mode": input_mode},
+        "rule_policy": {"fingerprint_sha256": rule_set_fingerprint(base_rule_set),
+                        "baseline_decision": asdict(base_rule_set.decision)},
+    }
+
+
 def create_decision_profile(
     result: DecisionCalibrationResult, evaluation: DecisionPolicyEvaluation, *,
     dataset_path: Path, model_name: str, model_revision: str,
@@ -336,14 +354,13 @@ def create_decision_profile(
         }
     payload = {
         "schema_version": 2, "profile_type": "final_decision_policy",
-        "model": {"name": model_name, "revision": model_revision},
-        "candidate_labels": list(base_rule_set.candidate_labels),
-        "candidate_hypotheses": candidate_hypotheses,
-        "hypothesis_template": hypothesis_template,
-        "input_policy": {"name": input_policy, "include_keyword": False,
-                         "max_sequence_length": max_sequence_length, "input_mode": input_mode},
-        "rule_policy": {"fingerprint_sha256": rule_set_fingerprint(base_rule_set),
-                        "baseline_decision": asdict(base_rule_set.decision)},
+        **_decision_profile_bindings(
+            model_name=model_name, model_revision=model_revision,
+            candidate_labels=list(base_rule_set.candidate_labels),
+            candidate_hypotheses=candidate_hypotheses, hypothesis_template=hypothesis_template,
+            input_policy=input_policy, max_sequence_length=max_sequence_length,
+            base_rule_set=base_rule_set, input_mode=input_mode,
+        ),
         "thresholds": {"review_model_score": result.policy.review_model_score,
                        "ambiguity_score": result.policy.ambiguity_score,
                        "ambiguity_margin": result.policy.ambiguity_margin},
@@ -483,16 +500,14 @@ def load_decision_profile(
     input_mode = input_metadata.get("input_mode") if isinstance(input_metadata, dict) else None
     if not isinstance(input_mode, str) or input_mode not in INPUT_MODES:
         raise ValueError("decision calibration has an invalid body input mode")
-    bindings = {
-        "model": {"name": expected_model_name, "revision": expected_model_revision},
-        "candidate_labels": expected_candidate_labels,
-        "candidate_hypotheses": expected_candidate_hypotheses,
-        "hypothesis_template": expected_hypothesis_template,
-        "input_policy": {"name": expected_input_policy, "include_keyword": False,
-                         "max_sequence_length": expected_max_sequence_length, "input_mode": input_mode},
-        "rule_policy": {"fingerprint_sha256": rule_set_fingerprint(base_rule_set),
-                        "baseline_decision": asdict(base_rule_set.decision)},
-    }
+    bindings = _decision_profile_bindings(
+        model_name=expected_model_name, model_revision=expected_model_revision,
+        candidate_labels=expected_candidate_labels,
+        candidate_hypotheses=expected_candidate_hypotheses,
+        hypothesis_template=expected_hypothesis_template, input_policy=expected_input_policy,
+        max_sequence_length=expected_max_sequence_length, base_rule_set=base_rule_set,
+        input_mode=input_mode,
+    )
     for key, expected in bindings.items():
         if payload.get(key) != expected:
             raise ValueError(f"decision calibration {key} does not match runtime; recalibrate")
