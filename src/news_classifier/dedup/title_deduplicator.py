@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
 import re
@@ -49,12 +49,10 @@ def _published_time(value: str) -> datetime | None:
         return None
 
 
-def _compatible_words(left: tuple[str, ...], right: tuple[str, ...]) -> bool:
+def _compatible_words(left_set: frozenset[str], right_set: frozenset[str]) -> bool:
     """새 기관명, 지역, 사건 단어의 차이를 단순 유사도로 무시하지 않음."""
-    left_set = set(left) - _FILLER_WORDS
-    right_set = set(right) - _FILLER_WORDS
 
-    def equivalent(word: str, others: set[str]) -> bool:
+    def equivalent(word: str, others: frozenset[str]) -> bool:
         return any(
             word == other
             or (len(other) >= 3 and word.startswith(other) and word[len(other):] in _PARTICLES)
@@ -81,63 +79,106 @@ def _independent_description(item: NewsItem, title_tokens: tuple[str, ...]) -> s
     return description
 
 
+@dataclass(frozen=True)
+class _ComparisonInfo:
+    title: str
+    title_key: str
+    source_key: str
+    published_time: datetime | None
+    title_text: str
+    title_words: frozenset[str]
+    title_word_count: int
+    title_numbers: frozenset[str]
+    conflict_cues: frozenset[str]
+    description: str
+    description_words: frozenset[str]
+    description_numbers: frozenset[str]
+
+
+def _prepare_comparison(item: NewsItem) -> _ComparisonInfo:
+    title = strip_source_suffix(item.title, item.source)
+    words = _tokens(title)
+    word_set = frozenset(words)
+    description = _independent_description(item, words)
+    return _ComparisonInfo(
+        title=title,
+        title_key=normalize_key(title),
+        source_key=normalize_key(item.source),
+        published_time=_published_time(item.published_at),
+        title_text=" ".join(words),
+        title_words=word_set - _FILLER_WORDS,
+        title_word_count=len(word_set),
+        title_numbers=frozenset(_NUMBERS.findall(title)),
+        conflict_cues=frozenset(
+            cue for cue in _CONFLICT_CUES if cue in f"{title} {item.description}"
+        ),
+        description=description,
+        description_words=frozenset(_tokens(description)) - _FILLER_WORDS,
+        description_numbers=frozenset(_NUMBERS.findall(description)),
+    )
+
+
+@dataclass(frozen=True)
+class _PreparedArticle:
+    item: NewsItem
+    originals: tuple[_ComparisonInfo, ...]
+
+
+def _prepare_article(item: NewsItem) -> _PreparedArticle:
+    originals = (_prepare_comparison(item),) + tuple(
+        _prepare_comparison(NewsItem(
+            keyword=item.keyword, title=ref.title, source=ref.source,
+            published_at=ref.published_at, link=ref.link,
+        ))
+        for ref in item.related_articles
+    )
+    return _PreparedArticle(item, originals)
+
+
 class TitleSourceDeduplicator:
     """완전 중복 및 보수적인 동일 사건 묶기. 첫 수집 기사 대표, 원문 정보 보존."""
 
-    def _same_event(self, left: NewsItem, right: NewsItem) -> bool:
-        def originals(item):
-            return [item] + [
-                NewsItem(keyword=item.keyword, title=ref.title, source=ref.source,
-                         published_at=ref.published_at, link=ref.link)
-                for ref in item.related_articles
-            ]
+    def _same_event(self, left: _PreparedArticle, right: _PreparedArticle) -> bool:
         return all(
             self._same_event_pair(a, b)
-            for a in originals(left) for b in originals(right)
+            for a in left.originals for b in right.originals
         )
 
-    def _same_event_pair(self, left: NewsItem, right: NewsItem) -> bool:
-        left_title = strip_source_suffix(left.title, left.source)
-        right_title = strip_source_suffix(right.title, right.source)
-        if not left_title or not right_title:
+    def _same_event_pair(self, left: _ComparisonInfo, right: _ComparisonInfo) -> bool:
+        if not left.title or not right.title:
             return False
-        left_date = _published_time(left.published_at)
-        right_date = _published_time(right.published_at)
+        left_date, right_date = left.published_time, right.published_time
         if left_date is not None and right_date is not None:
             if abs((left_date - right_date).total_seconds()) > 48 * 3600:
                 return False
         exact_duplicate = (
-            normalize_key(left_title) == normalize_key(right_title)
-            and normalize_key(left.source) == normalize_key(right.source)
+            left.title_key == right.title_key
+            and left.source_key == right.source_key
         )
         if not exact_duplicate and (left_date is None or right_date is None):
             return False
 
-        left_words, right_words = _tokens(left_title), _tokens(right_title)
-        left_cues = {cue for cue in _CONFLICT_CUES if cue in f"{left_title} {left.description}"}
-        right_cues = {cue for cue in _CONFLICT_CUES if cue in f"{right_title} {right.description}"}
-        if left_cues != right_cues:
+        if left.conflict_cues != right.conflict_cues:
             return False
-        left_description = _independent_description(left, left_words)
-        right_description = _independent_description(right, right_words)
+        left_description, right_description = left.description, right.description
         if left_description and right_description:
-            if not _compatible_words(_tokens(left_description), _tokens(right_description)):
+            if not _compatible_words(left.description_words, right.description_words):
                 return False
-            if set(_NUMBERS.findall(left_description)) != set(_NUMBERS.findall(right_description)):
+            if left.description_numbers != right.description_numbers:
                 return False
             if _similarity(left_description, right_description) < 0.85:
                 return False
         if exact_duplicate:
             return True  # 제목·언론사가 같아도 날짜 또는 설명이 충돌하면 위에서 유지 처리
 
-        left_text, right_text = " ".join(left_words), " ".join(right_words)
+        left_text, right_text = left.title_text, right.title_text
         if min(len(left_text), len(right_text)) < 20:
             return False
-        if min(len(set(left_words)), len(set(right_words))) < 4:
+        if min(left.title_word_count, right.title_word_count) < 4:
             return False
-        if set(_NUMBERS.findall(left_title)) != set(_NUMBERS.findall(right_title)):
+        if left.title_numbers != right.title_numbers:
             return False
-        if not _compatible_words(left_words, right_words):
+        if not _compatible_words(left.title_words, right.title_words):
             return False
         title_similarity = _similarity(left_text, right_text)
         if title_similarity < 0.88:
@@ -149,21 +190,24 @@ class TitleSourceDeduplicator:
         return title_similarity >= 0.95
 
     def deduplicate(self, items: list[NewsItem]) -> list[NewsItem]:
-        groups: list[list[NewsItem]] = []
+        # Comparison data lives only for this call; source articles remain unchanged.
+        groups: list[list[_PreparedArticle]] = []
         for item in items:
+            prepared = _prepare_article(item)
             for group in groups:
                 # 대표와만 비교하지 않고 모든 구성원과 비교하여 연쇄 오묶음 방지.
-                if all(self._same_event(member, item) for member in group):
-                    group.append(item)
+                if all(self._same_event(member, prepared) for member in group):
+                    group.append(prepared)
                     break
             else:
-                groups.append([item])
+                groups.append([prepared])
 
         representatives = []
         for group in groups:
-            first = group[0]
+            first = group[0].item
             references = list(first.related_articles)
-            for member in group[1:]:
+            for prepared in group[1:]:
+                member = prepared.item
                 references.append(NewsReference(
                     title=member.title, source=member.source,
                     published_at=member.published_at, link=member.link,

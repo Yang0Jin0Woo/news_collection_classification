@@ -2,6 +2,7 @@ from dataclasses import replace
 
 import pytest
 
+import news_classifier.dedup.title_deduplicator as dedup_module
 from news_classifier.dedup.title_deduplicator import TitleSourceDeduplicator
 from news_classifier.models import NewsItem
 
@@ -157,3 +158,43 @@ def test_same_title_and_source_with_conflicting_descriptions_are_kept():
         article(description="학생들이 센서와 생명공학 실습 수업을 함께 수강하는 교육과정은 취소됐다"),
     ])
     assert len(result) == 2
+
+
+def test_comparison_info_is_prepared_once_per_original_article(monkeypatch):
+    items = [article(source=f"source-{index}") for index in range(8)]
+    original_items = tuple(items)
+    calls = {"prepare": 0, "date": 0, "description": 0}
+
+    def record(name, function):
+        def wrapped(*args, **kwargs):
+            calls[name] += 1
+            return function(*args, **kwargs)
+        return wrapped
+
+    monkeypatch.setattr(dedup_module, "_prepare_comparison", record("prepare", dedup_module._prepare_comparison))
+    monkeypatch.setattr(dedup_module, "_published_time", record("date", dedup_module._published_time))
+    monkeypatch.setattr(dedup_module, "_independent_description", record("description", dedup_module._independent_description))
+    dedup = TitleSourceDeduplicator()
+    result = dedup.deduplicate(items)
+    assert len(result) == 1 and result[0].group_article_count == len(items)
+    assert calls == {"prepare": 8, "date": 8, "description": 8}
+    assert tuple(items) == original_items
+    assert dedup.deduplicate(result) == result
+    # A pre-grouped input still prepares each preserved original, not only its representative.
+    assert calls == {"prepare": 16, "date": 16, "description": 16}
+
+
+def test_comparison_info_does_not_leak_between_collection_calls():
+    dedup = TitleSourceDeduplicator()
+    left, right = article(), article(source="B")
+    assert len(dedup.deduplicate([left, right])) == 1
+    assert len(dedup.deduplicate([left, replace(right, published_at="invalid")])) == 2
+    assert len(dedup.deduplicate([left, replace(right, description="교육과정 취소")])) == 2
+    assert len(dedup.deduplicate([left, right])) == 1
+
+
+def test_empty_input_and_empty_titles_remain_unchanged():
+    dedup = TitleSourceDeduplicator()
+    assert dedup.deduplicate([]) == []
+    items = [article(title=""), article(title="", source="B")]
+    assert dedup.deduplicate(items) == items

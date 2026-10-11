@@ -109,29 +109,35 @@ def _phrase_pattern(normalized_phrase: str) -> re.Pattern[str]:
     return re.compile("".join(parts))
 
 
-def _phrase_spans(text: str, phrase: str) -> tuple[tuple[int, int], ...]:
-    normalized_phrase = normalize_rule_text(phrase)
-    if not normalized_phrase:
-        return ()
+@dataclass(frozen=True)
+class _PreparedPhrase:
+    normalized: str
+    pattern: re.Pattern[str]
+    ascii_boundaries: bool
 
-    spans: list[tuple[int, int]] = []
-    ascii_boundaries = _uses_ascii_boundaries(normalized_phrase)
-    for match in _phrase_pattern(normalized_phrase).finditer(text):
-        start, end = match.span()
-        if not _start_is_allowed(
-            text,
-            start,
-            ascii_boundaries=ascii_boundaries,
-        ):
-            continue
-        if not _suffix_is_allowed(
-            text,
-            end,
-            ascii_boundaries=ascii_boundaries,
-        ):
-            continue
-        spans.append((start, end))
-    return tuple(spans)
+    def spans(self, text: str) -> tuple[tuple[int, int], ...]:
+        if not self.normalized:
+            return ()
+        spans: list[tuple[int, int]] = []
+        for match in self.pattern.finditer(text):
+            start, end = match.span()
+            if not _start_is_allowed(text, start, ascii_boundaries=self.ascii_boundaries):
+                continue
+            if not _suffix_is_allowed(text, end, ascii_boundaries=self.ascii_boundaries):
+                continue
+            spans.append((start, end))
+        return tuple(spans)
+
+
+def _prepare_phrase(phrase: str) -> _PreparedPhrase:
+    normalized = normalize_rule_text(phrase)
+    return _PreparedPhrase(
+        normalized, _phrase_pattern(normalized), _uses_ascii_boundaries(normalized),
+    )
+
+
+def _phrase_spans(text: str, phrase: str) -> tuple[tuple[int, int], ...]:
+    return _prepare_phrase(phrase).spans(text)
 
 
 def _has_phrase(text: str, phrase: str) -> bool:
@@ -143,10 +149,11 @@ def _overlaps(span: tuple[int, int], occupied: list[tuple[int, int]]) -> bool:
     return any(start < occupied_end and end > occupied_start for occupied_start, occupied_end in occupied)
 
 
-def _term_sort_key(term: RuleTerm) -> tuple[int, int, str]:
-    normalized = normalize_rule_text(term.phrase)
-    semantic_length = sum(character.isalnum() for character in normalized)
-    return (-semantic_length, -int(term.strength), normalized)
+@dataclass(frozen=True)
+class _PreparedTerm:
+    label: str
+    term: RuleTerm
+    phrase: _PreparedPhrase
 
 
 class RuleEngine:
@@ -157,9 +164,36 @@ class RuleEngine:
         self.rule_set = rule_set
         # Evaluation-only prototype. Default CLI/service and saved profiles remain unchanged.
         self.experimental_event_anchors = experimental_event_anchors
+        self._direct_labels = rule_set.direct_rule_labels
+        self._tie_priority = {item.label: item.tie_priority for item in self._direct_labels}
+        self._candidate_order = {
+            label: index for index, label in enumerate(rule_set.candidate_labels)
+        }
+        self._label_policies = {item.label: item for item in rule_set.labels}
+        # RuleSet is immutable: prepare matching and longest-first order once per engine.
+        self._prepared_terms = tuple(sorted(
+            (
+                _PreparedTerm(policy.label, term, _prepare_phrase(term.phrase))
+                for policy in self._direct_labels
+                for term in policy.terms
+                if not term.context_only
+            ),
+            key=lambda item: (
+                -sum(character.isalnum() for character in item.phrase.normalized),
+                -int(item.term.strength),
+                self._tie_priority[item.label],
+                item.phrase.normalized,
+                item.label,
+            ),
+        ))
+        self._domain_phrases = tuple(_prepare_phrase(term) for term in rule_set.domain_terms)
+        self._unrelated_phrases = tuple(
+            tuple(_prepare_phrase(term) for term in group)
+            for group in rule_set.unrelated_signal_groups
+        )
         self._development_phrases = {
             policy.label: {
-                normalize_rule_text(term.phrase)
+                term.phrase
                 for term in policy.terms
                 if term.origin == "development"
             }
@@ -192,7 +226,7 @@ class RuleEngine:
         if len(strong_labels) < 2:
             return ()
         development_contributed = any(
-            normalize_rule_text(phrase) in self._development_phrases[score.label]
+            phrase in self._development_phrases[score.label]
             for score in ranking.ranked
             for phrase in score.matched_terms
         )
@@ -206,53 +240,30 @@ class RuleEngine:
         )
 
     def _score_labels(self, text: str) -> tuple[LabelRuleScore, ...]:
-        priority = {
-            item.label: item.tie_priority
-            for item in self.rule_set.direct_rule_labels
-        }
         occupied: list[tuple[int, int]] = []
         matched_terms: dict[str, list[str]] = {
-            item.label: [] for item in self.rule_set.direct_rule_labels
+            item.label: [] for item in self._direct_labels
         }
         weighted_scores = {
-            item.label: 0 for item in self.rule_set.direct_rule_labels
+            item.label: 0 for item in self._direct_labels
         }
         strong_match_counts = {
-            item.label: 0 for item in self.rule_set.direct_rule_labels
+            item.label: 0 for item in self._direct_labels
         }
-        terms = [
-            (label_policy, term)
-            for label_policy in self.rule_set.direct_rule_labels
-            for term in label_policy.terms
-            if not term.context_only
-        ]
 
-        def labeled_term_sort_key(item):
-            label_policy, term = item
-            length, strength, normalized = _term_sort_key(term)
-            return (
-                length,
-                strength,
-                priority[label_policy.label],
-                normalized,
-                label_policy.label,
-            )
-
-        terms.sort(key=labeled_term_sort_key)
-
-        for label_policy, term in terms:
+        for prepared in self._prepared_terms:
             available_spans = [
                 span
-                for span in _phrase_spans(text, term.phrase)
+                for span in prepared.phrase.spans(text)
                 if not _overlaps(span, occupied)
             ]
             if not available_spans:
                 continue
             occupied.extend(available_spans)
-            matched_terms[label_policy.label].append(term.phrase)
-            weighted_scores[label_policy.label] += int(term.strength)
-            if int(term.strength) > 1:
-                strong_match_counts[label_policy.label] += 1
+            matched_terms[prepared.label].append(prepared.term.phrase)
+            weighted_scores[prepared.label] += int(prepared.term.strength)
+            if int(prepared.term.strength) > 1:
+                strong_match_counts[prepared.label] += 1
 
         return tuple(
             LabelRuleScore(
@@ -262,7 +273,7 @@ class RuleEngine:
                 strong_match_count=strong_match_counts[item.label],
                 matched_terms=tuple(matched_terms[item.label]),
             )
-            for item in self.rule_set.direct_rule_labels
+            for item in self._direct_labels
         )
 
     def rank_rules(
@@ -272,16 +283,15 @@ class RuleEngine:
         content: str = "",
     ) -> RuleRanking:
         text = normalize_rule_text(f"{title} {description} {content}")
-        priority = {
-            item.label: item.tie_priority
-            for item in self.rule_set.direct_rule_labels
-        }
+        return self._rank_normalized_text(text)
+
+    def _rank_normalized_text(self, text: str) -> RuleRanking:
         scores = self._score_labels(text)
         ranked = tuple(sorted(
             scores,
             key=lambda item: (
                 -item.weighted_score,
-                priority[item.label],
+                self._tie_priority[item.label],
                 item.label,
             ),
         ))
@@ -309,25 +319,19 @@ class RuleEngine:
             item.label: item.weighted_score
             for item in sorted(
                 ranking.ranked,
-                key=lambda score: self.rule_set.candidate_labels.index(score.label),
+                key=lambda score: self._candidate_order[score.label],
             )
         }
 
-    def _unrelated_signal_count(
-        self,
-        title: str,
-        description: str,
-        content: str,
-    ) -> int:
-        text = normalize_rule_text(f"{title} {description} {content}")
+    def _unrelated_signal_count(self, text: str) -> int:
         has_domain_context = any(
-            _has_phrase(text, term) for term in self.rule_set.domain_terms
+            phrase.spans(text) for phrase in self._domain_phrases
         )
         if has_domain_context:
             return 0
         return sum(
-            any(_has_phrase(text, term) for term in group)
-            for group in self.rule_set.unrelated_signal_groups
+            any(phrase.spans(text) for phrase in group)
+            for group in self._unrelated_phrases
         )
 
     def rule_only_decision(
@@ -336,15 +340,12 @@ class RuleEngine:
         description: str = "",
         content: str = "",
     ) -> str:
-        unrelated_count = self._unrelated_signal_count(
-            title,
-            description,
-            content,
-        )
+        text = normalize_rule_text(f"{title} {description} {content}")
+        unrelated_count = self._unrelated_signal_count(text)
         if unrelated_count >= 2:
             return self.rule_set.other_label
 
-        ranking = self.rank_rules(title, description, content)
+        ranking = self._rank_normalized_text(text)
         if self._development_conflict_labels(ranking):
             return "검토필요"
         decision = self.rule_set.decision
@@ -406,11 +407,8 @@ class RuleEngine:
         content: str,
         prediction: ModelPrediction,
     ) -> RuleDecision:
-        unrelated_count = self._unrelated_signal_count(
-            title,
-            description,
-            content,
-        )
+        text = normalize_rule_text(f"{title} {description} {content}")
+        unrelated_count = self._unrelated_signal_count(text)
         if unrelated_count >= 2:
             return RuleDecision(
                 final_label=self.rule_set.other_label,
@@ -423,10 +421,10 @@ class RuleEngine:
                 rule_match_count=unrelated_count,
             )
 
-        ranking = self.rank_rules(title, description, content)
+        ranking = self._rank_normalized_text(text)
         conflict_labels = self._development_conflict_labels(ranking)
         decision = self.rule_set.decision
-        first_policy = self.rule_set.label_policy(ranking.first.label)
+        first_policy = self._label_policies[ranking.first.label]
         model_confident = (
             prediction.score >= decision.model_keep_score
             and prediction.margin >= decision.model_keep_margin

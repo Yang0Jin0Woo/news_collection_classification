@@ -2,6 +2,7 @@ from dataclasses import replace
 
 import pytest
 
+import news_classifier.classifiers.rule_engine as rule_engine_module
 from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.models import ModelPrediction
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET as RULES
@@ -533,3 +534,54 @@ def test_rule_at_minimum_score_and_margin_still_applies():
     assert decision.final_label == "제품/서비스"
     assert decision.rule_applied is True
     assert decision.rule_reason.startswith("규칙 보정:")
+
+
+def test_rule_preparation_is_reused_and_article_text_is_normalized_once(monkeypatch):
+    engine = RuleEngine(small_rule_set(product_strength=RuleStrength.STRONG))
+    normalized_inputs = []
+    normalize = rule_engine_module.normalize_rule_text
+
+    def record_normalization(text):
+        normalized_inputs.append(text)
+        return normalize(text)
+
+    def unexpected_preparation(*args, **kwargs):
+        pytest.fail("rule preparation must not repeat during article scoring")
+
+    monkeypatch.setattr(rule_engine_module, "normalize_rule_text", record_normalization)
+    monkeypatch.setattr(rule_engine_module, "_prepare_phrase", unexpected_preparation)
+    monkeypatch.setattr(rule_engine_module, "_phrase_pattern", unexpected_preparation)
+    for _ in range(3):
+        assert engine.rank_rules("alpha beta").first.label == "제품/서비스"
+        assert engine.calculate_scores("alpha beta") == {"기술개발": 1, "제품/서비스": 2}
+        assert engine.rule_only_decision("alpha beta") == "제품/서비스"
+        decision = engine.decide("alpha beta", "", "", ModelPrediction("기술개발", 0.3, 0.01))
+        assert decision.final_label == "제품/서비스"
+        assert engine.rule_only_decision("야구 경기 결과") == "기타/무관"
+    assert normalized_inputs == (["alpha beta  "] * 4 + ["야구 경기 결과  "]) * 3
+
+
+def test_prepared_rules_remain_isolated_between_engine_instances():
+    weak = RuleEngine(small_rule_set())
+    strong = RuleEngine(small_rule_set(product_strength=RuleStrength.STRONG, reverse_label_order=True))
+    for _ in range(3):
+        assert weak.rule_only_decision("alpha beta") == "검토필요"
+        assert strong.rule_only_decision("alpha beta") == "제품/서비스"
+        assert list(weak.calculate_scores("alpha beta")) == ["기술개발", "제품/서비스"]
+        assert list(strong.calculate_scores("alpha beta")) == ["제품/서비스", "기술개발"]
+        assert weak.rank_rules("unmatched").first.weighted_score == 0
+
+
+def test_prepared_development_terms_keep_original_phrase_and_conflict_reason():
+    rules = small_rule_set(product_strength=RuleStrength.STRONG)
+    labels = list(rules.labels)
+    labels[0] = replace(labels[0], terms=(RuleTerm("alpha", RuleStrength.STRONG),))
+    labels[1] = replace(labels[1], terms=(RuleTerm(
+        " Ｂｅｔａ ", RuleStrength.STRONG, origin="development",
+        evidence_event_ids=("event-1", "event-2"),
+    ),))
+    engine = RuleEngine(replace(rules, labels=tuple(labels)))
+    assert engine.rank_rules("alpha beta").first.matched_terms == (" Ｂｅｔａ ",)
+    decision = engine.decide("alpha beta", "", "", ModelPrediction("기술개발", 0.3, 0.01))
+    assert decision.final_label == "검토필요"
+    assert decision.rule_reason.startswith("주제 근거 충돌:")
