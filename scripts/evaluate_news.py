@@ -17,9 +17,10 @@ from news_classifier.evaluation import (
 from news_classifier.evaluation_dataset import (
     dataset_sha256,
     evaluation_input,
+    has_body_content,
     legacy_evaluation_input,
     load_reviewed_cases,
-    rows_to_items,
+    prepare_evaluation_items,
     rows_with_article_context,
     validate_unseen_keywords,
 )
@@ -43,7 +44,7 @@ from news_classifier.rules.policy import (
 from news_classifier.rules.review_validation import audit_rule_holdout, evaluate_review_reduction
 from news_classifier.rules.event_profile import create_event_rule_profile, read_rule_proposals, runtime_bindings
 from news_classifier.service import build_pipeline
-from news_classifier.utils.text import article_description, clean_text
+from news_classifier.utils.text import article_description
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -106,8 +107,6 @@ def main() -> None:
         validate_unseen_keywords(
             load_reviewed_cases(dataset_path, "development", CANDIDATE_LABELS), rows,
         )
-    items = rows_to_items(rows)
-
     settings = AppSettings()
     if args.rules_file:
         settings = replace(settings, event_rule_profile_path="", decision_calibration_path="")
@@ -115,10 +114,13 @@ def main() -> None:
         settings = replace(settings, decision_calibration_path=args.decision_profile)
     pipeline = build_pipeline(settings)
     profile_input_mode = getattr(pipeline.postprocessor, "decision_input_mode", None)
-    if profile_input_mode == "without_body":
-        items = [replace(item, content="") for item in items]
-    elif profile_input_mode == "with_body" and any(not clean_text(item.content) for item in items):
-        parser.error("본문 보강 판정 프로필의 평가에는 모든 기사의 본문 필요")
+    try:
+        items = prepare_evaluation_items(
+            rows, profile_input_mode,
+            missing_body_message="본문 보강 판정 프로필의 평가에는 모든 기사의 본문 필요",
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     rule_engine = pipeline.postprocessor.rule_engine
     if args.rules_file:
         proposed = read_rule_proposals(args.rules_file, rule_engine.rule_set)
@@ -148,11 +150,13 @@ def main() -> None:
         )
         if args.split == "evaluation":
             validate_unseen_keywords(development_rows, rows)
-        development_items = rows_to_items(development_rows)
-        if profile_input_mode == "without_body":
-            development_items = [replace(item, content="") for item in development_items]
-        elif profile_input_mode == "with_body" and any(not clean_text(item.content) for item in development_items):
-            parser.error("본문 보강 판정 프로필의 개발 근거에도 모든 기사의 본문 필요")
+        try:
+            development_items = prepare_evaluation_items(
+                development_rows, profile_input_mode,
+                missing_body_message="본문 보강 판정 프로필의 개발 근거에도 모든 기사의 본문 필요",
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
         development_evidence_rows = rows_with_article_context(development_rows, development_items)
         validate_development_rule_evidence(
             runtime_rule_set,
@@ -328,7 +332,7 @@ def main() -> None:
                 "model_score": prediction.score,
                 "model_margin": prediction.margin,
                 "keyword": row["keyword"],
-                "has_body": bool(item.content.strip()),
+                "has_body": has_body_content(item.content),
                 "legacy_model_label": legacy_predictions[idx].label if legacy_predictions else None,
                 "legacy_hybrid_label": legacy_results[idx].rule_decision.final_label if legacy_results else None,
                 "rule_label": predicted_by_method["규칙 단독"][idx],

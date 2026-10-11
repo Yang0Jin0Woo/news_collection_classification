@@ -109,6 +109,22 @@ def run_evaluation(monkeypatch, dataset, output):
     evaluate_news.main()
 
 
+@pytest.mark.parametrize("split", ["development", "evaluation"])
+def test_with_body_profile_rejects_html_blank_body_before_inference(tmp_path, monkeypatch, split):
+    rows = [{**row, "content": "실제 기사 본문"} for row in synthetic_rows()]
+    next(row for row in rows if row["split"] == split)["content"] = "&nbsp; &#160;"
+    dataset, output = tmp_path / "fixture.csv", tmp_path / "report"
+    write_fixture(dataset, rows)
+    original = dataset.read_bytes()
+    _, inference_calls = install_fake_pipeline(monkeypatch, rows, input_mode="with_body")
+    with pytest.raises(SystemExit) as exc:
+        run_evaluation(monkeypatch, dataset, output)
+    assert exc.value.code == 2
+    assert inference_calls == []
+    assert dataset.read_bytes() == original
+    assert not output.exists()
+
+
 def test_event_rule_evaluation_accepts_model_correct_but_previous_hybrid_review(tmp_path, monkeypatch):
     rows = synthetic_rows()
     dataset, output = tmp_path / "fixture.csv", tmp_path / "report"

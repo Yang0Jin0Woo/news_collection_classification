@@ -14,7 +14,7 @@ from pathlib import Path
 
 from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.confidence_calibration import wilson_lower_bound
-from news_classifier.evaluation_dataset import dataset_sha256, validate_unseen_keywords
+from news_classifier.evaluation_dataset import dataset_sha256, has_body_content, validate_unseen_keywords
 from news_classifier.models import ModelPrediction, NewsItem
 from news_classifier.rules.policy import (
     RuleDecisionPolicy, RuleSet, rule_set_fingerprint, validate_rule_set,
@@ -90,7 +90,7 @@ def _validate_samples(items, predictions, gold_labels, rule_set, event_ids, inpu
     if not isinstance(input_mode, str) or input_mode not in INPUT_MODES:
         raise ValueError("invalid decision calibration input mode")
     if (input_mode == "without_body" and any(item.content.strip() for item in items)
-            or input_mode == "with_body" and any(not item.content.strip() for item in items)):
+            or input_mode == "with_body" and any(not has_body_content(item.content) for item in items)):
         raise ValueError("decision calibration items do not match the declared body input mode")
     keywords = {normalize_key(item.keyword) for item in items}
     if "" in keywords or len(keywords) < 2:
@@ -323,7 +323,7 @@ def create_decision_profile(
                    or row.get("review_status", "").strip() != "confirmed"
                    or not row.get("reviewed_by", "").strip()
                    or not row.get("event_id", "").strip()
-                   or input_mode == "with_body" and not row.get("content", "").strip()
+                   or input_mode == "with_body" and not has_body_content(row.get("content", ""))
                    or row.get("suggested_label", "").strip() for row in rows)
         ):
             raise ValueError("decision profile requires manually confirmed split data")

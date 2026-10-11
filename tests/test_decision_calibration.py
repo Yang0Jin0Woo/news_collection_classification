@@ -364,3 +364,46 @@ def test_script_rejects_unconfirmed_or_unidentified_events_before_model_loading(
                         + (["--input-mode", "with_body"] if invalid == "missing_body" else []))
     with pytest.raises(SystemExit):
         script.main()
+
+
+@pytest.mark.parametrize("operation", ["calibrate", "evaluate"])
+@pytest.mark.parametrize("input_mode,content", [
+    ("with_body", ""), ("with_body", " \t\n"),
+    ("with_body", "&nbsp;"), ("with_body", "&#160;"),
+    ("without_body", "&nbsp;"),
+])
+def test_direct_calibration_apis_enforce_body_mode(operation, input_mode, content):
+    rows, items, predictions, labels = samples()
+    if input_mode == "with_body":
+        items = [replace(item, content="실제 본문") for item in items]
+    items[0] = replace(items[0], content=content)
+    with pytest.raises(ValueError, match="body input mode"):
+        if operation == "calibrate":
+            calibrate(rows, items, predictions, labels, input_mode=input_mode)
+        else:
+            evaluate_decision_policy(
+                items, predictions, labels, DEFAULT_RULE_SET, DEFAULT_RULE_SET.decision,
+                event_ids=[row["event_id"] for row in rows], input_mode=input_mode,
+            )
+
+
+@pytest.mark.parametrize("split", ["development", "evaluation"])
+def test_calibration_cli_rejects_html_blank_body_before_model_loading(tmp_path, monkeypatch, split):
+    dataset, _ = profile(tmp_path, "with_body")
+    with dataset.open(encoding="utf-8-sig", newline="") as file:
+        rows = list(csv.DictReader(file))
+    next(row for row in rows if row["split"] == split)["content"] = "&nbsp; &#160;"
+    with dataset.open("w", encoding="utf-8-sig", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+    original = dataset.read_bytes()
+    output = tmp_path / "no.json"
+    monkeypatch.setattr(script, "build_pipeline", lambda _: pytest.fail("model must not load"))
+    monkeypatch.setattr("sys.argv", ["calibrate", "--dataset", str(dataset),
+                                    "--output", str(output), "--input-mode", "with_body"])
+    with pytest.raises(SystemExit) as exc:
+        script.main()
+    assert exc.value.code == 2
+    assert dataset.read_bytes() == original
+    assert not output.exists()

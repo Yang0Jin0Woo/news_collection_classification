@@ -12,7 +12,7 @@ from news_classifier.decision_calibration import (
     calibrate_decision_policy, create_decision_profile, evaluate_decision_policy,
 )
 from news_classifier.evaluation_dataset import (
-    evaluation_input, load_reviewed_cases, rows_to_items, rows_with_article_context,
+    evaluation_input, load_reviewed_cases, prepare_evaluation_items, rows_with_article_context,
     validate_unseen_keywords,
 )
 from news_classifier.models import CLASSIFICATION_INPUT_POLICY
@@ -58,21 +58,14 @@ def main() -> None:
             dataset_path, "evaluation", CANDIDATE_LABELS, require_explicit_event_ids=True,
         )
         validate_unseen_keywords(development_rows, evaluation_rows)
-        if args.input_mode == "with_body" and any(
-            not row.get("content", "").strip() for row in development_rows + evaluation_rows
-        ):
-            raise ValueError("with_body mode requires non-empty content for every confirmed case")
+        development_items = prepare_evaluation_items(development_rows, args.input_mode)
+        evaluation_items = prepare_evaluation_items(evaluation_rows, args.input_mode)
         settings = AppSettings(confidence_calibration_path="")
         # Existing final-decision profiles must never become the tuning baseline.
         if hasattr(settings, "decision_calibration_path"):
             settings = replace(settings, decision_calibration_path="")
         pipeline = build_pipeline(settings)
         rule_set = pipeline.postprocessor.rule_engine.rule_set
-        development_items = rows_to_items(development_rows)
-        evaluation_items = rows_to_items(evaluation_rows)
-        if args.input_mode == "without_body":
-            development_items = [replace(item, content="") for item in development_items]
-            evaluation_items = [replace(item, content="") for item in evaluation_items]
         development_evidence_rows = rows_with_article_context(development_rows, development_items)
         validate_development_rule_evidence(rule_set, development_evidence_rows)
         development_predictions = pipeline.classifier.classify_many([

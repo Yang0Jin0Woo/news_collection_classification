@@ -7,10 +7,13 @@ import pytest
 from news_classifier.evaluation_dataset import (
     dataset_sha256,
     evaluation_input,
+    has_body_content,
     load_reviewed_cases,
+    prepare_evaluation_items,
     read_csv_dataset,
     row_to_item,
     rows_to_items,
+    rows_with_article_context,
 )
 from news_classifier.models import NewsItem
 
@@ -161,6 +164,56 @@ def test_common_article_conversion_defaults_missing_or_null_fields_to_empty_text
     row = {"title": "기사", "link": None, "content": None, "source": ""}
     assert row_to_item(row) == NewsItem(keyword="", title="기사", link="")
     assert row == {"title": "기사", "link": None, "content": None, "source": ""}
+
+
+@pytest.mark.parametrize("input_mode", [None, "with_body"])
+def test_body_preparation_preserves_raw_article_and_review_metadata(input_mode):
+    row = {**confirmed_case("1", "event-1", "development", "기술개발", "  제목  "),
+           "content": " \n본문&nbsp;문장\n "}
+    original = dict(row)
+    items = prepare_evaluation_items([row], input_mode)
+    assert items == rows_to_items([row])
+    assert items[0].content == original["content"]
+    assert row == original
+    assert row["keyword"] not in evaluation_input(items[0])
+    assert row["reviewed_by"] not in evaluation_input(items[0])
+
+
+def test_without_body_preparation_removes_body_from_model_and_rule_evidence_only():
+    row = {**confirmed_case("1", "event-1", "development", "기술개발", "제목"),
+           "content": "원문에만 있는 본문 근거"}
+    original = dict(row)
+    items = prepare_evaluation_items([row], "without_body")
+    assert items[0].content == ""
+    assert "본문 근거" not in evaluation_input(items[0])
+    evidence = rows_with_article_context([row], items)
+    assert evidence == [{**row, "source": "", "content": ""}]
+    assert row == original
+
+
+@pytest.mark.parametrize("content", [None, "", " \t\n", "\xa0", "&nbsp;", "&#160;", "&#xA0;", " &nbsp;\n&#160; "])
+def test_with_body_preparation_rejects_effectively_empty_body(content):
+    rows = [{"title": "유효한 기사", "content": "실제 본문"},
+            {"title": "빈 본문 기사", "content": content}]
+    original = [dict(row) for row in rows]
+    assert not has_body_content(content)
+    with pytest.raises(ValueError, match="with_body mode requires"):
+        prepare_evaluation_items(rows, "with_body")
+    assert rows == original
+
+
+@pytest.mark.parametrize("input_mode", ["", "bogus", False, 1, [], {}])
+def test_body_preparation_rejects_invalid_input_modes(input_mode):
+    with pytest.raises(ValueError, match="invalid evaluation input mode"):
+        prepare_evaluation_items([], input_mode)
+
+
+def test_body_preparation_preserves_tool_error_and_empty_dataset_policy():
+    with pytest.raises(ValueError, match="custom missing body"):
+        prepare_evaluation_items([{"content": "&nbsp;"}], "with_body",
+                                 missing_body_message="custom missing body")
+    for input_mode in (None, "without_body", "with_body"):
+        assert prepare_evaluation_items([], input_mode) == []
 
 
 def test_reviewed_case_reader_also_rejects_duplicate_columns_and_extra_values(tmp_path):

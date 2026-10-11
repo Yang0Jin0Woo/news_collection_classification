@@ -3,10 +3,11 @@ from __future__ import annotations
 import csv
 import hashlib
 from collections.abc import Mapping
+from dataclasses import replace
 from pathlib import Path
 
 from news_classifier.models import NewsItem
-from news_classifier.utils.text import normalize_key
+from news_classifier.utils.text import clean_text, normalize_key
 
 
 REQUIRED_COLUMNS = {
@@ -125,6 +126,30 @@ def row_to_item(row: Mapping[str, str | None]) -> NewsItem:
 
 def rows_to_items(rows: list[dict[str, str]]) -> list[NewsItem]:
     return [row_to_item(row) for row in rows]
+
+
+def has_body_content(content: str | None) -> bool:
+    """Check the effective body without modifying the stored article text."""
+    return bool(clean_text(content))
+
+
+def prepare_evaluation_items(
+    rows: list[dict[str, str]],
+    input_mode: str | None = None,
+    *,
+    missing_body_message: str = "with_body mode requires non-empty content for every confirmed case",
+) -> list[NewsItem]:
+    """Prepare the declared body mode without changing source rows or review metadata."""
+    if input_mode is not None and (
+        not isinstance(input_mode, str) or input_mode not in {"without_body", "with_body"}
+    ):
+        raise ValueError("invalid evaluation input mode")
+    items = rows_to_items(rows)
+    if input_mode == "without_body":
+        return [replace(item, content="") for item in items]
+    if input_mode == "with_body" and any(not has_body_content(item.content) for item in items):
+        raise ValueError(missing_body_message)
+    return items
 
 
 def rows_with_article_context(
