@@ -14,6 +14,7 @@ from pathlib import Path
 
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
 from news_classifier.evaluation_dataset import dataset_sha256, read_csv_dataset
+from news_classifier.utils.json_reports import write_new_json
 
 
 UNKNOWN = "(unknown)"
@@ -339,11 +340,10 @@ def main(argv=None):
             ],
             "files": [audit_csv(path, args.score_threshold, args.margin_threshold) for path in args.input],
         }
-        serialized = json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False)
-        if args.output is not None:
-            args.output.parent.mkdir(parents=True, exist_ok=True)
-            with args.output.open("x", encoding="utf-8") as file:
-                file.write(serialized + "\n")
+        if args.output is None:
+            serialized = json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False)
+        else:
+            serialized = write_new_json(args.output, payload, trailing_newline=True)
         print(serialized)
     except (OSError, ValueError, csv.Error) as exc:
         parser.error(str(exc))

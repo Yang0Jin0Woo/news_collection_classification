@@ -8,7 +8,6 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from dataclasses import replace
-import json
 from pathlib import Path
 
 from news_classifier.classifiers.input_text import has_changed_article_input
@@ -19,6 +18,7 @@ from news_classifier.rules.event_candidates import CANDIDATE_PHRASES, audit_cand
 from news_classifier.rules.policy import rule_set_fingerprint
 from news_classifier.service import build_pipeline
 from news_classifier.utils.text import clean_text
+from news_classifier.utils.json_reports import write_new_json
 
 
 def compare_rows(rows, pipeline):
@@ -129,9 +129,7 @@ def main(argv=None):
                "rule_fingerprint": rule_set_fingerprint(pipeline.postprocessor.rule_engine.rule_set),
                "note": "동일 저장 기사에 현재 모델과 규칙 적용. 기존 자동 판정 입력 유지, 검토 기사 본문만 보강. 정답과 독립 사건 및 미사용 검색어 평가는 별도 필요.",
                **comparison}
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open("x", encoding="utf-8") as file:
-        json.dump(payload, file, ensure_ascii=False, indent=2, allow_nan=False)
+    write_new_json(args.output, payload)
     print(f"본문 보강 비교: 검토 {comparison['before_review_count']}건 → {comparison['after_review_count']}건")
     print(f"비교 보고서: {args.output} (정답 정확도 평가 아님)")
 

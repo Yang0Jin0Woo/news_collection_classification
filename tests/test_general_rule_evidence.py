@@ -22,6 +22,7 @@ from news_classifier.rules.policy import (
     validate_development_rule_errors,
     validate_development_rule_evidence,
     validate_rule_set,
+    without_development_rules,
 )
 
 
@@ -201,7 +202,7 @@ def test_all_general_rule_priorities_and_empty_baselines_remain_valid(monkeypatc
     priorities = [policy.tie_priority for policy in rules.direct_rule_labels]
     assert len(set(priorities)) == len(priorities)
     assert not rules.label_policy("기타/무관").terms
-    baseline = evaluate_news.baseline_rule_set(rules)
+    baseline = without_development_rules(rules)
     validate_rule_set(baseline)
     assert baseline == default_rules.DEFAULT_RULE_SET
     assert all(baseline.label_policy(label).no_direct_rules for label in GENERAL_NEWS_LABELS)

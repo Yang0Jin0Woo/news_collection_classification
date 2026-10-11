@@ -11,7 +11,7 @@ from news_classifier.models import NewsItem, ModelPrediction
 from news_classifier.classifiers.rule_engine import RuleEngine
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
 from news_classifier.rules.default_rules import DEFAULT_RULE_SET
-from news_classifier.rules.policy import RuleTerm
+from news_classifier.rules.policy import RuleTerm, without_development_rules
 
 
 @pytest.fixture(autouse=True)
@@ -72,7 +72,7 @@ def test_baseline_excludes_only_development_rules_and_keeps_thresholds():
     labels = list(DEFAULT_RULE_SET.labels)
     labels[0] = replace(labels[0], terms=labels[0].terms + (RuleTerm("새 표현", origin="development", evidence_event_ids=("1", "2")),))
     modified = replace(DEFAULT_RULE_SET, labels=tuple(labels))
-    baseline = evaluate_news.baseline_rule_set(modified)
+    baseline = without_development_rules(modified)
     assert baseline == DEFAULT_RULE_SET
     assert baseline.decision == modified.decision
 

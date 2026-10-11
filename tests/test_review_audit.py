@@ -133,7 +133,9 @@ def test_output_is_new_and_source_bytes_stay_unchanged(tmp_path, capsys):
     audit.main(["--dataset", str(source), "--output", str(output)])
     assert source.read_bytes() == before
     assert json.loads(output.read_text(encoding="utf-8"))["schema_version"] == 1
-    capsys.readouterr()
+    printed = capsys.readouterr().out
+    assert output.read_text(encoding="utf-8") == printed
+    assert printed.endswith("\n")
 
 
 def test_existing_output_and_source_cannot_be_overwritten(tmp_path):

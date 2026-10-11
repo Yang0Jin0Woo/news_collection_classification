@@ -46,6 +46,7 @@ from news_classifier.rules.review_validation import audit_rule_holdout, evaluate
 from news_classifier.rules.event_profile import create_event_rule_profile, read_rule_proposals, runtime_bindings
 from news_classifier.service import build_pipeline
 from news_classifier.utils.text import article_description
+from news_classifier.utils.json_reports import write_new_json
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -74,14 +75,9 @@ def rule_only_label(rule_engine, item: NewsItem) -> str:
     )
 
 
-def baseline_rule_set(rule_set):
-    """같은 모델 출력으로 비교하기 위해 추가 development 규칙만 제외."""
-    return without_development_rules(rule_set)
-
-
 def legacy_rule_set(rule_set):
     """이번 사건 근거 구분 전의 규칙. 추가 development 규칙은 제외."""
-    baseline = baseline_rule_set(rule_set)
+    baseline = without_development_rules(rule_set)
     return replace(baseline, version="rules-v2-weighted-longest", unrelated_signal_groups=LEGACY_UNRELATED_SIGNAL_GROUPS, labels=tuple(
         replace(label, terms=tuple(replace(term, context_only=False) for term in label.terms))
         for label in baseline.labels
@@ -181,7 +177,7 @@ def main() -> None:
             count_error="model prediction count does not match development rule evidence",
             exception_type=RuntimeError,
         )
-        development_baseline = ClassificationPostProcessor(RuleEngine(baseline_rule_set(runtime_rule_set)))
+        development_baseline = ClassificationPostProcessor(RuleEngine(without_development_rules(runtime_rule_set)))
         validate_development_rule_errors(runtime_rule_set, development_evidence_rows, [
             development_baseline.process(item, prediction).rule_decision.final_label
             for item, prediction in zip(development_items, development_predictions, strict=True)
@@ -198,7 +194,7 @@ def main() -> None:
         pipeline.postprocessor.process(item, prediction)
         for item, prediction in zip(items, predictions, strict=True)
     ]
-    baseline_engine = RuleEngine(baseline_rule_set(runtime_rule_set))
+    baseline_engine = RuleEngine(without_development_rules(runtime_rule_set))
     baseline_processor = ClassificationPostProcessor(baseline_engine)
     baseline_decisions = [
         baseline_processor.process(item, prediction).rule_decision
@@ -307,8 +303,8 @@ def main() -> None:
         "dataset": str(dataset_path),
         "dataset_sha256": dataset_sha256(dataset_path),
         "split": args.split,
-        "model": AppSettings().classification_model,
-        "model_revision": AppSettings().classification_model_revision,
+        "model": settings.classification_model,
+        "model_revision": settings.classification_model_revision,
         "labels": CANDIDATE_LABELS,
         "topic_description_policy": TOPIC_DESCRIPTION_POLICY,
         "candidate_hypotheses": pipeline.classifier.candidate_hypotheses,
@@ -441,9 +437,7 @@ def main() -> None:
             )
         except ValueError as exc:
             parser.error(f"규칙 적용용 파일 생성 중단: {exc}")
-        export_path.parent.mkdir(parents=True, exist_ok=True)
-        with export_path.open("x", encoding="utf-8") as file:
-            json.dump(payload, file, ensure_ascii=False, indent=2, allow_nan=False)
+        write_new_json(export_path, payload)
         print(f"검증된 규칙 적용용 파일 생성: {export_path}")
 
 

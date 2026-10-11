@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 from news_classifier.classifiers.rule_engine import RuleEngine
@@ -16,6 +15,7 @@ from news_classifier.rules.event_candidates import (
     audit_candidate as _audit_candidate,
 )
 from news_classifier.rules.policy import normalize_rule_text
+from news_classifier.utils.json_reports import write_new_json
 
 
 def audit_candidate(phrase, label, rows, rule_set=DEFAULT_RULE_SET, *, candidate_phrases=None):
@@ -100,11 +100,9 @@ def main():
         ),
         "candidates": candidates,
     }
-    output.parent.mkdir(parents=True, exist_ok=True)
     # exists() 확인 후에도 다른 작업이 만들었으면 보존하는 배타적 생성.
     try:
-        with output.open("x", encoding="utf-8") as file:
-            json.dump(payload, file, ensure_ascii=False, indent=2)
+        write_new_json(output, payload, allow_nan=True)
     except FileExistsError:
         parser.error("기존 결과 보존: 새 --output 경로 지정 필요")
     print(f"규칙 후보 점검 저장: {output}")

@@ -18,6 +18,7 @@ from news_classifier.rules.event_candidates import rule_evidence_records
 from news_classifier.rules.policy import rule_set_fingerprint
 from news_classifier.service import build_pipeline
 from news_classifier.utils.text import safe_truncate
+from news_classifier.utils.json_reports import write_new_json
 
 
 def load_cases(path):
@@ -120,9 +121,7 @@ def main(argv=None):
         "note": "검토가 늘어도 잘못된 자동 보정을 보류하는 비교안. 앞 두 문장이 주요 사건을 보장하지 않으며 새로운 독립 사건과 검색어의 정답 평가 전 기본 적용 불가. 모든 주제의 성능 수치 아님.",
         **result,
     }
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open("x", encoding="utf-8") as file:
-        json.dump(payload, file, ensure_ascii=False, indent=2, allow_nan=False)
+    write_new_json(args.output, payload)
     before, after = result["metrics"]["before"], result["metrics"]["experimental_candidate"]
     print(f"개발 기사 비교 {len(rows)}건: 자동 분류 오답 {before['wrong_decided_count']} → {after['wrong_decided_count']}, 검토 {before['review_count']} → {after['review_count']}")
     print(f"기본 적용 없음, 독립 평가 미완료: {args.output}")

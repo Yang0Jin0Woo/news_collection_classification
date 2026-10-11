@@ -109,6 +109,31 @@ def run_evaluation(monkeypatch, dataset, output):
     evaluate_news.main()
 
 
+def test_evaluation_report_reuses_the_exact_settings_used_for_model_loading(tmp_path, monkeypatch):
+    rows = synthetic_rows()
+    dataset, output = tmp_path / "fixture.csv", tmp_path / "report"
+    write_fixture(dataset, rows)
+    build_calls, _ = install_fake_pipeline(monkeypatch, rows)
+    constructor = evaluate_news.AppSettings
+    calls = []
+
+    def settings_once():
+        if calls:
+            pytest.fail("evaluation must not recreate settings for report metadata")
+        settings = replace(constructor(), classification_model="fixture-model",
+                           classification_model_revision="fixture-revision")
+        calls.append(settings)
+        return settings
+
+    monkeypatch.setattr(evaluate_news, "AppSettings", settings_once)
+    run_evaluation(monkeypatch, dataset, output)
+    payload = json.loads((output / "evaluation_results.json").read_text(encoding="utf-8"))
+    assert len(calls) == len(build_calls) == 1
+    assert build_calls[0] is calls[0]
+    assert payload["model"] == build_calls[0].classification_model == "fixture-model"
+    assert payload["model_revision"] == build_calls[0].classification_model_revision == "fixture-revision"
+
+
 @pytest.mark.parametrize("split", ["development", "evaluation"])
 def test_with_body_profile_rejects_html_blank_body_before_inference(tmp_path, monkeypatch, split):
     rows = [{**row, "content": "실제 기사 본문"} for row in synthetic_rows()]
