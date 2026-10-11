@@ -173,6 +173,48 @@ def test_cli_writes_header_csv_for_no_results(monkeypatch, tmp_path, capsys):
     assert "CSV saved with headers only" in output
 
 
+@pytest.mark.parametrize("failure_stage", ["write", "replace"])
+def test_cli_preserves_previous_csv_when_save_fails(monkeypatch, tmp_path, capsys, failure_stage):
+    import pandas as pd
+    from pathlib import Path
+
+    result = successful_result()
+    path = tmp_path / "previous.csv"
+    CsvNewsStore(str(path)).save(result.results)
+    previous_bytes = path.read_bytes()
+    monkeypatch.setattr(
+        "news_classifier.service.build_pipeline", lambda settings: StubPipeline(result),
+    )
+
+    def fail_write(frame, file, **kwargs):
+        file.write("partial CSV output")
+        raise OSError("CSV write failed")
+
+    def fail_replace(temporary, target):
+        raise PermissionError("CSV replacement blocked")
+
+    def reject_sqlite_save(store, rows):
+        pytest.fail("SQLite must not save after CSV failure")
+
+    if failure_stage == "write":
+        monkeypatch.setattr(pd.DataFrame, "to_csv", fail_write)
+    else:
+        monkeypatch.setattr(Path, "replace", fail_replace)
+    monkeypatch.setattr("news_classifier.cli.SqliteNewsStore.save", reject_sqlite_save)
+
+    exit_code = run_cli([
+        "collect", "--keyword", "공통", "--csv", str(path),
+        "--sqlite", str(tmp_path / "unused.db"),
+    ])
+
+    assert exit_code == 1
+    assert path.read_bytes() == previous_bytes
+    assert set(tmp_path.iterdir()) == {path}
+    captured = capsys.readouterr()
+    assert "CSV 저장 실패" in captured.err
+    assert "CSV saved:" not in captured.out
+
+
 def test_cli_uses_configured_default_sqlite_path(
     monkeypatch, tmp_path, capsys
 ):

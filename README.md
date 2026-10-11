@@ -104,7 +104,7 @@ macOS와 Linux의 활성화 명령은 `source ../.venv/bin/activate` 사용
 
 ## 결과 확인
 
-- CSV: 기본 파일 `news_analysis_results.csv`, Excel에서 확인 가능, 실행마다 해당 파일 덮어쓰기
+- CSV: 기본 파일 `news_analysis_results.csv`, Excel에서 확인 가능, 임시 파일 저장 완료 후 교체하며 저장·교체 실패 시 기존 결과 보존
 - SQLite: 옵션 지정 시 결과 누적 저장, 같은 검색어와 제목 및 언론사의 기사 갱신
 - 대시보드: 최종 주제(`final_category`) 기준 대표 기사 수 집계, 실제 결과에 있는 주제만 표시
 
