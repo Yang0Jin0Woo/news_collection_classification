@@ -1,0 +1,876 @@
+{
+  "schema_version": 1,
+  "profile_type": "preliminary_accuracy_report_not_runtime_profile",
+  "measured_at": "2026-10-11T18:53:31.288061+09:00",
+  "evaluation_scope": "13_user_confirmed_unused_candidates_and_2_development_regressions",
+  "preliminary_measurement_completed": true,
+  "independent_evaluation_completed": false,
+  "automatic_activation": false,
+  "source_modified": false,
+  "rules_or_thresholds_changed": false,
+  "model": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
+  "model_revision": "b5113eb38ab63efdd7f280f8c144ea8b13f978ce",
+  "candidate_labels": [
+    "기술개발",
+    "제품/서비스",
+    "기업동향",
+    "생산/공급망",
+    "정책/규제",
+    "금융/투자",
+    "시장/산업",
+    "노동/노사",
+    "국제/통상",
+    "교육/취업",
+    "사회",
+    "정치",
+    "문화/연예",
+    "스포츠",
+    "건강/의료",
+    "생활/환경",
+    "기타/무관"
+  ],
+  "candidate_hypotheses": [
+    "새로운 기술의 연구와 개발, 실험 성과와 기술적 성능 개선 자체",
+    "상업용 제품이나 서비스의 출시와 판매, 제공 기능과 이용 방법",
+    "기업의 인수와 합병, 제휴, 사업 확장과 투자 유치, 경영과 조직 변화",
+    "공장의 생산과 증설, 제조 공정, 부품 조달과 공급망",
+    "법률 제정과 규제 시행, 정부의 행정 정책과 공공 지원 제도의 내용과 적용",
+    "주식과 증권 거래, 기업의 재무 실적, 금융 상품과 투자 판단",
+    "산업 전체의 시장 규모, 수요와 가격 추세, 경쟁 구도",
+    "고용된 근로자의 근로 조건과 임금, 고용 안정과 해고, 노동조합과 노사 갈등",
+    "국가 간 외교와 무역, 통상 협상과 협정, 수출입 제한과 국제 분쟁",
+    "학교 교육과 입학, 직업 교육과 인재 양성, 구직자의 취업 준비와 신규 채용 절차",
+    "사건과 사고, 범죄 수사, 재난의 피해와 대응, 복지와 지역 사회 문제",
+    "선거와 정당 활동, 정치인의 정치적 주장, 권력 관계와 정치권의 갈등",
+    "문화와 예술, 영화와 방송, 음악과 공연, 연예인의 활동",
+    "스포츠 경기와 대회 결과, 선수와 구단의 활동, 경기 기록",
+    "질병의 예방과 진단, 환자의 진료와 치료, 건강 관리와 보건 정보",
+    "날씨와 기상 정보, 자연과 환경의 상태와 보전, 여행과 음식 등 일상생활 정보",
+    "어느 구체적인 뉴스 주제에도 해당하지 않는 기타 내용"
+  ],
+  "classification_input_policy": "article_event_context_v2",
+  "max_sequence_length": 1200,
+  "classification_batch_size": 4,
+  "model_device": "cuda:0",
+  "rule_version": "rules-v5-evidence-general-news",
+  "rule_fingerprint_sha256": "1df7189ad6499ebbdcebc1673dfc626e1f7ea8ef65bc85521dc3a4e8c2a9fa21",
+  "candidate_policy": "title-description-first-two-sentences-v1-experimental",
+  "comparison_note": "현재 기본 판정과 기존의 미적용 실험안을 같은 모델 출력으로 비교. Git 수정 전후의 개선 비교가 아님.",
+  "sources": [
+    {
+      "path": "data/evaluation/user_confirmed_accuracy_20261011.json",
+      "sha256": "7b5d91a848f63f292587d6af33f40ea4f10328a9e156573595035001ffcb4e29"
+    },
+    {
+      "path": "data/evaluation/user_confirmed_accuracy_multitopic_20261011.json",
+      "sha256": "26bd37bab0fc24ad2c654d1215b43c31ceefcd3b8ec5e01facb4e1fddd6e21a0"
+    },
+    {
+      "path": "data/evaluation/user_confirmed_context_20261004.json",
+      "sha256": "10d9a68108e04ac49d8c59ece1644bcc7319024690a26cad439fdc6f0eeb9e43"
+    },
+    {
+      "path": "data/evaluation/accuracy_review_progress_multitopic_20261011.csv",
+      "sha256": "711996b52da814de6a87b880e5f0c246b43102daf432f9b1217ddc01496981fa"
+    }
+  ],
+  "preliminary_subset": {
+    "gold_topic_counts": {
+      "기술개발": 5,
+      "제품/서비스": 1,
+      "기업동향": 1,
+      "생산/공급망": 1,
+      "정책/규제": 1,
+      "금융/투자": 1,
+      "시장/산업": 1,
+      "노동/노사": 1,
+      "국제/통상": 1
+    },
+    "model_only": {
+      "total": 13,
+      "accuracy": 0.9230769230769231,
+      "coverage": 1.0,
+      "decided_accuracy": 0.9230769230769231,
+      "review_count": 0,
+      "review_rate": 0.0,
+      "wrong_decided_count": 1,
+      "error_count": 0
+    },
+    "current": {
+      "total": 13,
+      "accuracy": 0.8461538461538461,
+      "coverage": 0.9230769230769231,
+      "decided_accuracy": 0.9166666666666666,
+      "review_count": 1,
+      "review_rate": 0.07692307692307693,
+      "wrong_decided_count": 1,
+      "error_count": 0
+    },
+    "experimental": {
+      "total": 13,
+      "accuracy": 0.7692307692307693,
+      "coverage": 0.7692307692307693,
+      "decided_accuracy": 1.0,
+      "review_count": 3,
+      "review_rate": 0.23076923076923078,
+      "wrong_decided_count": 0,
+      "error_count": 0
+    },
+    "current_rule_correction": {
+      "rule_applied_count": 3,
+      "rule_changed_count": 1,
+      "wrong_rule_count": 1,
+      "wrong_rule_rate": 0.3333333333333333,
+      "corrected_count": 0,
+      "harmful_change_count": 1
+    },
+    "previous_correct_harmed_count": 2,
+    "wrong_automatic_to_review_count": 0,
+    "previous_wrong_corrected_count": 1,
+    "cases": [
+      {
+        "id": "1ad8c4b8c74dcd7f",
+        "title": "KAIST-엔비디아, 인간의 움직임 이해하는 '피지컬 AI 테크놀로지센터' 설립",
+        "link": "https://www.irobotnews.com/news/articleView.html?idxno=47608",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "기술개발",
+        "reviewed_by": "사용자(원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "기술개발",
+          "score": 0.7514933347702026,
+          "margin": 0.6978927813470364,
+          "top3_labels": [
+            "기술개발",
+            "기타/무관",
+            "노동/노사"
+          ],
+          "top3_scores": [
+            0.7514933347702026,
+            0.053600553423166275,
+            0.03800384700298309
+          ]
+        },
+        "model_input_sha256": "1dd77f4953def612437310c20509e20468c4c54a2344e0605dc7f803b1ef140a",
+        "current_category": "제품/서비스",
+        "current_source": "RULE",
+        "current_rule_applied": true,
+        "current_reason": "기술개발 편향 보정: 제품/서비스 규칙 점수 6, 근거 5개, 2위 대비 +2 (상용화, 서비스, 기능)",
+        "experimental_category": "기술개발",
+        "experimental_source": "MODEL",
+        "experimental_reason": "",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": true
+      },
+      {
+        "id": "2a132f783329d3c5",
+        "title": "전북대학교 조재혁 교수, 차세대 XR 핵심 AI 기술 개발 연구책임 맡아…감정 인식 기반 개인화 서비스 구현",
+        "link": "https://www.lecturernews.com/news/articleView.html?idxno=207059",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "기술개발",
+        "reviewed_by": "사용자(원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "기술개발",
+          "score": 0.6772592067718506,
+          "margin": 0.6321066804230213,
+          "top3_labels": [
+            "기술개발",
+            "정책/규제",
+            "교육/취업"
+          ],
+          "top3_scores": [
+            0.6772592067718506,
+            0.04515252634882927,
+            0.03881004452705383
+          ]
+        },
+        "model_input_sha256": "70b07145efb436041eec6257b9fcd349eae594b734ac0437215f37150efaca4e",
+        "current_category": "기술개발",
+        "current_source": "MODEL",
+        "current_rule_applied": false,
+        "current_reason": "",
+        "experimental_category": "기술개발",
+        "experimental_source": "MODEL",
+        "experimental_reason": "",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": false
+      },
+      {
+        "id": "f2e9af785d225721",
+        "title": "HJ중공업, 美 대학과 피지컬 AI 함정 용접기술 개발",
+        "link": "https://www.newspim.com/news/view/20260724001072",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "기술개발",
+        "reviewed_by": "사용자(원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "기술개발",
+          "score": 0.8863959908485413,
+          "margin": 0.8655601311475039,
+          "top3_labels": [
+            "기술개발",
+            "기타/무관",
+            "기업동향"
+          ],
+          "top3_scores": [
+            0.8863959908485413,
+            0.020835859701037407,
+            0.015431064181029797
+          ]
+        },
+        "model_input_sha256": "41f24b16824f8a2722284b4b93056697f3efd03ab485decbeb56ad97400e1c6f",
+        "current_category": "기술개발",
+        "current_source": "MODEL",
+        "current_rule_applied": false,
+        "current_reason": "",
+        "experimental_category": "기술개발",
+        "experimental_source": "MODEL",
+        "experimental_reason": "",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": false
+      },
+      {
+        "id": "6c243f60c6274a2f",
+        "title": "동아대 서정일 교수팀, AI 특징 압축기술 개발…국제표준 채택",
+        "link": "https://www.yna.co.kr/amp/view/AKR20260724134300051",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "기술개발",
+        "reviewed_by": "사용자(원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "기술개발",
+          "score": 0.6308228373527527,
+          "margin": 0.5678730383515358,
+          "top3_labels": [
+            "기술개발",
+            "노동/노사",
+            "스포츠"
+          ],
+          "top3_scores": [
+            0.6308228373527527,
+            0.06294979900121689,
+            0.06125183403491974
+          ]
+        },
+        "model_input_sha256": "4b6eff285f88967d139d3d86a4c1a152dba5e75d0d95ccabb206e0f25265e609",
+        "current_category": "기술개발",
+        "current_source": "MODEL",
+        "current_rule_applied": false,
+        "current_reason": "",
+        "experimental_category": "기술개발",
+        "experimental_source": "MODEL",
+        "experimental_reason": "",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": false
+      },
+      {
+        "id": "c8785dfa230a8c20",
+        "title": "신테카바이오, 항체 물성 최적화 AI 기술 개발…\"바이오베터 후보 확보\"",
+        "link": "https://www.mt.co.kr/thebio/2026/07/24/2026072408404577408",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "기술개발",
+        "reviewed_by": "사용자(원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "기술개발",
+          "score": 0.6479186415672302,
+          "margin": 0.4338400214910507,
+          "top3_labels": [
+            "기술개발",
+            "제품/서비스",
+            "기타/무관"
+          ],
+          "top3_scores": [
+            0.6479186415672302,
+            0.2140786200761795,
+            0.05055106431245804
+          ]
+        },
+        "model_input_sha256": "f9de2db03316f2340b6efa968c362592bea8355a5b0a06dcd70b9b704e689615",
+        "current_category": "기술개발",
+        "current_source": "MODEL",
+        "current_rule_applied": false,
+        "current_reason": "",
+        "experimental_category": "기술개발",
+        "experimental_source": "MODEL",
+        "experimental_reason": "",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": false
+      },
+      {
+        "id": "a92354868458b29c",
+        "title": "삼성전자, `New 갤럭시 AI 구독클럽` 출시…혜택 강화한 폴더블 전용 서비스",
+        "link": "https://seonamtoday.com/news/view.php?idx=51300",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "제품/서비스",
+        "reviewed_by": "사용자(TXT 원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "제품/서비스",
+          "score": 0.8432680368423462,
+          "margin": 0.7581264078617096,
+          "top3_labels": [
+            "제품/서비스",
+            "기술개발",
+            "정책/규제"
+          ],
+          "top3_scores": [
+            0.8432680368423462,
+            0.0851416289806366,
+            0.029237976297736168
+          ]
+        },
+        "model_input_sha256": "489902bef3d89f467c3aca02e7e419b010d81b14492098e027cc912a5dac7c85",
+        "current_category": "제품/서비스",
+        "current_source": "MODEL",
+        "current_rule_applied": false,
+        "current_reason": "",
+        "experimental_category": "제품/서비스",
+        "experimental_source": "MODEL",
+        "experimental_reason": "",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": false
+      },
+      {
+        "id": "5c5858303440a7c4",
+        "title": "FT \"'AI붐' 현금 확보한 한국 기업들, 미국 기업 M&A\"",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE95TElLcE1XX0FLQ1VReXNpU1RVQVFDRzVfd3pCdjBSZlFKNFQxUjFDbTJObjJGeVVuRVdSSE9PUGt6bWlGanhvRFVEYy15NFZId0hoVFhTRXdOLTY4YVV3TdIBYEFVX3lxTE95TElLcE1XX0FLQ1VReXNpU1RVQVFDRzVfd3pCdjBSZlFKNFQxUjFDbTJObjJGeVVuRVdSSE9PUGt6bWlGanhvRFVEYy15NFZId0hoVFhTRXdOLTY4YVV3TQ?oc=5",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "기업동향",
+        "reviewed_by": "사용자(TXT 원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "기업동향",
+          "score": 0.24176090955734253,
+          "margin": 0.07705523073673248,
+          "top3_labels": [
+            "기업동향",
+            "기술개발",
+            "기타/무관"
+          ],
+          "top3_scores": [
+            0.24176090955734253,
+            0.16470567882061005,
+            0.16406355798244476
+          ]
+        },
+        "model_input_sha256": "bc7d8c183655b75056cb83494628561b7642604bff919c34d1041611e783332e",
+        "current_category": "기업동향",
+        "current_source": "RULE",
+        "current_rule_applied": true,
+        "current_reason": "규칙 보정: 기업동향 규칙 점수 5, 근거 3개, 2위 대비 +2 (인수, 합병, 협력)",
+        "experimental_category": "검토필요",
+        "experimental_source": "REVIEW",
+        "experimental_reason": "주요 사건 근거 부족: 기업동향의 규칙 근거가 제목, 설명, 본문 첫 두 문장에서 충분하지 않아 보정 보류",
+        "previous_correct_harmed": true,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": false
+      },
+      {
+        "id": "c74a7dbeae640ded",
+        "title": "中 완성차·부품, 해외 생산거점 확대…“미래산업 공급망까지 영향”",
+        "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTE5NaTY4eWgyMHJJWmFpYXdmTEVYOXZsM3NyMTd2bmhVbGctMFNBRHZHeWhxQ2NGOW5BTzFCVFZmNGNtNEVfTGU4NTlOak5FcjZwWTBucnZxSEdfMmlKUzlwRDVScWsyNnZqSmp0TdIBcEFVX3lxTE1ISFl5aHVJRkxyMFlobVh2eDdPV3l1MGUyWExGMk9ORHktc1dTNWhRbEdyQVFDNE1xOC1WTHRkVDFFb3M2d1VObTlnbURjN2VQcWhGRTFveHF3T2Y2SmhBSTFYb1NBcDFnUFhNdTlyVUo?oc=5",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "생산/공급망",
+        "reviewed_by": "사용자(TXT 원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "국제/통상",
+          "score": 0.4839729070663452,
+          "margin": 0.3205908536911011,
+          "top3_labels": [
+            "국제/통상",
+            "정책/규제",
+            "생산/공급망"
+          ],
+          "top3_scores": [
+            0.4839729070663452,
+            0.16338205337524414,
+            0.1036493107676506
+          ]
+        },
+        "model_input_sha256": "2a14b4dba23bd9e77c8c167da4410674d9e2a01c3159319ce49cace07b7745b9",
+        "current_category": "검토필요",
+        "current_source": "REVIEW",
+        "current_rule_applied": false,
+        "current_reason": "주제 간 점수 차이 부족: 6 대 6, 차이 0점, 최소 1점 필요, 모델 판단 불확실",
+        "experimental_category": "검토필요",
+        "experimental_source": "REVIEW",
+        "experimental_reason": "주제 간 점수 차이 부족: 6 대 6, 차이 0점, 최소 1점 필요, 모델 판단 불확실",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": false
+      },
+      {
+        "id": "c21702ba277b8e26",
+        "title": "규제특례·재정지원 묶어 지역투자 속도낸다",
+        "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBVeWdyLWp4VWNRVm5EWHdPOGFWTkdEQnpzX1B1T0Ezc0NnQXNtdlZkRVg3bGZkYU5rZDY2Y3Jvb0w0a21aMnJqTFA4M0Y2WXpib3NSaVEzQjE3WEF4cGc0TGx3UVFFRXfSAWtBVV95cUxOSk1keTN2ZlVLbURaSDRWOWY5a0E4LUpvVUN2UXQ4OGNiTENKRVdEd0VtOFVGS2VNWDU5ZVFFWDlHOE9tVGMzajhQOTFlRTl1aDBQY1ItVVJLdmxvdFFnN3JFaDNpQ2dVVkl1bw?oc=5",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "정책/규제",
+        "reviewed_by": "사용자(TXT 원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "정책/규제",
+          "score": 0.7744221091270447,
+          "margin": 0.7389804273843765,
+          "top3_labels": [
+            "정책/규제",
+            "기타/무관",
+            "기술개발"
+          ],
+          "top3_scores": [
+            0.7744221091270447,
+            0.03544168174266815,
+            0.024796707555651665
+          ]
+        },
+        "model_input_sha256": "5d1b25cd035dd011299aa2027c63b45ed035bfda6d15193052e57915ec10c47c",
+        "current_category": "정책/규제",
+        "current_source": "MODEL",
+        "current_rule_applied": false,
+        "current_reason": "",
+        "experimental_category": "정책/규제",
+        "experimental_source": "MODEL",
+        "experimental_reason": "",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": false
+      },
+      {
+        "id": "7895f95a45a5c60f",
+        "title": "[특징주] 현대로템, 2분기 실적 부진에 목표가 줄하향…장중 14% 급락 - 조선비즈",
+        "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxPclE4b2JsNUhQcnVRT21WcHFOZEYtand1eDU2cE5tSUlQdGpHRjJLQnJFdXozRVp2LXdUNmpTMWktWVhlSHFvT2VsVExSa3BMNXhNTlZkUjlkX0d0SmtWZ0V1RndVVkRLSUxHV2VBeHdrQnNvWTBjUld2Z2h6UWxZTzNCODRpcDdY0gGcAUFVX3lxTE1zWkJZME00QjNxbGI3cE8yU1A5MHRLNjFGTE12V3VjMmt5dTQ1RnVCSS0tMFN1SE0yaHVodUhQTEV0VmU4OWRkMUsyR2JqZGhKWFM1TzctMjZHMG55OEZiRHliOWhsVUxBdkpNbE9RVTd6NGREUWRMSjJZMmtSdm9UdTB4X2lkRmFHckJ1d19fYzNzY3RYekRKbUtsTw?oc=5",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "금융/투자",
+        "reviewed_by": "사용자(TXT 원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "금융/투자",
+          "score": 0.8273867964744568,
+          "margin": 0.7965947426855564,
+          "top3_labels": [
+            "금융/투자",
+            "스포츠",
+            "기술개발"
+          ],
+          "top3_scores": [
+            0.8273867964744568,
+            0.030792053788900375,
+            0.025577416643500328
+          ]
+        },
+        "model_input_sha256": "40b8fd075af14de0c297bd03a7106844a1fc331f18d73f792a04bb9d8d512684",
+        "current_category": "금융/투자",
+        "current_source": "MODEL",
+        "current_rule_applied": false,
+        "current_reason": "",
+        "experimental_category": "금융/투자",
+        "experimental_source": "MODEL",
+        "experimental_reason": "",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": false
+      },
+      {
+        "id": "5e41b7b70de78c59",
+        "title": "BofA \"HBM 시장, 2030년까지 7배 성장\"",
+        "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE0tcmtKT3owdjRvdXUwdkV6SzJZOFg4MkRVYlhFWmZpVllIRVY5NTRVQ1BRWFRwbmM0aEZndjRSeDhCUi1ySThHMTJvSQ?oc=5",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "시장/산업",
+        "reviewed_by": "사용자(TXT 원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "시장/산업",
+          "score": 0.37319496273994446,
+          "margin": 0.21517427265644073,
+          "top3_labels": [
+            "시장/산업",
+            "금융/투자",
+            "기술개발"
+          ],
+          "top3_scores": [
+            0.37319496273994446,
+            0.15802069008350372,
+            0.10881824791431427
+          ]
+        },
+        "model_input_sha256": "f171cc28bba5e6f8a0501ae6a27b178b4629f75622e229efdba24c899f738b24",
+        "current_category": "시장/산업",
+        "current_source": "RULE",
+        "current_rule_applied": true,
+        "current_reason": "규칙 보정: 시장/산업 규칙 점수 9, 근거 8개, 2위 대비 +5 (시장 규모, 전력 수요, 사이클)",
+        "experimental_category": "검토필요",
+        "experimental_source": "REVIEW",
+        "experimental_reason": "주요 사건 근거 부족: 시장/산업의 규칙 근거가 제목, 설명, 본문 첫 두 문장에서 충분하지 않아 보정 보류",
+        "previous_correct_harmed": true,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": false
+      },
+      {
+        "id": "7d47e4eae07fcecb",
+        "title": "카카오뱅크 노조, 오는 31일 전일 파업…\"임금교섭 결렬\"",
+        "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5RNWN6R3RGMEx2SGJnS3BzUFMyZDdiaDMwbTR0RGJQY2ZXY3FjRmJHX3VEcHJYRUozS3E3N0M3bFVTYk1qRlVRU21GeXA3d29lWVhIS2RxS3NQc3lYM3ZMZkJ6SzByazQ?oc=5",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "노동/노사",
+        "reviewed_by": "사용자(TXT 원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "노동/노사",
+          "score": 0.5722872614860535,
+          "margin": 0.46683748811483383,
+          "top3_labels": [
+            "노동/노사",
+            "정책/규제",
+            "정치"
+          ],
+          "top3_scores": [
+            0.5722872614860535,
+            0.10544977337121964,
+            0.0945245698094368
+          ]
+        },
+        "model_input_sha256": "5b8afa00174dba61658fac5f053e291c6f84cc33fb1f1e814f24cbef08624640",
+        "current_category": "노동/노사",
+        "current_source": "MODEL",
+        "current_rule_applied": false,
+        "current_reason": "",
+        "experimental_category": "노동/노사",
+        "experimental_source": "MODEL",
+        "experimental_reason": "",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": false
+      },
+      {
+        "id": "d95c1095398be18a",
+        "title": "KOTRA, 美 관세·中 수출통제·EU 환경규제 대응 전략 제시",
+        "link": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE1jT3A4T1g5RzZMUk56Tkx1aEJJTzl1Qk1uTVczWFV6dnN3OHk5eGQtUVpaWTZYWHBicEJ6MGF2QlFvaFhXa3RSMWt2TE1BeTZHMkEtSHp3Wnd4X0kx?oc=5",
+        "sample_role": "preliminary_unused_candidate",
+        "gold_label": "국제/통상",
+        "reviewed_by": "사용자(TXT 원문 제공 및 채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "국제/통상",
+          "score": 0.7526618242263794,
+          "margin": 0.5879685580730438,
+          "top3_labels": [
+            "국제/통상",
+            "정책/규제",
+            "노동/노사"
+          ],
+          "top3_scores": [
+            0.7526618242263794,
+            0.16469326615333557,
+            0.020018618553876877
+          ]
+        },
+        "model_input_sha256": "baf4c0d5b43376553da00bc5ac71bff66693f173695be93d1f7cf84c3a44537c",
+        "current_category": "국제/통상",
+        "current_source": "MODEL",
+        "current_rule_applied": false,
+        "current_reason": "",
+        "experimental_category": "국제/통상",
+        "experimental_source": "MODEL",
+        "experimental_reason": "",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": false,
+        "previous_wrong_corrected": false
+      }
+    ]
+  },
+  "development_regression": {
+    "gold_topic_counts": {
+      "교육/취업": 1,
+      "정책/규제": 1
+    },
+    "model_only": {
+      "total": 2,
+      "accuracy": 0.5,
+      "coverage": 1.0,
+      "decided_accuracy": 0.5,
+      "review_count": 0,
+      "review_rate": 0.0,
+      "wrong_decided_count": 1,
+      "error_count": 0
+    },
+    "current": {
+      "total": 2,
+      "accuracy": 0.0,
+      "coverage": 1.0,
+      "decided_accuracy": 0.0,
+      "review_count": 0,
+      "review_rate": 0.0,
+      "wrong_decided_count": 2,
+      "error_count": 0
+    },
+    "experimental": {
+      "total": 2,
+      "accuracy": 0.0,
+      "coverage": 0.0,
+      "decided_accuracy": 0.0,
+      "review_count": 2,
+      "review_rate": 1.0,
+      "wrong_decided_count": 0,
+      "error_count": 0
+    },
+    "current_rule_correction": {
+      "rule_applied_count": 2,
+      "rule_changed_count": 1,
+      "wrong_rule_count": 2,
+      "wrong_rule_rate": 1.0,
+      "corrected_count": 0,
+      "harmful_change_count": 1
+    },
+    "previous_correct_harmed_count": 0,
+    "wrong_automatic_to_review_count": 2,
+    "previous_wrong_corrected_count": 0,
+    "cases": [
+      {
+        "id": "user-confirmed-seoul-training-20261004",
+        "title": "서울대, AI 반도체 인재 키운다...6년간 석박사급 110명 양성",
+        "link": "https://www.thelec.kr/news/articleView.html?idxno=62982",
+        "sample_role": "development_regression_only",
+        "gold_label": "교육/취업",
+        "reviewed_by": "사용자(채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "기업동향",
+          "score": 0.42485493421554565,
+          "margin": 0.06813785433769226,
+          "top3_labels": [
+            "기업동향",
+            "기술개발",
+            "정책/규제"
+          ],
+          "top3_scores": [
+            0.42485493421554565,
+            0.3567170798778534,
+            0.03427491709589958
+          ]
+        },
+        "model_input_sha256": "1b51ee32d5918dae39ab5c408f8e3f02030ba0566edc06592d64cbc4347df1d4",
+        "current_category": "기업동향",
+        "current_source": "RULE",
+        "current_rule_applied": true,
+        "current_reason": "규칙 보정: 기업동향 규칙 점수 4, 근거 3개, 2위 대비 +1 (합병, 사업, 협력)",
+        "experimental_category": "검토필요",
+        "experimental_source": "REVIEW",
+        "experimental_reason": "주요 사건 근거 부족: 기업동향의 규칙 근거가 제목, 설명, 본문 첫 두 문장에서 충분하지 않아 보정 보류",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": true,
+        "previous_wrong_corrected": false
+      },
+      {
+        "id": "user-confirmed-government-budget-20261004",
+        "title": "[단독]산업부, 1666억 ‘AI반도체 개발’ 예산 한푼도 안썼다",
+        "link": "https://www.donga.com/news/Politics/article/all/20261001/134770354/1",
+        "sample_role": "development_regression_only",
+        "gold_label": "정책/규제",
+        "reviewed_by": "사용자(채팅에서 정답 확정)",
+        "stored_event_id": "",
+        "stored_independent_event_check": "pending",
+        "model_prediction": {
+          "label": "정책/규제",
+          "score": 0.310600608587265,
+          "margin": 0.018247902393341064,
+          "top3_labels": [
+            "정책/규제",
+            "기술개발",
+            "정치"
+          ],
+          "top3_scores": [
+            0.310600608587265,
+            0.29235270619392395,
+            0.0906551331281662
+          ]
+        },
+        "model_input_sha256": "ddc55b5f1467e95b763e9d7483d882b0bf5fdeb26c8e8112803046fe3cf1c5e3",
+        "current_category": "기술개발",
+        "current_source": "RULE",
+        "current_rule_applied": true,
+        "current_reason": "규칙 보정: 기술개발 규칙 점수 3, 근거 3개, 2위 대비 +1 (개발, 기술, 실증)",
+        "experimental_category": "검토필요",
+        "experimental_source": "REVIEW",
+        "experimental_reason": "주요 사건 근거 부족: 기술개발의 규칙 근거가 제목, 설명, 본문 첫 두 문장에서 충분하지 않아 보정 보류",
+        "previous_correct_harmed": false,
+        "wrong_automatic_to_review": true,
+        "previous_wrong_corrected": false
+      }
+    ]
+  },
+  "missing_preliminary_topics": [
+    "건강/의료",
+    "교육/취업",
+    "기타/무관",
+    "문화/연예",
+    "사회",
+    "생활/환경",
+    "스포츠",
+    "정치"
+  ],
+  "independent_readiness": {
+    "schema_version": 1,
+    "status": "awaiting_review",
+    "ready": false,
+    "independent_evaluation_completed": false,
+    "article_count": 182,
+    "confirmed_gold_count": 15,
+    "ready_article_count": 0,
+    "articles_requiring_completion": 182,
+    "incomplete_fields": {
+      "confirmed_gold": 167,
+      "event_confirmation": 182,
+      "explicit_event_id": 182,
+      "main_event": 169,
+      "main_event_evidence": 169,
+      "split": 180
+    },
+    "pending_article_ids_preview": [
+      "1ad8c4b8c74dcd7f",
+      "1a33a342f2152f3f",
+      "74355146c585beb3",
+      "95ec46109f2d10e7",
+      "2a132f783329d3c5",
+      "5e0b5a498b3a34bf",
+      "f2e9af785d225721",
+      "4decd643bc947b71",
+      "6390a3857c230774",
+      "a6adbe4292c5a4e0"
+    ],
+    "duplicate_article_ids": [],
+    "unknown_gold_labels": [],
+    "invalid_splits": [],
+    "events_crossing_splits": [],
+    "article_links_crossing_splits": [],
+    "keywords_crossing_splits": [],
+    "minimum_independent_events_per_label": 2,
+    "independent_events_per_label": {
+      "development": {
+        "기술개발": 0,
+        "제품/서비스": 0,
+        "기업동향": 0,
+        "생산/공급망": 0,
+        "정책/규제": 0,
+        "금융/투자": 0,
+        "시장/산업": 0,
+        "노동/노사": 0,
+        "국제/통상": 0,
+        "교육/취업": 0,
+        "사회": 0,
+        "정치": 0,
+        "문화/연예": 0,
+        "스포츠": 0,
+        "건강/의료": 0,
+        "생활/환경": 0,
+        "기타/무관": 0
+      },
+      "evaluation": {
+        "기술개발": 0,
+        "제품/서비스": 0,
+        "기업동향": 0,
+        "생산/공급망": 0,
+        "정책/규제": 0,
+        "금융/투자": 0,
+        "시장/산업": 0,
+        "노동/노사": 0,
+        "국제/통상": 0,
+        "교육/취업": 0,
+        "사회": 0,
+        "정치": 0,
+        "문화/연예": 0,
+        "스포츠": 0,
+        "건강/의료": 0,
+        "생활/환경": 0,
+        "기타/무관": 0
+      }
+    },
+    "labels_needing_more_events": {
+      "development": [
+        "기술개발",
+        "제품/서비스",
+        "기업동향",
+        "생산/공급망",
+        "정책/규제",
+        "금융/투자",
+        "시장/산업",
+        "노동/노사",
+        "국제/통상",
+        "교육/취업",
+        "사회",
+        "정치",
+        "문화/연예",
+        "스포츠",
+        "건강/의료",
+        "생활/환경",
+        "기타/무관"
+      ],
+      "evaluation": [
+        "기술개발",
+        "제품/서비스",
+        "기업동향",
+        "생산/공급망",
+        "정책/규제",
+        "금융/투자",
+        "시장/산업",
+        "노동/노사",
+        "국제/통상",
+        "교육/취업",
+        "사회",
+        "정치",
+        "문화/연예",
+        "스포츠",
+        "건강/의료",
+        "생활/환경",
+        "기타/무관"
+      ]
+    },
+    "labels": [
+      "기술개발",
+      "제품/서비스",
+      "기업동향",
+      "생산/공급망",
+      "정책/규제",
+      "금융/투자",
+      "시장/산업",
+      "노동/노사",
+      "국제/통상",
+      "교육/취업",
+      "사회",
+      "정치",
+      "문화/연예",
+      "스포츠",
+      "건강/의료",
+      "생활/환경",
+      "기타/무관"
+    ],
+    "note": "Only review metadata and dataset separation checked; no model accuracy measured. Read original articles to confirm gold and event identities. Minimum coverage is a pilot gate, not statistically sufficient accuracy evidence."
+  },
+  "limitations": [
+    "13건·9개 주제의 소표본 측정이며 17개 주제 전체 성능 아님",
+    "사건 ID·독립성·개발/평가 구분이 미확정이므로 엄격 독립 평가 완료 아님",
+    "저장 본문을 포함한 분류 입력 평가이며 실시간 수집·중복 묶기·본문 확보 평가 아님",
+    "개발 기사 2건은 신규 평가의 정확도 분모에서 제외",
+    "정답 자료가 부족한 상태에서 규칙이나 점수 기준을 변경하거나 실험안을 활성화하지 않음"
+  ]
+}

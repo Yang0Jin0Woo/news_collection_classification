@@ -143,7 +143,7 @@ python -m pytest -q
 
 - 자동 테스트로 정제, 중복 묶기, 규칙 판단, 오류 처리와 저장 동작 확인
 - 규칙 계산 재사용과 본문·검증·저장 처리 공통화, 기존 판정·오류·저장 정책 유지
-- 실제 뉴스 분류 정확도는 사람 정답 자료 부족으로 미검증, 검토 감소와 정확도 향상은 별개
+- 실제 분류는 확정 기사 13건의 예비 측정만 완료, 17개 주제의 독립 정확도 평가 미완료
 - 검색어는 뉴스 수집에만 사용하고 모델 입력에서 제외, 검색어별 예외나 주제 비율 강제 없음
 - 제목 유사도와 발행일 등을 이용한 중복 묶기로 동일 사건의 완전한 판별 미보장
 - 언론사 접근 차단과 페이지 구조에 따른 본문 확보 실패 가능, 본문 보강에 추가 시간 소요
@@ -187,6 +187,8 @@ python scripts/prepare_accuracy_review.py prepare --dataset data/evaluation/real
 - 기존 확정 기사 2건은 개발 자료로만 유지, 정답 확인과 사건 독립성 확인의 구분
 
 2026-10-11 사용자 확인 자료: [기술개발 5건](data/evaluation/user_confirmed_accuracy_20261011.json)과 [다른 주제 8건](data/evaluation/user_confirmed_accuracy_multitopic_20261011.json) 추가 기록. [최신 확인 진행 CSV](data/evaluation/accuracy_review_progress_multitopic_20261011.csv)는 기존 2건을 포함한 정답 확정 15건과 미확인 167건으로 구성. 기존 TXT·CSV 보존, KOTRA 본문의 다른 기사 추천 영역 제외. 신규 13건의 사건 독립성과 개발/평가 구분은 확인 대기, 분류 규칙 변경 및 독립 정확도 평가 없음.
+
+[예비 분류 측정](data/evaluation/confirmed_subset_preliminary_20261011.json): 신규 13건에서 자동 정답 11건·자동 오답 1건·검토 1건, 개발 기사 2건은 별도 회귀 확인. 미적용 실험안은 자동 오답 0건·검토 3건이나 기존 정답 2건이 검토로 이동하여 기본 적용 보류. 9개 주제의 소표본·저장 본문 기준 측정이며 사건 확인과 전 주제 독립 평가 미완료.
 
 평가할 기사만 선별하여 `accuracy_review_confirmed.csv`로 별도 저장, 미확인 나머지 후보는 원래 CSV에 보존
 
