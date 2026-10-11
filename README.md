@@ -170,3 +170,36 @@ python scripts/compare_rule_context.py --dataset data/evaluation/user_confirmed_
 
 수정안은 제목, 설명과 본문 첫 두 문장의 근거를 추가 확인하는 실험용 처리, 주요 사건의 완전한 판별 미보장
 사람이 확인한 별도 사건과 검색어, 기존 자동 정답 기사까지 추가 평가 후 적용 여부 결정
+
+### 실제 기사 정답 평가
+
+기존 후보와 확정 개발 기사 2건을 합친 정답 확인용 CSV 생성, 원본과 기존 파일 보존
+
+```powershell
+python scripts/prepare_accuracy_review.py prepare --dataset data/evaluation/real_news_candidates.csv --confirmed-json data/evaluation/user_confirmed_context_20261004.json --output data/evaluation/accuracy_review_pending.csv
+```
+
+- 후보의 모델 예측과 추천 주제 제외, 신규 정답·사건 ID·자료 구분은 빈칸 유지
+- 원문 확인 후 `gold_label`, `reviewed_by`, `main_event`, `main_event_evidence` 입력과 `review_status=confirmed` 지정
+- 같은 사건에 같은 `event_id` 입력, 사건 확인 후 `independent_event_check=confirmed` 지정
+- `split`은 `development` 또는 `evaluation` 지정, 두 자료 사이의 사건·원문 링크·검색어 중복 금지
+- 17개 주제별 각 자료에 서로 다른 사건 2건 이상 확보, 소규모 예비 평가의 최소 준비 기준이며 정확도 보장 아님
+- 기존 확정 기사 2건은 개발 자료로만 유지, 정답 확인과 사건 독립성 확인의 구분
+
+2026-10-11 사용자 확인 자료: [기술개발 5건](data/evaluation/user_confirmed_accuracy_20261011.json)과 [다른 주제 8건](data/evaluation/user_confirmed_accuracy_multitopic_20261011.json) 추가 기록. [최신 확인 진행 CSV](data/evaluation/accuracy_review_progress_multitopic_20261011.csv)는 기존 2건을 포함한 정답 확정 15건과 미확인 167건으로 구성. 기존 TXT·CSV 보존, KOTRA 본문의 다른 기사 추천 영역 제외. 신규 13건의 사건 독립성과 개발/평가 구분은 확인 대기, 분류 규칙 변경 및 독립 정확도 평가 없음.
+
+평가할 기사만 선별하여 `accuracy_review_confirmed.csv`로 별도 저장, 미확인 나머지 후보는 원래 CSV에 보존
+
+모델 실행 전 준비 검사, 미확인 자료는 종료 코드 1과 미완료 사유 표시
+
+```powershell
+python scripts/prepare_accuracy_review.py check --dataset data/evaluation/accuracy_review_confirmed.csv
+```
+
+준비 검사 통과 후 독립 평가 실행, 자동 분류 오답·검토 비율·기존 정답 훼손 비교
+
+```powershell
+python scripts/evaluate_news.py --dataset data/evaluation/accuracy_review_confirmed.csv --require-independent-events --output-dir evaluation_results/independent_accuracy
+```
+
+저장 기사의 분류 평가이며 실시간 수집·본문 보강 동작 평가와 구분, 정답 확인 전 실제 정확도 평가 미완료

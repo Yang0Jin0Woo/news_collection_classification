@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from news_classifier.config import AppSettings
+from news_classifier.accuracy_review import require_accuracy_review_ready
 from news_classifier.classifiers.rule_engine import RuleEngine, RuleScoringSession
 from news_classifier.classifiers.postprocessor import ClassificationPostProcessor
 from news_classifier.classifiers.prediction_validation import validate_model_predictions
@@ -21,6 +22,7 @@ from news_classifier.evaluation_dataset import (
     has_body_content,
     legacy_evaluation_input,
     load_reviewed_cases,
+    read_csv_dataset,
     prepare_evaluation_items,
     rows_with_article_context,
     validate_unseen_keywords,
@@ -61,6 +63,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--compare-legacy", action="store_true", help="같은 모델과 원문으로 이번 변경 전후 비교")
     parser.add_argument("--compare-short-labels", action="store_true", help="같은 17개 주제와 입력으로 짧은 주제명과 사건 설명 비교")
     parser.add_argument("--require-unseen-keywords", action="store_true", help="개발용과 겹치지 않는 검색어만 평가")
+    parser.add_argument("--require-independent-events", action="store_true", help="확인된 사건·근거와 별도 검색어의 독립 평가 자료만 허용")
+    parser.add_argument("--min-events-per-label", type=int, default=2, help="독립 평가 준비 검사의 주제별 최소 사건 수, 정확도 보장 기준 아님")
     parser.add_argument("--decision-profile", default=None, help="독립 평가를 통과한 최종 판정 기준 파일")
     parser.add_argument("--rules-file", default=None, help="development 사건 ID가 명시된 규칙 제안 JSON")
     parser.add_argument("--export-rule-profile", default=None, help="독립 평가 통과 시에만 새 규칙 적용용 JSON 생성")
@@ -98,13 +102,24 @@ def main() -> None:
             parser.error("원본 및 기존 프로필 보존: 새 --export-rule-profile 경로 필요")
     if args.rules_file and args.decision_profile:
         parser.error("새 규칙은 판정 기준 변경과 분리하여 먼저 평가 필요")
-    if args.require_unseen_keywords and args.split != "evaluation":
+    if (args.require_unseen_keywords or args.require_independent_events) and args.split != "evaluation":
         parser.error("새 검색어 검증은 --split evaluation에서만 가능")
     dataset_path = Path(args.dataset)
-    rows = load_reviewed_cases(dataset_path, args.split, CANDIDATE_LABELS)
-    if args.require_unseen_keywords:
+    independent_review = None
+    if args.require_independent_events:
+        try:
+            independent_review = require_accuracy_review_ready(
+                read_csv_dataset(dataset_path)[1], CANDIDATE_LABELS,
+                minimum_events_per_label=args.min_events_per_label,
+            )
+        except (OSError, ValueError) as exc:
+            parser.error(str(exc))
+    rows = load_reviewed_cases(dataset_path, args.split, CANDIDATE_LABELS,
+                               require_explicit_event_ids=args.require_independent_events)
+    if args.require_unseen_keywords or args.require_independent_events:
         validate_unseen_keywords(
-            load_reviewed_cases(dataset_path, "development", CANDIDATE_LABELS), rows,
+            load_reviewed_cases(dataset_path, "development", CANDIDATE_LABELS,
+                                require_explicit_event_ids=args.require_independent_events), rows,
         )
     settings = AppSettings()
     if args.rules_file:
@@ -291,7 +306,7 @@ def main() -> None:
         predicted_by_method["하이브리드"], labels=CANDIDATE_LABELS,
         keywords=[row["keyword"] for row in rows], event_ids=[row["event_id"] for row in rows],
         has_development_rules=has_development_rules, split=args.split,
-        unseen_keywords_validated=args.require_unseen_keywords or (has_development_rules and args.split == "evaluation"),
+        unseen_keywords_validated=args.require_unseen_keywords or args.require_independent_events or (has_development_rules and args.split == "evaluation"),
         minimum_independent_events=runtime_rule_set.minimum_development_evidence_events,
     )
     if has_development_rules and args.split == "evaluation":
@@ -314,7 +329,9 @@ def main() -> None:
         "topic_description_policy": TOPIC_DESCRIPTION_POLICY,
         "candidate_hypotheses": pipeline.classifier.candidate_hypotheses,
         "hypothesis_template": HYPOTHESIS_TEMPLATE,
-        "unseen_keywords_validated": args.require_unseen_keywords or (has_development_rules and args.split == "evaluation"),
+        "unseen_keywords_validated": args.require_unseen_keywords or args.require_independent_events or (has_development_rules and args.split == "evaluation"),
+        "independent_review_readiness": independent_review,
+        "evaluation_scope": "stored_article_classification_not_live_collection_or_enrichment",
         "compare_legacy": args.compare_legacy,
         "compare_short_labels": args.compare_short_labels,
         "legacy_labels": list(LEGACY_CANDIDATE_LABELS) if args.compare_legacy else None,
